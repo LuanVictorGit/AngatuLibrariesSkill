@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin (Jetty 11), Saveable, e frontend vanilla com sistema de design obrigatório (Tailwind local, ds.css, arte generativa por tema). Link oficial https://github.com/LuanVictorGit/AngatuLibraries. Inclui 9 referências de frontend unificadas, traduzidas e auditadas como Angatu Sistemas (frontend-design, framer-motion, css-native, canvas-generative, brand-landingpage, mobile-principles, desktop-principles, paint/pipeline, design-audit) com geração automática de artes/backgrounds/animações/SEO por tema — uso obrigatório em todo frontend. Use para criar projetos do zero, inicialização loja.angatusistemas.com.br:1716, entidades Saveable, rotas auto-registradas, HTML por filename e qualquer integração da lib. Dispara em AngatuLibraries, Saveable, Route, JavalinAPI, criar projeto do zero, nova rota/entidade/tela.
+description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin (Jetty via transitivo), Saveable, e frontend vanilla com sistema de design obrigatório (Tailwind local, ds.css, arte generativa por tema). Link oficial https://github.com/LuanVictorGit/AngatuLibraries. Inclui 9 referências de frontend unificadas, traduzidas e auditadas como Angatu Sistemas (frontend-design, framer-motion, css-native, canvas-generative, brand-landingpage, mobile-principles, desktop-principles, paint/pipeline, design-audit) com geração automática de artes/backgrounds/animações/SEO por tema — uso obrigatório em todo frontend. Use para criar projetos do zero, inicialização loja.angatusistemas.com.br:1716, entidades Saveable, rotas auto-registradas, HTML por filename e qualquer integração da lib. Cobre ainda regras obrigatórias de cache (nunca usar sem pedido), rodapé com a marca da Angatu Sistemas, segurança de sessão e API (cookie HttpOnly, token fora da URL, isolamento multi-tenant) e teste sempre pelo JAR do projeto. Dispara em AngatuLibraries, Saveable, Route, JavalinAPI, criar projeto do zero, nova rota/entidade/tela, cache, cookie, sessão, rodapé, segurança.
 ---
 
 # AngatuLibraries — https://github.com/LuanVictorGit/AngatuLibraries
@@ -12,7 +12,7 @@ description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin (Jetty 1
 
 ## 0. Princípios do agente neste repo
 
-1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits detalhados + push sempre, nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção.
+1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits detalhados + push sempre, nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`.
 
 ---
 
@@ -82,7 +82,9 @@ Guard: `Dependencies.require("io.javalin.Javalin","io.javalin:javalin:7.2.2","We
 
 ### 1.4 Jetty — versão alinhada ao Javalin (obrigatório)
 
-Javalin 7.2.2 roda sobre **Jetty 11** (`org.eclipse.jetty:jetty-server:11.0.24` transitivamente). Nunca fixe Jetty manualmente em versão divergente.
+Javalin 7.2.2 traz o Jetty **transitivamente** — nas builds recentes da lib isso é **Jetty 12.x**
+(`ee10`), e não Jetty 11. **Não fixe Jetty manualmente**: confirme a versão real com
+`mvn dependency:tree -Dincludes=org.eclipse.jetty` e deixe o transitivo do Javalin mandar.
 
 - Não declare `org.eclipse.jetty:*` no `pom.xml` a menos que precise sobrescrever — deixe o Javalin trazer o transitivo.
 - Se precisar declarar (ex: `jetty-alpn`, `jetty-http`), use **exatamente 11.0.24** (ou a versão que `mvn dependency:tree` mostra vinda do `javalin:7.2.2`).
@@ -447,9 +449,9 @@ boolean sigOk = MercadoPagoAPI.validateWebhookSignature(xSig, xReqId, dataId, se
 
 ---
 
-## 9. Frontend — shell + Design System (uso obrigatório — §9.0 a §9.7)
+## 9. Frontend — shell + Design System (uso obrigatório — §9.0 a §9.8)
 
-> **Obrigatoriedade absoluta:** todo frontend criado ou alterado por esta skill **deve** passar por §9.0 → §9.7. Não existe entrega "só backend" com frontend improvisado, nem "só estilizar depois". Sem pipeline de design, sem arte por tema, sem auditoria — sem entrega. As 9 referências abaixo são parte oficial e auditada da AngatuLibraries.
+> **Obrigatoriedade absoluta:** todo frontend criado ou alterado por esta skill **deve** passar por §9.0 → §9.8. Não existe entrega "só backend" com frontend improvisado, nem "só estilizar depois". Sem pipeline de design, sem arte por tema, sem auditoria — sem entrega. As 9 referências abaixo são parte oficial e auditada da AngatuLibraries.
 
 ### 9.0 Referências internas — sistema de design Angatu (9 skills unificadas)
 
@@ -579,7 +581,7 @@ Antes de cada commit que toque frontend, releia **todas** as strings alteradas e
 
 ### 9.3 Sistema de design obrigatório — todo frontend passa por aqui
 
-> **Obrigatoriedade:** todo frontend (página, dashboard, landing, app) deve passar por §9.3 → §9.7. Não existe "só estilizar depois". Sem sistema, sem entrega.
+> **Obrigatoriedade:** todo frontend (página, dashboard, landing, app) deve passar por §9.3 → §9.8. Não existe "só estilizar depois". Sem sistema, sem entrega.
 
 **Pipeline Angatu (inspirado em `paint` + `frontend-design`, auditado):**
 
@@ -804,9 +806,94 @@ grep -A5 'exit=' --include='*.js' -rn src/main/resources/public # entrada >= sa�
 - [ ] Sem `div onClick` sem `role`/`tabIndex`/`onKeyDown`
 - [ ] Nenhuma animação de `width`/`height`/`top`/`left` (só `transform`/`opacity`/`clip-path`/`filter`)
 - [ ] `grep -r "cdn.tailwindcss"` vazio (§9.1)
+- [ ] `grep -rn "caches.put\|caches.match"` vazio, salvo cache pedido pelo cliente (§15)
+- [ ] `grep -rn "<script>" public/*.html` vazio — script de página em arquivo externo, para a política de segurança não bloquear
+- [ ] Rodapé com o logotipo da Angatu presente em todas as páginas (§9.8)
 - [ ] **Toda responsividade via Tailwind `sm:/md:/lg:/xl:/2xl:` — nenhum `@media (min-width` manual fora de `ds.css` (§9.6)**
 - [ ] `og:image` gerada por tema + `json-ld` + `meta description` revisada (§9.2 + §9.5)
 - [ ] Durações/easings centralizados (≤5 cada) + `view-transition-name`/`@starting-style` onde há entrada/saída
+
+### 9.8 Rodapé — marca da Angatu Sistemas sempre presente (obrigatório)
+
+> **Regra:** **toda** página com rodapé, e **todo** e-mail com rodapé, exibe o crédito de
+> desenvolvimento com o logotipo da Angatu Sistemas. Sem exceção: login, painéis, telas públicas,
+> páginas legais, e-mails transacionais e relatórios.
+
+**Marcador padrão:**
+
+```html
+<footer class="ds-footer">
+  <a class="ds-credito" href="https://angatusistemas.com.br" target="_blank" rel="noopener">
+    <span class="ds-credito-texto">Desenvolvido por</span>
+    <img class="ds-credito-marca" src="/images/angatu-sistemas-escuro.png"
+         alt="Angatu Sistemas" width="76" height="26">
+  </a>
+  <p class="ds-footer-links">
+    <a href="/privacidade">Política de Privacidade</a> ·
+    <a href="/termos">Termos de Uso</a>
+  </p>
+</footer>
+```
+
+```css
+.ds-footer { border-top: 1px solid var(--line); padding: 20px 16px;
+             text-align: center; font-size: 13px; color: var(--ink-600); }
+.ds-credito { display: inline-flex; align-items: center; gap: 10px;
+              text-decoration: none; color: var(--ink-600);
+              transition: opacity var(--dur-2) var(--ease-out); }
+.ds-credito-marca { height: 26px; width: auto; display: block; }
+@media (hover: hover) and (pointer: fine) { .ds-credito:hover { opacity: .75; } }
+```
+
+**O logotipo é um arquivo oficial — nunca redesenhe.** O escudo da Angatu tem traços de circuito
+próprios da identidade; qualquer versão recriada à mão está errada, por mais parecida que pareça.
+Baixe o arquivo de um produto existente da Angatu, por exemplo:
+
+```bash
+curl -sL -o src/main/resources/public/images/angatu-sistemas.png \
+  https://fastcurriculo.angatusistemas.com.br/images/angatu-sistemas.png
+```
+
+Ele é **branco sobre fundo transparente**, feito para fundo escuro. Para o fundo claro padrão dos
+sistemas, gere uma variante tingida preservando o canal alfa byte a byte — só a cor muda, as formas
+continuam idênticas às do original:
+
+```java
+int alfa = (origem.getRGB(x, y) >>> 24) & 0xFF;
+destino.setRGB(x, y, (alfa << 24) | (r << 16) | (g << 8) | b);  // azul da marca: #101073
+```
+
+Versione os dois arquivos: `angatu-sistemas.png` (branco, fundo escuro) e
+`angatu-sistemas-escuro.png` (azul, fundo claro).
+
+**Montagem.** Monte o rodapé no corpo do documento, e não dentro do contêiner centralizado da
+página — do contrário ele fica recortado na largura da coluna. Isso também evita `100vw`, que
+abriria rolagem horizontal por causa da barra de rolagem:
+
+```js
+var host = document.createElement('div');
+host.id = 'rodape-global';
+host.innerHTML = Auth.rodape();
+document.body.appendChild(host);
+```
+
+**Não invente fundo colorido.** O rodapé segue o fundo das demais telas. Uma faixa escura só entra
+se o cliente pedir — e o modo único claro do sistema de design continua valendo (§16.8 da
+especificação de produto).
+
+**Nos e-mails**, aponte para o arquivo servido pelo domínio de produção, com URL absoluta: cliente
+de e-mail não renderiza SVG nem resolve caminho relativo.
+
+```html
+<a href="https://angatusistemas.com.br" target="_blank" rel="noopener"
+   style="display:inline-block;text-decoration:none;color:#5A5A66;">
+  <span style="font-size:13px;vertical-align:middle;">Desenvolvido por</span>
+  <img src="https://SEU-DOMINIO/images/angatu-sistemas-escuro.png"
+       alt="Angatu Sistemas" width="76" height="26"
+       style="vertical-align:middle;margin-left:8px;border:0;">
+</a>
+```
+
 
 ---
 
@@ -882,6 +969,11 @@ Manter `CLAUDE.md` na raiz sempre atualizado (ver §10.1). Toda feature/correç�
 - [ ] Todo texto do frontend revisado: acentuação, vírgulas e concordância (§9.2)
 - [ ] `.env` + `.gitignore` (`database.db`, `.env`, `tools/tailwindcss*` se binário não versionado)
 - [ ] `CLAUDE.md` criado/atualizado
+- [ ] Rodapé com a marca da Angatu Sistemas em todas as páginas e e-mails (§9.8)
+- [ ] Sem cache: `AssetsAPI.setCacheEnabled(false)`, `no-store` em toda resposta, service worker que não guarda nada (§15)
+- [ ] Cookie de sessão `HttpOnly` + `SameSite` + `Secure` condicional; token nunca em URL (§16)
+- [ ] Páginas fora do rate limit; API e login com o deles (§16.8)
+- [ ] Testado subindo o JAR do projeto, nunca por servidor externo ou `file://` (§14.1)
 - [ ] Commit detalhado sem menção a IA + push
 
 ## 12. Gotchas
@@ -974,6 +1066,217 @@ Nunca entregue código sem ter compilado e rodado.
 
 1. **Compile:** `compilar.bat` (ou `mvn package -DskipTests`) — corrija erros de compilação/Jetty imediatamente (ver §1.4 para Jetty 11.0.24 alinhado ao Javalin 7.2.2; `mvn dependency:tree -Dincludes=org.eclipse.jetty` se houver `NoSuchMethodError`).
 2. **Suba o servidor:** `java -jar target/<app>.jar` (ou `mvn exec:java`). Confirme o banner da AngatuLibraries, modo `localhost` vs `https://loja.angatusistemas.com.br:1716` e `Javalin configurado`.
-3. **Valide na prática:** `curl`/`httpie` nas rotas criadas (`GET /health`, `POST /api/...`), verifique HTML em `http://localhost/<pagina>` e logs do `Console`. Para HTML/JS/CSS alterados, copie para `target/classes/public/` e recarregue sem rebuild.
+3. **Valide na prática:** `curl`/`httpie` nas rotas criadas (`GET /health`, `POST /api/...`), verifique HTML em `http://localhost/<pagina>` e logs do `Console`.
+
+> **Rodando por `java -jar`, copiar para `target/classes/public/` NÃO surte efeito** — o classpath é o próprio JAR. Alterações em HTML/JS/CSS exigem `mvn package` de novo. A cópia para `target/classes` só vale rodando por `mvn exec:java`.
+
+### 14.1 Nunca suba um servidor externo para testar (obrigatório)
+
+O projeto é testado **pelo próprio JAR**, servido pelo `AngatuLib`. É proibido, para "ver a tela funcionando":
+
+- `python -m http.server`, `npx serve`, `live-server`, extensão Live Server do editor ou qualquer outro servidor estático;
+- abrir o HTML por `file://`;
+- copiar o frontend para outro diretório/servidor.
+
+**Por quê:** o frontend depende do servidor real para existir. Fora dele não há sessão em cookie, não há API, não há WebSocket, não há substituição de `{content}` pelo `HtmlRouteAPI`, não há cabeçalhos de segurança e a política de conteúdo não se aplica. Um servidor estático mostra uma tela que *parece* certa e esconde exatamente os defeitos que importam — foi assim que um bloqueio de script inline pela política de segurança passou despercebido, com a API respondendo 100% e a interface inteira morta no navegador.
+
+Fluxo correto, sempre:
+
+```bash
+mvn package -DskipTests && java -jar target/<app>.jar
+# aguarde o banner, depois valide em http://localhost/<pagina>
+```
+
+Ao terminar, encerre o processo em vez de deixá-lo segurando a porta e o banco.
 4. **Shutdown limpo:** ao encerrar, garanta `Saveable.shutdown()`, `Task.shutdown()` e `BrowserAPI.shutdown()` (se usou) em shutdown hook.
 5. Só considere pronto após servidor subir sem exceção e rotas responderem com status/body esperados.
+
+---
+
+## 15. Cache — não usar, a menos que seja pedido (obrigatório)
+
+> **Regra:** todo conteúdo vem do servidor a cada requisição. Não implemente cache de conteúdo por
+> iniciativa própria. Só existe cache quando o usuário pedir, e aí ele é deliberado, restrito e
+> documentado.
+
+**Proibido por padrão:**
+
+- Service worker que guarda telas, scripts ou estilos (`caches.put`, pré-carregamento, estratégia
+  "cache primeiro").
+- `Cache-Control` com `max-age` longo em página, script, estilo ou imagem.
+- Cache de assets da lib — `AssetsAPI` vem com cache ligado; desligue.
+- Guardar resposta de API em `localStorage`/`sessionStorage` para exibir depois como se fosse atual.
+
+**O que fazer no bootstrap, antes de servir tráfego:**
+
+```java
+// Nada de conteúdo guardado, nem no servidor nem no navegador.
+AssetsAPI.setCacheEnabled(false);
+
+JavalinAPI.setSecurityHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+JavalinAPI.setSecurityHeader("Pragma", "no-cache");
+JavalinAPI.setSecurityHeader("Expires", "0");
+
+// O servidor de estáticos aplica o próprio Cache-Control depois do before-handler, e as folhas
+// de estilo e scripts saem com max-age=0 — que manda revalidar, não descartar. Carimbe a
+// resposta já pronta. No Javalin 7 os manipuladores ficam em unsafe.routes, não na instância.
+JavalinAPI.get().unsafe.routes.after(ctx -> {
+    ctx.header("Cache-Control", "no-store, no-cache, must-revalidate");
+    ctx.header("Pragma", "no-cache");
+    ctx.header("Expires", "0");
+});
+```
+
+**Service worker sem cache.** Ele continua existindo para tornar o app instalável (PWA) e receber
+push, mas não guarda nada. Um manipulador de busca precisa existir para o navegador considerar o
+app instalável; deixe-o repassar para a rede:
+
+```js
+self.addEventListener('install', () => self.skipWaiting());
+
+self.addEventListener('activate', (evento) => evento.waitUntil(
+  // Apaga o que versões anteriores tenham guardado.
+  caches.keys()
+    .then((chaves) => Promise.all(chaves.map((c) => caches.delete(c))))
+    .then(() => self.clients.claim())
+));
+
+// Sem respondWith: o navegador segue o caminho normal até o servidor.
+self.addEventListener('fetch', () => {});
+```
+
+E, no registro, force a checagem de versão e recarregue uma vez quando um service worker novo
+assumir — senão o aparelho fica preso na versão anterior por tempo indeterminado:
+
+```js
+const registro = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+registro.update();
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  if (!window.__recarregando) { window.__recarregando = true; location.reload(); }
+});
+```
+
+**Por que a regra é essa.** Cache de conteúdo transforma uma correção publicada em correção
+invisível: o aparelho continua abrindo a versão anterior. O prejuízo não é uma tela desatualizada
+— é uma tela que **abre e não funciona**, porque o HTML guardado não corresponde mais ao código do
+sistema. Já aconteceu em produção com este stack: a versão guardada trazia script embutido na
+página, bloqueado pela política de segurança, e a interface inteira ficou sem responder enquanto a
+API respondia normalmente. Depurar isso é caro, e o usuário final não tem como se ajudar sozinho.
+
+Se o funcionamento sem internet for **pedido**, implemente-o de forma explícita: rede primeiro para
+navegação, cache apenas como reserva de offline, nome de cache versionado, `skipWaiting()` +
+`clients.claim()` e limpeza das versões antigas no `activate`. Nunca "cache primeiro" para página.
+
+---
+
+## 16. Segurança de sessão e de API (obrigatório)
+
+Autorização é sempre validada no **backend**, em toda rota. Checagem só no frontend não vale nada:
+qualquer pessoa edita o JavaScript da própria página.
+
+### 16.1 Sessão em cookie — o padrão
+
+```java
+Cookie cookie = new Cookie(NOME, token);
+cookie.setPath("/");
+cookie.setHttpOnly(true);                  // JavaScript não lê: contém o XSS
+cookie.setSameSite(SameSite.LAX);          // contém o CSRF vindo de outros sites
+cookie.setSecure(!ehRequisicaoLocal(ctx)); // só HTTPS em produção; fixo em true quebra o login local
+cookie.setMaxAge((int) (VALIDADE_MS / 1000));
+ctx.cookie(cookie);
+```
+
+- **`HttpOnly` sempre.** Token em `localStorage` é legível por qualquer script injetado. Cookie
+  `HttpOnly` não é legível nem pelo script da própria página.
+- **`SameSite=Lax`** cobre o caso comum de CSRF. Se a API precisar mesmo de requisição de outra
+  origem, avalie `None` + `Secure` + verificação de origem, e documente o motivo.
+- **`Secure` condicional.** Fixo em `true` impede o login em `http://localhost` no desenvolvimento;
+  decida pelo host da requisição.
+
+### 16.2 Token no cabeçalho, nunca na URL
+
+Aceite também `Authorization: Bearer <token>`, para clientes que não enviam cookie:
+
+```java
+String cookie = ctx.cookie(NOME);
+if (cookie != null && !cookie.isBlank()) return cookie;
+String header = ctx.header("Authorization");
+if (header != null && header.startsWith("Bearer ")) return header.substring(7).trim();
+return null;
+```
+
+**Nunca aceite token em parâmetro de consulta numa rota HTTP.** URL vaza em histórico do navegador,
+em log de servidor, em log de proxy e no cabeçalho `Referer` ao clicar num link externo.
+
+**Única exceção justificada:** o handshake do WebSocket, porque a API do navegador não permite
+cabeçalho personalizado. Aceite o token na consulta **apenas ali**, prefira o cookie quando ele
+vier, e valide com a mesma função usada nas rotas HTTP.
+
+### 16.3 Sessão: geração, validade e revogação
+
+- Token de **256 bits** de fonte aleatória segura (`SecureRandom`), em Base64 seguro para URL.
+  Nunca sequencial, nunca derivado de dados do usuário.
+- Guarde **validade** e recuse a sessão vencida, apagando-a no ato.
+- **Revogue todas as sessões** na troca de senha, no bloqueio da conta e na exclusão. Sem isso,
+  trocar a senha por suspeita de acesso indevido não expulsa quem já estava dentro.
+- Copie papel e tenant na sessão para não consultar a conta a cada requisição — e, quando a
+  permissão mudar, **revogue** em vez de editar, para o dado copiado nunca ficar defasado.
+
+### 16.4 Senha
+
+- `Password.criptography` para gravar, `Password.checkCriptography` para conferir. Nunca guarde
+  senha reversível, nunca registre senha em log.
+- Senha inicial aleatória, com **troca obrigatória** no primeiro acesso.
+- Senha que será ditada por telefone ou WhatsApp: alfabeto sem caracteres ambíguos (sem `0`/`O`,
+  sem `1`/`I`).
+- **Resposta idêntica** para e-mail inexistente e senha errada. Mensagens diferentes revelam quais
+  e-mails estão cadastrados.
+
+### 16.5 Autorização e isolamento entre contas
+
+- Centralize a checagem num porteiro (`Guard.requireX(ctx)`), que devolve `null` depois de já ter
+  escrito o erro — a rota só precisa retornar.
+- Em sistema multi-tenant, **filtre por tenant em toda consulta**. Nunca confie em identificador
+  vindo da requisição sem verificar a que conta ele pertence.
+- Ao negar acesso a recurso de outra conta, responda **404**, não 403: confirmar que o recurso
+  existe mas pertence a outro já é vazamento de informação.
+
+### 16.6 Uploads e arquivos
+
+- Valide **pelo conteúdo real** (assinatura dos primeiros bytes), nunca pela extensão informada
+  pelo cliente.
+- Limite o tamanho lendo no máximo `limite + 1` bytes e recusando o que passar.
+- Guarde fora da pasta pública e sirva por rota autenticada. Arquivo em pasta estática é público
+  para quem descobrir o endereço.
+- Bloqueie travessia de diretório: normalize o caminho e confirme que ele continua dentro da pasta
+  de destino.
+
+### 16.7 Segredos
+
+- Segredo de integração (token de pagamento, chave de API) fica **cifrado no banco**, decifrado em
+  memória só na hora de usar. Nunca em texto puro, nunca em arquivo versionado.
+- A chave mestra da cifra fica **fora do banco** e fora do controle de versão: uma cópia isolada do
+  banco não pode bastar para abrir os segredos.
+- Nenhuma rota devolve segredo em texto puro. Para conferência na tela, mostre mascarado
+  (`****1234`).
+- **O assistente nunca solicita, digita ou embute token de produção.** Ele é inserido pelo próprio
+  responsável, na interface, depois do deploy.
+
+### 16.8 Rate limiting
+
+```java
+JavalinAPI.configureApiRateLimit("/api/*");        // uso normal da API
+JavalinAPI.configureLoginRateLimit("/api/login");  // mais rígido: força bruta
+JavalinAPI.setTrustedProxyHops(1);                 // IP real atrás de proxy reverso
+```
+
+**Deixe as páginas fora do limite.** Elas são conteúdo, não operação: trocar de tela três vezes em
+poucos segundos é navegação normal, e o usuário legítimo acaba bloqueado com a tela de excesso de
+requisições. Limite a API e o login, não a leitura de tela.
+
+Deixe de fora também o que é alimentado continuamente (envio de localização) e o que vem de
+terceiros com reenvio automático (webhook de pagamento).
+
+> **Ao testar:** o limite de login costuma ser de poucas tentativas por minuto, com bloqueio longo.
+> Um laço de espera batendo em `/api/login` queima esse orçamento antes do teste começar — sonde a
+> prontidão do servidor por uma rota sem efeito colateral, como `GET /api/me`.
