@@ -295,6 +295,80 @@ Tabela = `SimpleName.toLowerCase()` + `s` (`User→users`, `Key→keys`); coluna
 
 > **Idioma obrigatório (§13.4):** classe `User` (inglês) com Javadoc em português e `@author Angatu Sistemas`. Nunca use `Usuario`/`Produto` — sempre inglês.
 
+### 4.1 Portar projeto de versão anterior da biblioteca — procedimento
+
+> **O projeto vai compilar sem alterar uma linha.** Nada aqui é erro de compilação: são mudanças de
+> comportamento. O sistema sobe, as telas abrem, os testes de unidade passam — e o defeito aparece
+> em produção, com dois componentes mexendo no mesmo registro. Faça esta passagem **antes** de
+> considerar a migração pronta.
+
+**1. Ache toda escrita disputada e converta para `mutate`.** É o item caro; comece por ele.
+
+```bash
+# Onde um registro é lido e gravado em passos separados
+grep -rnE "findById\(|findFirstByField\(" --include="*.java" src/main/java | cut -d: -f1 | sort -u
+# Cruze com quem grava: o mesmo arquivo aparecendo nos dois é candidato
+grep -rn "\.save()" --include="*.java" src/main/java | cut -d: -f1 | sort | uniq -c | sort -rn
+```
+
+Para cada candidato, pergunte: **quem mais escreve neste registro?** Converta quando a resposta
+incluir um trabalho agendado, um webhook (o provedor reenvia até receber confirmação), um
+WebSocket ou outra rota. Registro que só um fluxo toca pode continuar com `save()`.
+
+```java
+// ERRADO — grava a cópia lida antes por cima do que outro componente escreveu no intervalo
+Invoice f = Saveable.findById(Invoice.class, id); f.setStatus(PAID); f.save();
+// CERTO
+Saveable.mutate(Invoice.class, id, f -> f.setStatus(PAID));
+```
+
+**2. Não regrave a entidade inteira para mudar um campo.** `save()` persiste o objeto completo: um
+`setLastAccessAt` gravado a partir de uma cópia apaga a edição que outra tela fez no intervalo. Em
+`mutate`, altere **só** o campo que aquele fluxo é dono.
+
+**3. Método que recebe entidade por parâmetro precisa devolver o estado gravado.** `mutate` não
+atualiza o objeto de quem chamou. Copie de volta o que foi persistido, ou o chamador lê o estado
+anterior logo em seguida (e o teste dele falha por um motivo que parece não ter relação).
+
+**4. Decida dentro da transação, não antes.** Guarda de idempotência (`if (já está pago) return;`)
+lida fora do `mutate` não vale: entre a leitura e a gravação o estado muda. Leve a comparação para
+dentro do bloco e sinalize o resultado.
+
+**5. Confira o retorno de `mutate`.** Devolve `null` quando o registro não existe — e a alteração
+simplesmente não aconteceu, sem exceção.
+
+**6. Índice para todo campo consultado.** Sem cache, cada busca vai ao SQLite.
+
+```bash
+grep -rhoE "findByField\([A-Za-z]+\.class, \"[a-zA-Z]+\"" --include="*.java" src/main/java | sort -u
+```
+
+Crie um `createIndex` no arranque para cada par que sair daí. É idempotente.
+
+**7. Enum vai como texto.** `findByField(X.class, "role", Role.ADMIN)` cai no filtro em memória e lê
+a tabela inteira; `Role.ADMIN.name()` desce para o SQL e usa o índice.
+
+**8. Testes que comparam identidade quebram.**
+
+```bash
+grep -rn "assertSame" --include="*.java" src/test
+```
+
+`assertSame` entre entidades só passava por causa do cache. Compare identificador — que é o que a
+regra de negócio exige de verdade.
+
+**9. Inicialização e hospedagem.** A porta informada é a usada (não há mais desvio para a 80 em
+localhost) e o TLS deixou de ser da aplicação: leia a porta de `PORT`, remova qualquer pedido de
+HTTPS ao Javalin e crie `Dockerfile`, `.dockerignore` e `GET /health` (§17). Ajuste também o que
+apontava para a porta antiga: scripts de teste, `CLAUDE.md`, URLs de desenvolvimento.
+
+**Caso real que originou este procedimento.** Sistema de transporte em produção: a rotina de
+cobrança rodava de hora em hora e o Mercado Pago reenviava o aviso de pagamento até receber
+confirmação. As duas tocavam a mesma fatura. Com o cache, as duas mexiam no mesmo objeto e nada
+acontecia. Sem ele, havia um intervalo em que a rotina gravava o estado anterior por cima da
+confirmação: **a fatura voltava a pendente e a conta que tinha acabado de pagar era bloqueada.**
+Nenhum teste de unidade pegava — os dois fluxos passavam isolados.
+
 ---
 
 ## 5. Rotas — Route / RouteType
