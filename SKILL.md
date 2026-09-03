@@ -236,10 +236,15 @@ long total = Saveable.count(User.class);
 
 // consultar por campo: crie o índice uma vez, na inicialização
 Saveable.createIndex(User.class, "email");
+Saveable.createIndex(User.class, "role");   // enum: indexe também, e consulte pelo nome
 User byEmail = Saveable.findFirstByField(User.class, "email", "joao@exemplo.com");
 List<User> byField = Saveable.findByField(User.class, "name", "João");
 List<User> result = Saveable.query(User.class,
         "SELECT data FROM users WHERE json_extract(data,'$.name')=?", "João");
+
+// ATENÇÃO — enum e objeto não descem para o SQL:
+Saveable.findByField(User.class, "role", Role.ADMIN);         // varre a tabela em memória
+Saveable.findByField(User.class, "role", Role.ADMIN.name());  // usa o índice
 List<User> page = Saveable.query(User.class,
         "SELECT data FROM users ORDER BY id LIMIT 100 OFFSET ?", 0);
 
@@ -283,6 +288,9 @@ Tabela = `SimpleName.toLowerCase()` + `s` (`User→users`, `Key→keys`); coluna
 - alterar um objeto e não chamar `save()` não muda nada para ninguém — o valor antigo continua no banco;
 - `findById` duas vezes devolve **dois objetos diferentes**; não compare com `==` nem espere que alterar um reflita no outro;
 - `findAll`/`findByPredicate` percorrem e desserializam a tabela inteira: em rota quente, troque por `findByField`/`query` com índice;
+- **escrita disputada perde atualização.** Ler, alterar e gravar em passos separados grava a cópia lida antes por cima do que outro componente escreveu no meio do caminho. Com o cache isso não aparecia, porque os dois lados mexiam no mesmo objeto — ao portar, converta para `Saveable.mutate(...)` **todo** ponto em que um trabalho agendado e uma rota (ou um webhook com reenvio automático) tocam o mesmo registro. É onde estão os defeitos de dinheiro;
+- **`mutate` não atualiza o objeto que você tinha em mãos.** Ele grava e devolve o estado novo; quem chamou continua com a cópia anterior. Se o método recebe a entidade por parâmetro e quem chamou lê campos dela depois, copie de volta o que foi gravado;
+- **teste que compara identidade quebra.** `assertSame` entre entidades só passava por causa do cache. Compare identificador — que é o que a regra de negócio exige de verdade;
 - o banco em si não mudou: consultas customizadas continuam com `SELECT data FROM ...`, e nada precisa ser migrado.
 
 > **Idioma obrigatório (§13.4):** classe `User` (inglês) com Javadoc em português e `@author Angatu Sistemas`. Nunca use `Usuario`/`Produto` — sempre inglês.
@@ -1053,6 +1061,8 @@ Manter `CLAUDE.md` na raiz sempre atualizado (ver §10.1). Toda feature/correç�
 - `.java` exige recompilar; HTML/JS copie para `target/classes/public/` (só vale por `mvn exec:java`).
 - `Saveable.query` sempre com `?`, nunca concatenação. `Saveable.shutdown()` + `Task.shutdown()` (+ `BrowserAPI.shutdown()`) no shutdown hook.
 - **Sem cache no `Saveable`:** objeto alterado sem `save()` não muda nada; `findById` devolve instância nova a cada chamada; registro disputado exige `Saveable.mutate(...)` (§4).
+- **`findByField` com enum varre a tabela:** só texto, número e booleano viram `json_extract` no SQL; passe `Role.ADMIN.name()`, não `Role.ADMIN` (§4).
+- **`mutate` devolve `null` quando o registro não existe** — e a alteração simplesmente não acontece. Verifique o retorno em fluxo que precisa saber se gravou.
 - **Porta:** a informada é a usada — não há mais desvio para a 80 em localhost. Leia de `PORT`.
 - **Nunca ligue HTTPS no Javalin quando estiver no Coolify** (§2.1): o TLS é da hospedagem.
 - **Banco sem volume some no deploy:** `/data` montado + `ANGATU_DB_PATH` (§17) — um volume por projeto, um `database.db` por projeto.
