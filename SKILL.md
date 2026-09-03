@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin (Jetty via transitivo), Saveable, e frontend vanilla com sistema de design obrigatório (Tailwind local, ds.css, arte generativa por tema). Link oficial https://github.com/LuanVictorGit/AngatuLibraries. Inclui 9 referências de frontend unificadas, traduzidas e auditadas como Angatu Sistemas (frontend-design, framer-motion, css-native, canvas-generative, brand-landingpage, mobile-principles, desktop-principles, paint/pipeline, design-audit) com geração automática de artes/backgrounds/animações/SEO por tema — uso obrigatório em todo frontend. Use para criar projetos do zero, inicialização loja.angatusistemas.com.br:1716, entidades Saveable, rotas auto-registradas, HTML por filename e qualquer integração da lib. Cobre ainda regras obrigatórias de cache (nunca usar sem pedido), rodapé com a marca da Angatu Sistemas, segurança de sessão e API (cookie HttpOnly, token fora da URL, isolamento multi-tenant) e teste sempre pelo JAR do projeto. Dispara em AngatuLibraries, Saveable, Route, JavalinAPI, criar projeto do zero, nova rota/entidade/tela, cache, cookie, sessão, rodapé, segurança.
+description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveable e frontend vanilla com sistema de design obrigatório (Tailwind local, ds.css, arte generativa por tema). Link oficial https://github.com/LuanVictorGit/AngatuLibraries. Projetos hospedados no Coolify, com Dockerfile obrigatório, inicialização HTTP por padrão e HTTPS apenas por parâmetro explícito. Saveable sem cache em RAM — leitura e gravação direto no SQLite, com mutate/transaction para concorrência. Ao salvar imagens, pergunte sempre ao programador qual estratégia de compressão usar. Inclui 9 referências de frontend auditadas como Angatu Sistemas (frontend-design, framer-motion, css-native, canvas-generative, brand-landingpage, mobile-principles, desktop-principles, paint, design-audit) com geração automática de artes, backgrounds, animações e SEO por tema. Cobre ainda cache (nunca usar sem pedido), rodapé com a marca da Angatu Sistemas, segurança de sessão e API (cookie HttpOnly, token fora da URL, isolamento multi-tenant) e teste sempre pelo JAR do projeto. Dispara em AngatuLibraries, Saveable, Route, JavalinAPI, Coolify, Docker, deploy, HTTPS, criar projeto do zero, nova rota/entidade/tela, imagem, compressão, cache, cookie, sessão, segurança.
 ---
 
 # AngatuLibraries — https://github.com/LuanVictorGit/AngatuLibraries
@@ -12,7 +12,7 @@ description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin (Jetty v
 
 ## 0. Princípios do agente neste repo
 
-1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits detalhados + push sempre, nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`.
+1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits detalhados + push sempre, nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho.
 
 ---
 
@@ -64,7 +64,7 @@ Debug: `java -Dangatu.debug=true -jar app.jar` ou `Console.setDebugEnabled(true)
 
 | Módulo | Coordenadas | Classe que exige no classload |
 |---|---|---|
-| Web/HTML/Assets/Rotas | `io.javalin:javalin:7.2.2`, `io.javalin.community.ssl:javalin-ssl:7.2.2`, `org.reflections:reflections:0.10.2` + binding SLF4J (`org.slf4j:slf4j-simple:2.0.17`) | `JavalinAPI` |
+| Web/HTML/Assets/Rotas | `io.javalin:javalin:7.2.2`, `org.reflections:reflections:0.10.2` + binding SLF4J (`org.slf4j:slf4j-simple:2.0.17`); `io.javalin.community.ssl:javalin-ssl:7.2.2` **só** se `manageSsl=true` (§2.1) | `JavalinAPI` |
 | Persistência | `org.xerial:sqlite-jdbc:3.51.3.0`, `com.zaxxer:HikariCP:7.0.2`, `com.google.code.gson:gson:2.13.2` | — |
 | JSON | `com.google.code.gson:gson:2.13.2` | `GsonAPI`, TypeAdapters |
 | .env | `io.github.cdimascio:dotenv-java:3.2.0` | — |
@@ -95,40 +95,55 @@ Javalin 7.2.2 traz o Jetty **transitivamente** — nas builds recentes da lib is
 
 ## 2. Inicialização correta — AngatuLib
 
-### 2.1 Construtor
+### 2.1 Construtor — HTTP por padrão, HTTPS só quando pedido
 
 ```java
 import br.com.angatusistemas.lib.AngatuLib;
+import br.com.angatusistemas.lib.javalin.JavalinAPI;
 
 public class Main {
     public static void main(String[] args) {
-        // Desenvolvimento: sem certificados → HTTP na porta 80
-        new AngatuLib("localhost", 80, true);
+        // A porta vem do ambiente: o Coolify publica o contêiner nela
+        int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
 
-        // Exemplo real de produção da Angatu:
-        // Domínio loja.angatusistemas.com.br, porta HTTPS 1716, com rate limiting
-        // new AngatuLib("loja.angatusistemas.com.br", 1716, true);
+        JavalinAPI.setTrustedProxyHops(1); // proxy do Coolify na frente
+        new AngatuLib("loja.angatusistemas.com.br", port, true);
 
-        // Sem rate limiting (aberto):
-        // new AngatuLib("loja.angatusistemas.com.br", 1716, false);
-
-        // Rate limits logo após o bootstrap e antes do tráfego:
-        // JavalinAPI.configureApiRateLimit("/api/*");
-        // JavalinAPI.configureLoginRateLimit("/api/login");
-        // JavalinAPI.setTrustedProxyHops(1); // se houver nginx na frente
+        JavalinAPI.addIgnoredPath("/health");            // usada pelo HEALTHCHECK
+        JavalinAPI.configureApiRateLimit("/api/*");
+        JavalinAPI.configureLoginRateLimit("/api/login");
     }
 }
 ```
 
-**Assinatura:** `new AngatuLib(String addressCertificate, int port, boolean bloqByMaxRequisitions)`
+**Assinaturas:**
 
-- `addressCertificate` — domínio que define ` /etc/letsencrypt/live/<dominio>/fullchain.pem` + `privkey.pem`. Ex: `loja.angatusistemas.com.br`.
-- `port` — porta principal. Em produção HTTPS usa esta porta; HTTP fica em `port+1` com redirect automático. Em localhost a lib sobe em **porta 80** (ignora o valor passado e loga "Modo localhost").
-- `bloqByMaxRequisitions` — `true` ativa rate limiting/bloqueios; `false` desativa (útil para debug ou redes internas).
+```java
+new AngatuLib(String host, int port, boolean bloqByMaxRequisitions)                    // HTTP  (padrão)
+new AngatuLib(String host, int port, boolean bloqByMaxRequisitions, boolean manageSsl) // HTTPS opcional
+```
+
+- `host` — domínio público do projeto (`loja.angatusistemas.com.br`) ou `localhost` em desenvolvimento.
+- `port` — porta em que o Javalin escuta. **É respeitada sempre** (não existe mais o desvio para a porta 80 em localhost). Leia de `PORT`, com `8080` como padrão.
+- `bloqByMaxRequisitions` — liga rate limiting/bloqueios.
+- `manageSsl` — **omita**. Só passe `true` fora do Coolify, quando o próprio servidor tiver `/etc/letsencrypt/live/<host>/{fullchain,privkey}.pem`; aí o Javalin sobe HTTPS na porta informada e mantém `port+1` só para redirecionar. Sem os certificados, a inicialização falha com `IllegalStateException` — de propósito.
+
+> **Nunca configure HTTPS por iniciativa própria.** No Coolify o certificado é emitido e renovado pela hospedagem; a aplicação fala HTTP dentro da rede do contêiner. Pedir SSL ao Javalin lá dentro quebra o deploy.
+
+**Ambiente (`isLocalhost()`)** não olha mais pasta de certificados — dentro do contêiner ela não existe. A ordem é:
+
+1. `-Dangatu.env=` / `ANGATU_ENV` / `ENVIRONMENT` (`production`/`prod` ou `development`/`dev`/`local`);
+2. `manageSsl = true` → produção;
+3. host local (`localhost`, `127.0.0.1`, `::1`, `0.0.0.0`, `*.local`) → desenvolvimento;
+4. qualquer outro host → **produção** (conservador: cookie `Secure`, nada de atalho de desenvolvimento).
+
+O `Dockerfile` modelo já define `ANGATU_ENV=production`. Em desenvolvimento, use `localhost` como host — ou `-Dangatu.env=development` quando precisar rodar local com o domínio real.
+
+**URL pública** — `AngatuLib.getInstance().getOriginHost()` devolve `http://localhost:<porta>` em desenvolvimento e `https://<host>` em produção (mesmo em HTTP interno, porque quem termina o TLS é o Coolify). Publicando sem TLS, declare a origem real com `setOriginHost(...)`.
 
 ### 2.2 Fluxo interno
 
-1. `Dependencies.require` do Javalin. 2. `System.setOut(new PrintStream(new InterceptorOutputStream()))` → `Console` (preserva original em `getOriginalOut()`). 3. Se pasta de certs não existe → `localhost=true`. 4. `JavalinAPI.setup(folderCerts, port, localhost, bloqByMaxRequisitions)` (SSL, headers, SQLi/XSS, rate limit, estáticos). 5. `HtmlRouteAPI.registerAllRoutes(javalin)` (templates em `/public`). 6. Banner.
+1. `Dependencies.require` do Javalin. 2. `System.setOut(new PrintStream(new InterceptorOutputStream()))` → `Console` (preserva original em `getOriginalOut()`). 3. Resolve o ambiente (produção x desenvolvimento). 4. `JavalinAPI.setup(port, rateLimit, manageSsl, folderCerts)` (headers, SQLi/XSS, rate limit, estáticos e — só se pedido — SSL). 5. `HtmlRouteAPI.registerAllRoutes(javalin)` (templates em `/public`). 6. Banner com host, modo e ambiente.
 
 Não instancie `AngatuLib` duas vezes no mesmo processo. Recursos sem servidor web (`Saveable`, `Task`, `StringAPI`…) funcionam sem ela.
 
@@ -147,7 +162,10 @@ project-root/
 │   │   ├── index.html            // shell base {content} {page} {%nome_active}
 │   │   └── css/ js/ img/
 │   └── emails/                   // templates (EmailAPI.loadHtmlTemplate)
-├── .env
+├── Dockerfile                    // deploy no Coolify (§17) — obrigatório
+├── .dockerignore                 // contexto de build enxuto, sem .env nem banco
+├── CLAUDE.md
+├── .env                          // local; em produção são variáveis do Coolify
 └── pom.xml
 ```
 
@@ -155,7 +173,7 @@ project-root/
 
 ## 3. JavalinAPI — servidor e segurança
 
-`JavalinAPI.setup(File folderCerts, int port, boolean localhost, boolean enableRateLimit)` — `Javalin.create { cors anyHost; staticFiles classpath /public; contextPath "/"; ignoreTrailingSlashes; maxRequestSize 1GB; SslPlugin quando !localhost }`. `JavalinAPI.get()` expõe a instância.
+`JavalinAPI.setup(int port, boolean enableRateLimit, boolean manageSsl, File folderCerts)` (e o atalho `setup(int port, boolean enableRateLimit)`) — `Javalin.create { cors anyHost; staticFiles classpath /public; contextPath "/"; ignoreTrailingSlashes; maxRequestSize 1GB; SslPlugin só quando manageSsl }` e `start(port)` em HTTP. `JavalinAPI.get()` expõe a instância. A ordem dos parâmetros mudou de propósito: chamada antiga quebra no compilador em vez de inverter o sentido do booleano.
 
 Before-handler: `SECURITY_HEADERS` → SQLi/XSS (`select..from`, `union select`, `<script`, `javascript:`, `eval(`…) → 403 sem contar violação → rate limiting.
 
@@ -184,9 +202,9 @@ JavalinAPI.unblockAll();
 
 ---
 
-## 4. Persistência — Saveable
+## 4. Persistência — Saveable (sem dados em RAM)
 
-SQLite `database.db` (HikariCP 20 conexões, WAL, `INSERT OR REPLACE`), Gson, cache total `ConcurrentHashMap`.
+SQLite `database.db` + Gson, **um pool HikariCP para o banco inteiro**, WAL, `busy_timeout` e transações `IMMEDIATE`. **Não existe mais cache total nem identity map:** toda busca vai ao banco e devolve instância nova; toda alteração só existe depois do `save()`.
 
 ```java
 import br.com.angatusistemas.lib.database.Saveable;
@@ -206,25 +224,64 @@ public class User extends Saveable {
     @Override public String getId() { return id; }
 }
 
-// criar
+// criar / gravar (atômico; a última escrita vence)
 User user = new User(); user.setName("João"); user.save(); // UUID se id==null
 
-// buscar — identity map: mesmo ID = mesma instância
+// ler — sempre do banco, sempre instância nova
 User found = Saveable.findById(User.class, user.getId());
-List<User> all = Saveable.findAll(User.class);
-List<User> filtered = Saveable.findByPredicate(User.class, x -> "João".equals(x.getName()));
-List<User> byField = Saveable.findByField(User.class, "name", "João");
 boolean exists = Saveable.exists(User.class, id);
 long total = Saveable.count(User.class);
+
+// consultar por campo: crie o índice uma vez, na inicialização
+Saveable.createIndex(User.class, "email");
+User byEmail = Saveable.findFirstByField(User.class, "email", "joao@exemplo.com");
+List<User> byField = Saveable.findByField(User.class, "name", "João");
+List<User> result = Saveable.query(User.class,
+        "SELECT data, version FROM users WHERE json_extract(data,'$.name')=?", "João");
+List<User> page = Saveable.query(User.class,
+        "SELECT data, version FROM users ORDER BY id LIMIT 100 OFFSET ?", 0);
+
+// varredura da tabela inteira — use com consciência do tamanho
+List<User> all = Saveable.findAll(User.class);
+List<User> filtered = Saveable.findByPredicate(User.class, x -> "João".equals(x.getName()));
+
+// excluir
 user.delete(); Saveable.deleteById(User.class, id); Saveable.deleteAll(User.class);
-user.reload();
-Saveable.query(User.class, "CREATE INDEX IF NOT EXISTS idx_name ON users(json_extract(data,'$.name'))");
-List<User> result = Saveable.query(User.class, "SELECT data FROM users WHERE json_extract(data,'$.name')=?", "João");
-List<User> page = Saveable.query(User.class, "SELECT data FROM users ORDER BY id LIMIT 100 OFFSET ?", 0);
-Saveable.shutdown(); // ao encerrar
+user.reload(); // descarta alterações locais e pega o estado atual
+Saveable.shutdown(); // no shutdown hook
 ```
 
-Tabela = `SimpleName.toLowerCase()` + `s` (`User→users`, `Product→products`, `Key→keys`), coluna `id TEXT PK, data TEXT NOT NULL`. Cache total no primeiro acesso — ótimo até centenas de milhares; milhões exigem cache lazy. Campos novos retrocompatíveis; use getters null-safe para coleções. Construtor `protected`, `abstract`.
+**Concorrência — a parte que não pode ser improvisada.** Rotas, tarefas agendadas e workers mexem nos mesmos registros ao mesmo tempo. Escolha pela intenção:
+
+| Situação | Use | Comportamento |
+|---|---|---|
+| Gravar objeto que só você mexe | `obj.save()` | Atômico; última escrita vence |
+| Alterar registro disputado (saldo, estoque, contador, lista) | `Saveable.mutate(Class, id, obj -> ...)` | Lê, altera e grava **na mesma transação** — sem atualização perdida |
+| Fluxo com confirmação do usuário | `obj.saveIfCurrent()` | `false` se alguém alterou desde a leitura → `reload()` e reaplique |
+| Duas gravações que valem juntas | `Saveable.transaction(() -> {...})` | Tudo ou nada; `computeInTransaction(...)` devolve valor |
+| Lote | `Saveable.saveAll(lista)` | Uma transação só |
+
+```java
+// ERRADO em registro disputado: entre o findById e o save, outro componente grava e a alteração dele some
+User u = Saveable.findById(User.class, id); u.setCredits(u.getCredits() + 10); u.save();
+
+// CERTO
+Saveable.mutate(User.class, id, x -> x.setCredits(x.getCredits() + 10));
+
+// CERTO: duas gravações que precisam valer juntas
+Saveable.transaction(() -> { stock.save(); new Order(userId, productId).save(); });
+```
+
+Tabela = `SimpleName.toLowerCase()` + `s` (`User→users`, `Key→keys`); colunas `id TEXT PK, data TEXT NOT NULL, version INTEGER, updated_at INTEGER` — tabelas antigas ganham `version`/`updated_at` automaticamente. Campos `transient` não são persistidos. Campos novos são retrocompatíveis; use getters null-safe para coleções. Construtor `protected`, `abstract`.
+
+**Banco em contêiner:** `ANGATU_DB_PATH=/data/database.db` (já no `Dockerfile` modelo, §17) aponta o SQLite para o volume persistente. Sem isso, o banco morre a cada deploy. `Saveable.databasePath()` mostra o caminho em uso.
+
+**Consequências de não haver cache (leia antes de portar projeto antigo):**
+
+- alterar um objeto e não chamar `save()` não muda nada para ninguém — o valor antigo continua no banco;
+- `findById` duas vezes devolve **dois objetos diferentes**; não compare com `==` nem espere que alterar um reflita no outro;
+- `findAll`/`findByPredicate` percorrem e desserializam a tabela inteira: em rota quente, troque por `findByField`/`query` com índice;
+- consulta customizada que vá alimentar `saveIfCurrent()` deve trazer `data, version`.
 
 > **Idioma obrigatório (§13.4):** classe `User` (inglês) com Javadoc em português e `@author Angatu Sistemas`. Nunca use `Usuario`/`Produto` — sempre inglês.
 
@@ -559,6 +616,10 @@ tools/tailwindcss.exe -i tailwind.input.css -o src/main/resources/public/styles/
 Alternativa com Node (se o projeto já usa `package.json`): `npm i -D tailwindcss && npx tailwindcss -i tailwind.input.css -o src/main/resources/public/styles/tailwind.css --minify` — o resultado continua sendo um arquivo local versionado, nunca CDN.
 
 Valide que nenhum HTML/JS contém `cdn.tailwindcss` antes de commitar (`grep -r "cdn.tailwindcss"` deve retornar vazio).
+
+> **Versione o `tailwind.css` gerado.** O Coolify constrói a imagem a partir do repositório, não da sua
+> máquina: CSS gerado localmente e deixado no `.gitignore` produz site sem estilo em produção (§17.3).
+> O binário `tools/tailwindcss*` pode ficar de fora; o CSS gerado, não.
 
 ### 9.2 Português impecável no frontend (obrigatório)
 
@@ -912,11 +973,14 @@ src/main/java/com/company/store/{Main, entities/, routes/, services/, utils/}
 src/main/resources/public/{index.html, styles/ds.css, scripts/, *.html}
 
 ## Como rodar
-./compilar.bat && java -jar target/<app>.jar
-# HTML/JS: copiar para target/classes/public/ reflete sem rebuild
+mvn package -DskipTests && java -jar target/<app>.jar   # http://localhost:8080
+# HTML/JS: copiar para target/classes/public/ só reflete rodando por mvn exec:java
 
 ## Inicialização
-new AngatuLib("loja.angatusistemas.com.br", 1716, true)
+new AngatuLib("loja.angatusistemas.com.br", port, true)  // port = env PORT, padrão 8080; HTTPS é do Coolify
+
+## Deploy (Coolify)
+Dockerfile na raiz · porta 8080 · volume /data (ANGATU_DB_PATH=/data/database.db) · GET /health
 
 ## Rotas / Entidades
 - GET /health — HealthRoute
@@ -942,7 +1006,7 @@ git add -A
 git commit -m "$(cat <<'EOF'
 feat: integra Web Push com VAPID persistido
 
-- Adiciona PushBootstrap.setup() no Main (loja.angatusistemas.com.br:1716)
+- Adiciona PushBootstrap.setup() no Main (loja.angatusistemas.com.br, porta de PORT)
 - Cria rota SalvarAssinatura que persiste Subscription via Saveable
 - Trata SendResult.isExpired() removendo assinatura inválida
 - Atualiza CLAUDE.md com fluxo de push e env vars
@@ -962,7 +1026,13 @@ Manter `CLAUDE.md` na raiz sempre atualizado (ver §10.1). Toda feature/correç�
 
 ## 11. Checklist de projeto novo
 
-- [ ] `Main` com `new AngatuLib("loja.angatusistemas.com.br", 1716, true)` + rate limits
+- [ ] `Main` com `new AngatuLib(dominio, porta de PORT, true)` (HTTP — sem `manageSsl`) + `setTrustedProxyHops(1)` + rate limits
+- [ ] `Dockerfile` + `.dockerignore` na raiz (§17), `EXPOSE`/`PORT` coerentes e `docker build` testado
+- [ ] Rota `GET /health` (200) fora do rate limit, usada pelo `HEALTHCHECK`
+- [ ] `ANGATU_DB_PATH=/data/database.db` + volume `/data` configurado no Coolify
+- [ ] `public/styles/tailwind.css` **versionado** (o Coolify constrói do repositório, não da sua máquina)
+- [ ] Índices do `Saveable` criados na inicialização para os campos consultados (§4)
+- [ ] Se o projeto salva imagens: estratégia de compressão **perguntada e registrada** no CLAUDE.md (§18)
 - [ ] `Company`/entidades Saveable + CRUD via Route + telas lista/form/print
 - [ ] `index.html` shell + `styles/tailwind.css` (local, §9.1) + `styles/ds.css` + helpers
 - [ ] `tailwind.config.js` + `tailwind.input.css` + `tools/tailwindcss[.exe]` e `grep -r "cdn.tailwindcss"` vazio
@@ -978,8 +1048,13 @@ Manter `CLAUDE.md` na raiz sempre atualizado (ver §10.1). Toda feature/correç�
 
 ## 12. Gotchas
 
-- `.java` exige `compilar.bat`; HTML/JS copie para `target/classes/public/`.
+- `.java` exige recompilar; HTML/JS copie para `target/classes/public/` (só vale por `mvn exec:java`).
 - `Saveable.query` sempre com `?`, nunca concatenação. `Saveable.shutdown()` + `Task.shutdown()` (+ `BrowserAPI.shutdown()`) no shutdown hook.
+- **Sem cache no `Saveable`:** objeto alterado sem `save()` não muda nada; `findById` devolve instância nova a cada chamada; registro disputado exige `Saveable.mutate(...)` (§4).
+- **Porta:** a informada é a usada — não há mais desvio para a 80 em localhost. Leia de `PORT`.
+- **Nunca ligue HTTPS no Javalin quando estiver no Coolify** (§2.1): o TLS é da hospedagem.
+- **Banco sem volume some no deploy:** `/data` montado + `ANGATU_DB_PATH` (§17).
+- **`isLocalhost()` agora vem do ambiente** (`ANGATU_ENV`) ou do host local, não da pasta de certificados — cheque quem depende disso (cookie `Secure`, atalhos de desenvolvimento).
 - CSP default permissiva — aperte com `JavalinAPI.setSecurityHeader(...)` antes do `new AngatuLib(...)` em produção.
 - `RateLimitConfig`/`BlockInfo` etc. `final` — não estenda.
 
@@ -1064,9 +1139,10 @@ public class CreateUserRoute extends Route {
 
 Nunca entregue código sem ter compilado e rodado.
 
-1. **Compile:** `compilar.bat` (ou `mvn package -DskipTests`) — corrija erros de compilação/Jetty imediatamente (ver §1.4 para Jetty 11.0.24 alinhado ao Javalin 7.2.2; `mvn dependency:tree -Dincludes=org.eclipse.jetty` se houver `NoSuchMethodError`).
-2. **Suba o servidor:** `java -jar target/<app>.jar` (ou `mvn exec:java`). Confirme o banner da AngatuLibraries, modo `localhost` vs `https://loja.angatusistemas.com.br:1716` e `Javalin configurado`.
-3. **Valide na prática:** `curl`/`httpie` nas rotas criadas (`GET /health`, `POST /api/...`), verifique HTML em `http://localhost/<pagina>` e logs do `Console`.
+1. **Compile:** `mvn package -DskipTests` — corrija erros de compilação/Jetty imediatamente (ver §1.4 para o Jetty alinhado ao Javalin 7.2.2; `mvn dependency:tree -Dincludes=org.eclipse.jetty` se houver `NoSuchMethodError`).
+2. **Suba o servidor:** `java -jar target/<app>.jar` (ou `mvn exec:java`). Confirme no banner: host, **modo HTTP**, ambiente e `Javalin configurado`.
+3. **Valide na prática:** `curl`/`httpie` nas rotas criadas (`GET /health`, `POST /api/...`), verifique HTML em `http://localhost:8080/<pagina>` e logs do `Console`.
+4. **Valide o contêiner** quando mexer em `Dockerfile`, dependências ou inicialização: `docker build -t <app> . && docker run --rm -p 8080:8080 -v <app>-data:/data <app>` — é essa imagem que o Coolify vai subir.
 
 > **Rodando por `java -jar`, copiar para `target/classes/public/` NÃO surte efeito** — o classpath é o próprio JAR. Alterações em HTML/JS/CSS exigem `mvn package` de novo. A cópia para `target/classes` só vale rodando por `mvn exec:java`.
 
@@ -1084,7 +1160,7 @@ Fluxo correto, sempre:
 
 ```bash
 mvn package -DskipTests && java -jar target/<app>.jar
-# aguarde o banner, depois valide em http://localhost/<pagina>
+# aguarde o banner, depois valide em http://localhost:8080/<pagina>
 ```
 
 Ao terminar, encerre o processo em vez de deixá-lo segurando a porta e o banco.
@@ -1191,7 +1267,10 @@ ctx.cookie(cookie);
 - **`SameSite=Lax`** cobre o caso comum de CSRF. Se a API precisar mesmo de requisição de outra
   origem, avalie `None` + `Secure` + verificação de origem, e documente o motivo.
 - **`Secure` condicional.** Fixo em `true` impede o login em `http://localhost` no desenvolvimento;
-  decida pelo host da requisição.
+  decida pelo host da requisição — ou por `AngatuLib.getInstance().isLocalhost()`, que agora vem do
+  ambiente (`ANGATU_ENV`) e não da pasta de certificados (§2.1). **No Coolify a aplicação fala HTTP
+  dentro do contêiner e HTTPS para o mundo:** decidir `Secure` por `ctx.scheme()` sem
+  `setTrustedProxyHops(1)` derruba o cookie em produção.
 
 ### 16.2 Token no cabeçalho, nunca na URL
 
@@ -1280,3 +1359,112 @@ terceiros com reenvio automático (webhook de pagamento).
 > **Ao testar:** o limite de login costuma ser de poucas tentativas por minuto, com bloqueio longo.
 > Um laço de espera batendo em `/api/login` queima esse orçamento antes do teste começar — sonde a
 > prontidão do servidor por uma rota sem efeito colateral, como `GET /api/me`.
+
+---
+
+## 17. Deploy — Coolify e Dockerfile (obrigatório)
+
+> **Regra:** todo projeto tem `Dockerfile` e `.dockerignore` na raiz, versionados. A hospedagem é o
+> **Coolify**: ele constrói a imagem a partir do repositório, publica o contêiner e cuida do
+> certificado. Projeto sem `Dockerfile` não sobe.
+
+Modelos prontos: [`templates/Dockerfile`](https://github.com/LuanVictorGit/AngatuLibraries/blob/main/templates/Dockerfile)
+e [`templates/.dockerignore`](https://github.com/LuanVictorGit/AngatuLibraries/blob/main/templates/.dockerignore)
+no repositório da lib. Detalhes e variações em [`references/deploy-coolify.md`](references/deploy-coolify.md).
+
+### 17.1 O contrato entre aplicação e hospedagem
+
+| Item | Aplicação | Coolify |
+|---|---|---|
+| Protocolo | HTTP na porta de `PORT` (`8080`) | termina o TLS e encaminha; emite e renova o certificado |
+| IP do cliente | `JavalinAPI.setTrustedProxyHops(1)` | injeta `X-Forwarded-For` |
+| Dados | `ANGATU_DB_PATH=/data/database.db`, uploads em `/data/...` | volume persistente montado em `/data` |
+| Segredos | `Env.get().get("CHAVE")` | *Environment Variables* no painel |
+| Saúde | `GET /health` (200, fora do rate limit) | usa o `HEALTHCHECK` da imagem |
+| Ambiente | `isLocalhost()` lê `ANGATU_ENV` | `ANGATU_ENV=production` já vem no `Dockerfile` |
+
+### 17.2 Dockerfile padrão (resumo)
+
+Duas etapas: `maven:3.9-eclipse-temurin-21` compila (`mvn package -DskipTests`) e copia o JAR maior de
+`target/` como `/opt/app/app.jar`; `eclipse-temurin:21-jre` executa como usuário sem privilégio
+(uid 10001), com `WORKDIR /data` — assim banco, `.env` e uploads nascem no volume, e não na camada
+descartável do contêiner.
+
+```dockerfile
+ENV TZ=America/Sao_Paulo ANGATU_ENV=production ANGATU_DB_PATH=/data/database.db PORT=8080
+WORKDIR /data
+EXPOSE 8080
+HEALTHCHECK CMD curl -fsS "http://127.0.0.1:${PORT}/health" || exit 1
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /opt/app/app.jar"]
+```
+
+Projeto com `BrowserAPI`/Playwright: troque a etapa de execução por
+`mcr.microsoft.com/playwright/java:v1.58.0-jammy` (a imagem JRE não tem as bibliotecas do Chromium).
+
+### 17.3 Erros que só aparecem em produção
+
+- **CSS sumido:** `public/styles/tailwind.css` gerado e não commitado. O Coolify constrói do
+  repositório — o que não foi versionado não existe lá. Versione o CSS gerado (§9.1).
+- **Banco zerado a cada deploy:** faltou o volume em `/data` ou o `ANGATU_DB_PATH`.
+- **Todo mundo com o mesmo IP no rate limit:** faltou `setTrustedProxyHops(1)`; o IP visto é o do proxy.
+- **Login some ao publicar:** cookie `Secure` decidido por `ctx.scheme()`, que dentro do contêiner é
+  `http`. Decida por `isLocalhost()` (§16.1).
+- **Deploy sobe e reinicia sozinho:** `HEALTHCHECK` batendo em rota inexistente ou bloqueada pelo rate
+  limit — crie `GET /health` e `JavalinAPI.addIgnoredPath("/health")`.
+- **`COPY target/*.jar` falhou:** o shade gera mais de um JAR; o modelo copia o maior (`ls -S`).
+
+---
+
+## 18. Imagens — perguntar a estratégia de compressão (obrigatório)
+
+> **Regra:** assim que o projeto passar a **salvar imagens** (upload de usuário, foto de produto,
+> avatar, anexo, geração de arte), **pare e pergunte ao programador qual estratégia de
+> compressão/otimização usar**, antes de escrever o código de gravação. Armazenamento é caro e a
+> escolha muda o resultado visual — não é decisão do agente.
+
+### 18.1 A pergunta
+
+Apresente as opções com o efeito de cada uma, e recomende a primeira quando não houver contexto:
+
+| Opção | Estratégia | Efeito típico | Quando faz sentido |
+|---|---|---|---|
+| **A** (padrão recomendado) | JPEG qualidade 0,8 + lado maior 1600 px | 80–90% menos bytes, diferença imperceptível na tela | fotos de produto, galeria, banner, avatar |
+| **B** | Original preservado + derivadas (`thumb` 400 px, `web` 1200 px) | mais espaço, flexibilidade total | quando o original importa — documento, comprovante, arte para impressão |
+| **C** | Agressiva: JPEG qualidade 0,6 + lado maior 1024 px | maior economia, perda visível em detalhe fino | catálogos grandes, muitas imagens por registro, orçamento apertado |
+| **D** | Sem compressão | nenhum ganho de espaço | exigência legal ou de fidelidade — peça a justificativa e registre |
+
+Pergunte também, quando fizer diferença: **tamanho máximo aceito no upload**, **formatos aceitos** e
+se precisa de **miniatura** para listagem.
+
+> **WebP não sai de graça.** O `imageio-webp` do pom só **lê** WebP; para **gravar**, o projeto
+> precisa de uma dependência de escrita a mais. Ofereça como opção extra ("~30% menor que JPEG na
+> mesma qualidade, exige nova dependência") em vez de assumir que dá para usar.
+
+Registre a escolha no `CLAUDE.md` do projeto (§10.1) — ela vale para todas as telas seguintes, e o
+agente não deve reabrir a pergunta a cada nova imagem.
+
+### 18.2 Como implementar (a lib já tem)
+
+```java
+// redimensiona mantendo proporção e grava com qualidade controlada
+BufferedImage original = ImageAPI.bytesToImage(uploadBytes);
+BufferedImage resized  = ImageAPI.resizeMaintainAspect(original, 1600, 1600);
+ImageAPI.saveImageWithQuality(resized, "/data/uploads/" + id + ".jpg", 0.8f);
+
+// miniatura para listagem
+ImageAPI.createThumbnail(origem, destino, 400, 400);
+```
+
+> **Atenção:** `saveImageWithQuality` grava **sempre em JPEG**, qualquer que seja a extensão do
+> arquivo — use `.jpg` no nome. Para PNG (transparência), use `ImageAPI.saveImage(...)`, que respeita
+> a extensão mas não aceita qualidade.
+
+### 18.3 Onde guardar
+
+- **Arquivo no volume, caminho no banco.** Grave em `/data/uploads/...` (persistente no Coolify, §17)
+  e persista apenas o caminho/nome na entidade `Saveable`.
+- **Não jogue bytes de imagem dentro do SQLite.** O `Saveable` serializa o objeto inteiro em JSON:
+  um `byte[]` vira Base64 dentro da coluna `data`, inchando o banco e cada leitura da entidade. A
+  entidade `Image` da lib existe para casos pequenos e pontuais (ícone, QR Code) — não para galeria.
+- **Valide antes de gravar:** `ImageAPI.isValidImage(...)`, tamanho máximo e extensão (§16.6).
+- **Nomeie por ID gerado**, nunca pelo nome enviado pelo usuário.
