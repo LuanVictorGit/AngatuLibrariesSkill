@@ -12,7 +12,7 @@ description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveabl
 
 ## 0. Princípios do agente neste repo
 
-1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits detalhados + push sempre, nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho.
+1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits detalhados + push sempre, nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho.
 
 ---
 
@@ -204,7 +204,9 @@ JavalinAPI.unblockAll();
 
 ## 4. Persistência — Saveable (sem dados em RAM)
 
-SQLite `database.db` + Gson, **um pool HikariCP para o banco inteiro**, WAL, `busy_timeout` e transações `IMMEDIATE`. **Não existe mais cache total nem identity map:** toda busca vai ao banco e devolve instância nova; toda alteração só existe depois do `save()`.
+SQLite `database.db` + Gson — **um banco por projeto**, no diretório de trabalho da aplicação, como sempre foi. **Não existe mais cache total nem identity map:** toda busca vai ao banco e devolve instância nova; toda alteração só existe depois do `save()`.
+
+**O formato do banco não mudou:** tabela `(id TEXT PRIMARY KEY, data TEXT NOT NULL)` e gravação por `INSERT OR REPLACE`. Nenhuma coluna nova, nenhum `ALTER TABLE` — bancos de sistemas já em produção continuam funcionando, inclusive com versões anteriores da biblioteca. O que mudou é só o comportamento em memória e a concorrência: um pool HikariCP por aplicação (antes um por classe de entidade), WAL, `busy_timeout` e transações `IMMEDIATE`.
 
 ```java
 import br.com.angatusistemas.lib.database.Saveable;
@@ -237,9 +239,9 @@ Saveable.createIndex(User.class, "email");
 User byEmail = Saveable.findFirstByField(User.class, "email", "joao@exemplo.com");
 List<User> byField = Saveable.findByField(User.class, "name", "João");
 List<User> result = Saveable.query(User.class,
-        "SELECT data, version FROM users WHERE json_extract(data,'$.name')=?", "João");
+        "SELECT data FROM users WHERE json_extract(data,'$.name')=?", "João");
 List<User> page = Saveable.query(User.class,
-        "SELECT data, version FROM users ORDER BY id LIMIT 100 OFFSET ?", 0);
+        "SELECT data FROM users ORDER BY id LIMIT 100 OFFSET ?", 0);
 
 // varredura da tabela inteira — use com consciência do tamanho
 List<User> all = Saveable.findAll(User.class);
@@ -257,7 +259,7 @@ Saveable.shutdown(); // no shutdown hook
 |---|---|---|
 | Gravar objeto que só você mexe | `obj.save()` | Atômico; última escrita vence |
 | Alterar registro disputado (saldo, estoque, contador, lista) | `Saveable.mutate(Class, id, obj -> ...)` | Lê, altera e grava **na mesma transação** — sem atualização perdida |
-| Fluxo com confirmação do usuário | `obj.saveIfCurrent()` | `false` se alguém alterou desde a leitura → `reload()` e reaplique |
+| Reler antes de decidir | `obj.reload()` | Traz o estado atual do banco, descartando alteração local não gravada |
 | Duas gravações que valem juntas | `Saveable.transaction(() -> {...})` | Tudo ou nada; `computeInTransaction(...)` devolve valor |
 | Lote | `Saveable.saveAll(lista)` | Uma transação só |
 
@@ -272,16 +274,16 @@ Saveable.mutate(User.class, id, x -> x.setCredits(x.getCredits() + 10));
 Saveable.transaction(() -> { stock.save(); new Order(userId, productId).save(); });
 ```
 
-Tabela = `SimpleName.toLowerCase()` + `s` (`User→users`, `Key→keys`); colunas `id TEXT PK, data TEXT NOT NULL, version INTEGER, updated_at INTEGER` — tabelas antigas ganham `version`/`updated_at` automaticamente. Campos `transient` não são persistidos. Campos novos são retrocompatíveis; use getters null-safe para coleções. Construtor `protected`, `abstract`.
+Tabela = `SimpleName.toLowerCase()` + `s` (`User→users`, `Key→keys`); colunas `id TEXT PK, data TEXT NOT NULL` — as mesmas de sempre. Campos `transient` não são persistidos. Campos novos são retrocompatíveis; use getters null-safe para coleções. Construtor `protected`, `abstract`.
 
-**Banco em contêiner:** `ANGATU_DB_PATH=/data/database.db` (já no `Dockerfile` modelo, §17) aponta o SQLite para o volume persistente. Sem isso, o banco morre a cada deploy. `Saveable.databasePath()` mostra o caminho em uso.
+**Banco em contêiner:** cada projeto tem o seu `database.db`. No Coolify, `ANGATU_DB_PATH=/data/database.db` (já no `Dockerfile` modelo, §17) aponta o SQLite daquele projeto para o volume persistente dele. Sem isso, o banco morre a cada deploy. `Saveable.databasePath()` mostra o caminho em uso.
 
 **Consequências de não haver cache (leia antes de portar projeto antigo):**
 
 - alterar um objeto e não chamar `save()` não muda nada para ninguém — o valor antigo continua no banco;
 - `findById` duas vezes devolve **dois objetos diferentes**; não compare com `==` nem espere que alterar um reflita no outro;
 - `findAll`/`findByPredicate` percorrem e desserializam a tabela inteira: em rota quente, troque por `findByField`/`query` com índice;
-- consulta customizada que vá alimentar `saveIfCurrent()` deve trazer `data, version`.
+- o banco em si não mudou: consultas customizadas continuam com `SELECT data FROM ...`, e nada precisa ser migrado.
 
 > **Idioma obrigatório (§13.4):** classe `User` (inglês) com Javadoc em português e `@author Angatu Sistemas`. Nunca use `Usuario`/`Produto` — sempre inglês.
 
@@ -1053,7 +1055,7 @@ Manter `CLAUDE.md` na raiz sempre atualizado (ver §10.1). Toda feature/correç�
 - **Sem cache no `Saveable`:** objeto alterado sem `save()` não muda nada; `findById` devolve instância nova a cada chamada; registro disputado exige `Saveable.mutate(...)` (§4).
 - **Porta:** a informada é a usada — não há mais desvio para a 80 em localhost. Leia de `PORT`.
 - **Nunca ligue HTTPS no Javalin quando estiver no Coolify** (§2.1): o TLS é da hospedagem.
-- **Banco sem volume some no deploy:** `/data` montado + `ANGATU_DB_PATH` (§17).
+- **Banco sem volume some no deploy:** `/data` montado + `ANGATU_DB_PATH` (§17) — um volume por projeto, um `database.db` por projeto.
 - **`isLocalhost()` agora vem do ambiente** (`ANGATU_ENV`) ou do host local, não da pasta de certificados — cheque quem depende disso (cookie `Secure`, atalhos de desenvolvimento).
 - CSP default permissiva — aperte com `JavalinAPI.setSecurityHeader(...)` antes do `new AngatuLib(...)` em produção.
 - `RateLimitConfig`/`BlockInfo` etc. `final` — não estenda.

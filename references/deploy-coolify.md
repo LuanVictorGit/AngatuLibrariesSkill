@@ -137,7 +137,8 @@ public class HealthRoute extends Route {
 1. **Application → Build Pack: Dockerfile**, apontando para o repositório e a branch.
 2. **Port**: `8080` (a mesma do `EXPOSE`/`PORT`).
 3. **Domain**: o domínio do projeto — o Coolify emite e renova o certificado. Nada de SSL na aplicação.
-4. **Persistent Storage**: volume nomeado montado em `/data`.
+4. **Persistent Storage**: volume nomeado montado em `/data` — um por projeto. Cada
+   aplicação tem o seu `database.db`; nada é compartilhado entre projetos.
 5. **Environment Variables**: as chaves que estavam no `.env`
    (`EMAIL_KEY`, `EMAIL_PASSWORD`, `MP_ACCESS_TOKEN`, `DEEPSEEK_API_KEY`, …).
    `Env.get().get("CHAVE")` lê variável de ambiente do mesmo jeito que lia o arquivo.
