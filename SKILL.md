@@ -12,7 +12,7 @@ description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveabl
 
 ## 0. Princípios do agente neste repo
 
-1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits detalhados + push sempre, nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho.
+1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits sempre na branch `development`, nunca na `main`; `main` só com confirmacao explicita do dono do projeto; nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. O heap vai limitado em **`-Xmx150m`** por padrão, com `ExitOnOutOfMemoryError`, e o contêiner reservando ~256 MB. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho.
 
 ---
 
@@ -1078,14 +1078,23 @@ EMAIL_KEY, DISCORD_BOT_TOKEN, DEEPSEEK_API_KEY, MP_ACCESS_TOKEN
 Route/Saveable só via extends; handlers enxutos; json_extract com índices; ds.css única fonte visual.
 ```
 
-### 10.2 Commits detalhados + push sempre (nunca citar Claude/IA)
+### 10.2 Commits detalhados na `development` (nunca citar Claude/IA)
+
+> **A `main` é produção. Trabalho em andamento nunca vai para ela.**
+>
+> Todo commit do trabalho corrente vai para a branch **`development`**. A `main` só recebe o
+> que o dono do projeto **confirmar explicitamente** que pode ir para produção — e essa
+> confirmação é sempre uma frase dele, nunca uma dedução de que "o trabalho ficou pronto".
+> Terminar a tarefa, os testes passarem e o servidor subir **não** autorizam a promoção.
 
 - Mensagens em PT-BR, detalhadas (o que + por que + impacto). Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `perf:`.
 - Corpo sempre com bullets explicando cada mudança relevante.
 - **Nunca mencionar Claude, IA, gerado por IA ou `Co-Authored-By` no commit.** Commit deve parecer 100% humano/autoral do projeto.
-- **Sempre `git push`** após commit (criar branch com `git push -u origin <branch>` se preciso). Nunca `--no-verify`/`--no-gpg-sign` sem pedido.
+- **Sempre `git push`** para a `development` após o commit. Nunca `--no-verify`/`--no-gpg-sign` sem pedido.
 
 ```bash
+# Trabalho do dia — sempre na development
+git checkout development 2>/dev/null || git checkout -b development
 git add -A
 git commit -m "$(cat <<'EOF'
 feat: integra Web Push com VAPID persistido
@@ -1097,8 +1106,22 @@ feat: integra Web Push com VAPID persistido
 
 EOF
 )"
-git push
+git push -u origin development
 ```
+
+**Promoção para produção — só depois da confirmação.** Quando (e apenas quando) o dono do
+projeto disser que pode subir:
+
+```bash
+git checkout main
+git merge --no-ff development -m "release: <o que está subindo>"
+git push origin main
+git checkout development
+```
+
+Se o repositório ainda não tem `development`, crie-a a partir da `main` na primeira alteração —
+não continue commitando na `main` "só desta vez". É justamente o commit avulso na `main` que
+sobe para produção uma tela pela metade, e ninguém percebe até um usuário abrir.
 
 Antes de editar arquivo grande valide `{}`/`()` balanceados e `node -e "new Function(fs.readFileSync(...,'utf8'))"` para JS. Atualize `CLAUDE.md` no mesmo commit quando a mudança afeta stack/estrutura/rotas.
 
@@ -1477,15 +1500,42 @@ Duas etapas: `maven:3.9-eclipse-temurin-21` compila (`mvn package -DskipTests`) 
 descartável do contêiner.
 
 ```dockerfile
-ENV TZ=America/Sao_Paulo ANGATU_ENV=production ANGATU_DB_PATH=/data/database.db PORT=8080
+ENV TZ=America/Sao_Paulo ANGATU_ENV=production ANGATU_DB_PATH=/data/database.db PORT=8080 \
+    JAVA_OPTS="-Xmx150m -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true"
 WORKDIR /data
 EXPOSE 8080
 HEALTHCHECK CMD curl -fsS "http://127.0.0.1:${PORT}/health" || exit 1
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /opt/app/app.jar"]
 ```
 
+**Memória: `-Xmx150m` é o padrão.** Sem limite, a JVM assume um quarto da memória da máquina —
+num servidor com vários projetos, cada um reserva um naco e o primeiro pico derruba os vizinhos.
+Cento e cinquenta megabytes atendem com folga um sistema de porte comum; projetos que processam
+imagem, geram PDF ou seguram muita coisa em memória sobem esse número **com medida**, não por
+precaução.
+
+Três coisas que costumam ser confundidas aqui:
+
+- **`-Xmx` limita o HEAP, não o processo.** Fora dele ainda ficam metaspace, cache de código,
+  pilhas de thread e memória nativa (SQLite, imagem). Na prática o contêiner precisa de ~1,7x o
+  heap: com `-Xmx150m`, reserve **256 MB**. Limitar o contêiner nos mesmos 150 MB o mata no
+  arranque.
+- **O `Dockerfile` não define o limite do contêiner.** Isso é `docker run --memory`, o
+  `docker-compose` ou o painel do Coolify. O que se fixa aqui é só o heap.
+- **`ExitOnOutOfMemoryError` não é opcional.** Sem ele a JVM sem memória não morre: entra em
+  coleta de lixo contínua e passa a responder em minutos, o que o `HEALTHCHECK` lê como "vivo".
+  Morrer e ser reiniciado é honesto; agonizar de pé não é.
+
+Para ajustar sem reconstruir a imagem, defina `JAVA_OPTS` nas variáveis de ambiente da hospedagem.
+
+**Todo caminho que consome memória proporcional à entrada precisa de teto.** Upload, geração de
+imagem, leitura de arquivo: se a operação aceita N pedidos simultâneos de até M bytes, o pior
+caso é N×M e ele tem de caber no heap. Recusar com uma mensagem clara é o desfecho bom; aceitar e
+ficar sem memória derruba todo mundo que estava conectado.
+
 Projeto com `BrowserAPI`/Playwright: troque a etapa de execução por
-`mcr.microsoft.com/playwright/java:v1.58.0-jammy` (a imagem JRE não tem as bibliotecas do Chromium).
+`mcr.microsoft.com/playwright/java:v1.58.0-jammy` (a imagem JRE não tem as bibliotecas do
+Chromium) — e suba o `-Xmx`, porque o Chromium não cabe em 150 MB.
 
 ### 17.3 Erros que só aparecem em produção
 
