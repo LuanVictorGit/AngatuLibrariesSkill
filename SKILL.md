@@ -12,7 +12,7 @@ description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveabl
 
 ## 0. Princípios do agente neste repo
 
-1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits sempre na branch `development`, nunca na `main`; `main` só com confirmacao explicita do dono do projeto; nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. O heap vai limitado em **`-Xmx150m`** por padrão, com `ExitOnOutOfMemoryError`, e o contêiner reservando ~256 MB. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho.
+1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits sempre na branch `development`, nunca na `main`; `main` só com confirmacao explicita do dono do projeto; nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. **Nunca fixe teto de heap com `-Xmx`:** use `-XX:MaxRAMPercentage` junto de `ExitOnOutOfMemoryError` e deixe o limite de memória no painel da hospedagem. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho.
 
 ---
 
@@ -1501,27 +1501,31 @@ descartável do contêiner.
 
 ```dockerfile
 ENV TZ=America/Sao_Paulo ANGATU_ENV=production ANGATU_DB_PATH=/data/database.db PORT=8080 \
-    JAVA_OPTS="-Xmx150m -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true"
+    JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true"
 WORKDIR /data
 EXPOSE 8080
 HEALTHCHECK CMD curl -fsS "http://127.0.0.1:${PORT}/health" || exit 1
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /opt/app/app.jar"]
 ```
 
-**Memória: `-Xmx150m` é o padrão.** Sem limite, a JVM assume um quarto da memória da máquina —
-num servidor com vários projetos, cada um reserva um naco e o primeiro pico derruba os vizinhos.
-Cento e cinquenta megabytes atendem com folga um sistema de porte comum; projetos que processam
-imagem, geram PDF ou seguram muita coisa em memória sobem esse número **com medida**, não por
-precaução.
+**Memória: sem teto fixo de heap.** `-XX:MaxRAMPercentage=75` faz a JVM se dimensionar pelo
+limite do **contêiner**, não pela memória da máquina. Quem decide passa a ser o painel da
+hospedagem: mudar a memória lá basta, sem reconstruir a imagem e sem reabrir o `Dockerfile`.
+
+Um `-Xmx` fixo erra dos dois lados e sempre em silêncio: ou sufoca o projeto que cresceu (e o
+sintoma chega como lentidão, não como erro claro), ou reserva menos do que a hospedagem já está
+cobrando. Fixe um valor apenas quando houver uma medição que o justifique — nunca por precaução.
 
 Três coisas que costumam ser confundidas aqui:
 
-- **`-Xmx` limita o HEAP, não o processo.** Fora dele ainda ficam metaspace, cache de código,
-  pilhas de thread e memória nativa (SQLite, imagem). Na prática o contêiner precisa de ~1,7x o
-  heap: com `-Xmx150m`, reserve **256 MB**. Limitar o contêiner nos mesmos 150 MB o mata no
-  arranque.
+- **A JVM lê o limite do contêiner, não o da máquina.** Desde o Java 10 os `cgroups` são
+  respeitados; sem nenhuma opção, o padrão é **25%** desse limite — conservador demais para quem
+  gera PDF ou processa imagem. Daí os 75%.
+- **O percentual é do HEAP, não do processo.** Fora dele ainda ficam metaspace, cache de código,
+  pilhas de thread e memória nativa (SQLite, imagem, Chromium em processo separado). É por isso
+  que 75% deixa margem, e não 100%.
 - **O `Dockerfile` não define o limite do contêiner.** Isso é `docker run --memory`, o
-  `docker-compose` ou o painel do Coolify. O que se fixa aqui é só o heap.
+  `docker-compose` ou o painel do Coolify — e é lá que a memória do projeto se ajusta.
 - **`ExitOnOutOfMemoryError` não é opcional.** Sem ele a JVM sem memória não morre: entra em
   coleta de lixo contínua e passa a responder em minutos, o que o `HEALTHCHECK` lê como "vivo".
   Morrer e ser reiniciado é honesto; agonizar de pé não é.
@@ -1535,7 +1539,8 @@ ficar sem memória derruba todo mundo que estava conectado.
 
 Projeto com `BrowserAPI`/Playwright: troque a etapa de execução por
 `mcr.microsoft.com/playwright/java:v1.58.0-jammy` (a imagem JRE não tem as bibliotecas do
-Chromium) — e suba o `-Xmx`, porque o Chromium não cabe em 150 MB.
+Chromium) — e reserve mais memória ao contêiner no painel, porque o Chromium roda em processo
+separado e não entra na conta do heap.
 
 ### 17.3 Erros que só aparecem em produção
 

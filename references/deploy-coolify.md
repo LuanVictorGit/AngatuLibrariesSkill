@@ -32,7 +32,7 @@ ENV TZ=America/Sao_Paulo \
     ANGATU_ENV=production \
     ANGATU_DB_PATH=/data/database.db \
     PORT=8080 \
-    JAVA_OPTS="-XX:MaxRAMPercentage=75 -Djava.awt.headless=true"
+    JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true"
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl tzdata \
@@ -62,7 +62,8 @@ ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /opt/app/app.jar"]
 | `useradd --uid 10001` | a imagem base já tem um usuário no uid 1000; o volume nomeado herda o dono de `/data` |
 | `curl` instalado | o `HEALTHCHECK` precisa dele; a imagem JRE não traz |
 | `exec java` no ENTRYPOINT | o Java vira PID 1 e recebe o `SIGTERM` do Coolify — sem isso o shutdown hook não roda e o WAL fica sem checkpoint |
-| `MaxRAMPercentage=75` | a JVM respeita o limite de memória do contêiner |
+| `MaxRAMPercentage=75` | a JVM se dimensiona pelo limite de memória do **contêiner** (sem isso o padrão é 25%). Nunca fixe `-Xmx`: quem decide a memória é o painel da hospedagem, e mudá-la lá não deve exigir reconstruir a imagem |
+| `ExitOnOutOfMemoryError` | sem ele a JVM sem memória não morre — entra em coleta contínua e passa a responder em minutos, o que o `HEALTHCHECK` lê como "vivo" |
 
 ## 2. `.dockerignore`
 
