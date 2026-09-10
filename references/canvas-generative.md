@@ -177,4 +177,4 @@ function render(){
 Canvas generativo é o motor de **arte automática por tema**: financeiro→flow field, orgânico→partículas+trilha, tecnológico→mesh, criativo→L-system, corporativo→ruído+grain. Exporte `og:image` via `canvas.toDataURL('image/png')` → `public/assets/og-{tema}.png`; `favicon` da mesma paleta; `alt` em imagens e `aria-hidden="true"` só em decoração.
 
 ---
-*Fonte: `canvas-generative/SKILL.md` + `references/algorithms.md` · Tradução e auditoria Angatu Sistemas — @author Angatu Sistemas*
+*Fonte original: a skill `canvas-generative` (seu `SKILL.md` e o `algorithms.md` dela) · Tradução e auditoria Angatu Sistemas — @author Angatu Sistemas*

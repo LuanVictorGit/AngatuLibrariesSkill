@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveable e frontend vanilla com sistema de design obrigatório (Tailwind local, ds.css, arte generativa por tema). Link oficial https://github.com/LuanVictorGit/AngatuLibraries. Projetos hospedados no Coolify, com Dockerfile obrigatório, inicialização HTTP por padrão e HTTPS apenas por parâmetro explícito. Saveable sem cache em RAM — leitura e gravação direto no SQLite, com mutate/transaction para concorrência. Ao salvar imagens, pergunte sempre ao programador qual estratégia de compressão usar. Inclui 9 referências de frontend auditadas como Angatu Sistemas (frontend-design, framer-motion, css-native, canvas-generative, brand-landingpage, mobile-principles, desktop-principles, paint, design-audit) com geração automática de artes, backgrounds, animações e SEO por tema. Cobre ainda cache (nunca usar sem pedido), rodapé com a marca da Angatu Sistemas, segurança de sessão e API (cookie HttpOnly, token fora da URL, isolamento multi-tenant) e teste sempre pelo JAR do projeto. Dispara em AngatuLibraries, Saveable, Route, JavalinAPI, Coolify, Docker, deploy, HTTPS, criar projeto do zero, nova rota/entidade/tela, imagem, compressão, cache, cookie, sessão, segurança.
+description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveable e frontend vanilla com sistema de design obrigatório (Tailwind local, ds.css, arte generativa por tema). Link oficial https://github.com/LuanVictorGit/AngatuLibraries. Projetos hospedados no Coolify, com Dockerfile obrigatório, inicialização HTTP por padrão e HTTPS apenas por parâmetro explícito. Saveable sem cache em RAM — leitura e gravação direto no SQLite, com mutate/transaction para concorrência. Ao salvar imagens, pergunte sempre ao programador qual estratégia de compressão usar. Frontend segue a lei SOURCE → BUILD → DIST — source sempre legível, e minificação, ofuscação, renomeação de classes e hash de assets só no build, em níveis development/production/protected, com validação que reprova referência quebrada. Landing page exige apresentação rica — background SVG temático do segmento, hero em motion graphics feito no Remotion (ferramenta descartável, renderiza o vídeo e é apagada), vídeo mudo em laço, marca d’água do cliente, fotos e vídeos reais autorizados, redação com revisão anti-IA (sem travessão como muleta, sem palavra de marketing vazia, sem título ou CTA genérico, sem dado inventado) e SEO próprio por URL com capa editorial de Open Graph por página. Inclui 13 referências de frontend auditadas como Angatu Sistemas. Cobre ainda cache (nunca usar sem pedido), rodapé com a marca da Angatu Sistemas, segurança de sessão e API (cookie HttpOnly, token fora da URL, isolamento multi-tenant) e teste sempre pelo JAR do projeto. Dispara em AngatuLibraries, Saveable, Route, JavalinAPI, Coolify, Docker, deploy, HTTPS, criar projeto do zero, nova rota/entidade/tela, imagem, compressão, cache, cookie, sessão, segurança, build de produção, dist, minificar, ofuscar, proteger frontend, renomear classes, hash de assets, anti-bot, hardening, PWA, service worker, source map, landing page, hero, motion graphics, Remotion, background SVG, marca d’água, identidade visual, texto de IA, copywriting, título, CTA, SEO, Open Graph, og:image, Schema.org, canonical, favicon.
 ---
 
 # AngatuLibraries — https://github.com/LuanVictorGit/AngatuLibraries
@@ -12,7 +12,7 @@ description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveabl
 
 ## 0. Princípios do agente neste repo
 
-1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits sempre na branch `development`, nunca na `main`; `main` só com confirmacao explicita do dono do projeto; nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. **Nunca fixe teto de heap com `-Xmx`:** use `-XX:MaxRAMPercentage` junto de `ExitOnOutOfMemoryError` e deixe o limite de memória no painel da hospedagem. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho.
+1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits sempre na branch `development`, nunca na `main`; `main` só com confirmacao explicita do dono do projeto; nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. **Nunca fixe teto de heap com `-Xmx`:** use `-XX:MaxRAMPercentage` junto de `ExitOnOutOfMemoryError` e deixe o limite de memória no painel da hospedagem. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho. 21. **SOURCE legível, BUILD protege, DIST publica (§9.9):** o código-fonte do frontend permanece semântico e depurável do começo ao fim; minificação, ofuscação, renomeação de classes e hash de assets existem **só** no build, gravando em `dist/` — o build nunca reescreve `src/`. 22. **Ofuscação não é segurança (§9.11):** o que chega ao navegador é acessível ao cliente; autorização, regra crítica e anti-abuso ficam no backend (§16), e nenhuma proteção de frontend pode custar funcionamento, acessibilidade ou SEO (ordem de prioridade em §9.9).
 
 ---
 
@@ -590,13 +590,19 @@ boolean sigOk = MercadoPagoAPI.validateWebhookSignature(xSig, xReqId, dataId, se
 
 ---
 
-## 9. Frontend — shell + Design System (uso obrigatório — §9.0 a §9.8)
+## 9. Frontend — shell, Design System e build (uso obrigatório — §9.0 a §9.16)
 
-> **Obrigatoriedade absoluta:** todo frontend criado ou alterado por esta skill **deve** passar por §9.0 → §9.8. Não existe entrega "só backend" com frontend improvisado, nem "só estilizar depois". Sem pipeline de design, sem arte por tema, sem auditoria — sem entrega. As 9 referências abaixo são parte oficial e auditada da AngatuLibraries.
+> **Obrigatoriedade absoluta:** todo frontend criado ou alterado por esta skill **deve** passar por §9.0 → §9.13, e **toda landing page passa também por §9.14, §9.15 e §9.16**. Não existe entrega "só backend" com frontend improvisado, nem "só estilizar depois", nem "protege depois". Sem pipeline de design, sem arte por tema, sem auditoria, sem build separado — sem entrega. As 13 referências abaixo são parte oficial e auditada da AngatuLibraries.
 
-### 9.0 Referências internas — sistema de design Angatu (9 skills unificadas)
+> **A lei que governa o §9 inteiro:**
+>
+> **SOURCE** = legível e fácil de desenvolver · **BUILD** = minificar, otimizar, ofuscar, renomear e proteger · **DIST** = versão final para produção.
+>
+> Código fácil de desenvolver; código mais difícil de analisar **somente depois do build**. A proteção nunca contamina o código-fonte (§9.9 a §9.13).
 
-> **Origem:** `frontend-design`, `framer-motion`, `design-audit`, `css-native`, `canvas-generative`, `brand-landingpage`, `mobile-principles`, `desktop-principles`, `paint` — todas **retraduzidas para português, reescritas e auditadas como `Angatu Sistemas (@author Angatu Sistemas)`**, otimizadas e **juntadas** nesta skill para uso offline/local sem depender de registros externos. Quando o §9 cita uma técnica, a referência completa está nestes arquivos.
+### 9.0 Referências internas — sistema de design Angatu (13 referências)
+
+> **Origem:** `frontend-design`, `framer-motion`, `design-audit`, `css-native`, `canvas-generative`, `brand-landingpage`, `mobile-principles`, `desktop-principles`, `paint` — todas **retraduzidas para português, reescritas e auditadas como `Angatu Sistemas (@author Angatu Sistemas)`**, otimizadas e **juntadas** nesta skill para uso offline/local sem depender de registros externos. A décima, `frontend-build`, é **material próprio da Angatu**: o pipeline source → build → dist que protege o que é publicado sem tornar o desenvolvimento pior. Quando o §9 cita uma técnica, a referência completa está nestes arquivos.
 
 | # | Arquivo | O que entrega | Quando consultar (obrigatório) |
 |---|---|---|---|
@@ -609,30 +615,38 @@ boolean sigOk = MercadoPagoAPI.validateWebhookSignature(xSig, xReqId, dataId, se
 | 7 | `references/mobile-principles.md` | UX touch-first: alvos 44px, sem-hover, zonas de polegar, safe areas, gestos canônicos, orçamentos de performance | Sempre — metade de §9.6 |
 | 8 | `references/desktop-principles.md` | UX desktop: hover obrigatório, precisão, atalhos `⌘/Ctrl`, multi-janela, foco `Tab`, densidade 8px | Sempre — outra metade de §9.6 |
 | 9 | `references/design-audit.md` | Checklist final com `grep`s para gaps de movimento, a11y, performance e consistência (Crítico/Importante/Bom ter) | Sempre — §9.7 antes do `git push` |
+| 10 | `references/frontend-build.md` | **Pipeline source → build → dist:** níveis (`development`/`production`/`protected`), configuração, minificação, ofuscação, renomeação provável de classes, hash de assets, PWA, source maps, validação que reprova o build, perfil Maven, Dockerfile de 3 etapas e migração de projeto existente | Sempre — motor de §9.9 a §9.13; obrigatório antes de publicar |
+| 11 | `references/landing-motion.md` | **Landing rica:** background SVG temático por segmento, hero em motion graphics com Remotion descartável, vídeo mudo tipo GIF, compositions desktop/mobile, marca d'água do cliente, material real com autorização, orçamentos de peso e checklist | Toda landing page, homepage institucional ou página de campanha — motor de §9.14 |
+| 12 | `references/landing-copy.md` | **Redação sem cara de IA:** anti-padrões de linguagem, vícios de pontuação, escrita específica por empresa, proibição de inventar dados, títulos e CTAs concretos, arquitetura de página vinda do negócio e revisão anti-IA com varreduras | Toda landing page — motor de §9.15; leia antes de escrever a primeira linha de texto |
+| 13 | `references/landing-seo-og.md` | **SEO e capa de compartilhamento:** bloco completo de `<head>`, `<head>` próprio por URL neste stack, capa editorial por página, geração automatizada das artes, tamanhos e compatibilidade, e a validação de 15 pontos | Toda landing page e toda URL pública — motor de §9.16 |
 
-**Como usar:** ao iniciar qualquer frontend, abra `references/paint.md` (pipeline) e siga as fases; durante a Fase 3 consulte `frontend-design.md` + `brand-landingpage.md`; na Fase 4 use `css-native.md`/`framer-motion.md`/`canvas-generative.md` conforme a tese; valide responsividade com `mobile/desktop-principles.md`; feche com `design-audit.md`. Todos os arquivos estão em português e com auditoria Angatu Sistemas. Código gerado continua em inglês + Javadocs em português + `@author Angatu Sistemas` (§13.4).
+**Como usar:** ao iniciar qualquer frontend, abra `references/paint.md` (pipeline) e siga as fases; durante a Fase 3 consulte `frontend-design.md` + `brand-landingpage.md`; na Fase 4 use `css-native.md`/`framer-motion.md`/`canvas-generative.md` conforme a tese; valide responsividade com `mobile/desktop-principles.md`; feche com `design-audit.md` (design) e `frontend-build.md` (build e publicação). Todos os arquivos estão em português e com auditoria Angatu Sistemas. Código gerado continua em inglês + Javadocs em português + `@author Angatu Sistemas` (§13.4).
 
 **Otimizações Angatu nesta unificação (além da tradução):**
 
 - **Arte automática por tema (§9.5):** 5 receitas prontas (financeiro→flow field, orgânico→partículas, tecnológico→mesh, criativo→L-system, corporativo→ruído) + exportação automática de `og:image` (1200×630), `favicon`/`apple-touch-icon` e `json-ld` a partir da mesma paleta/canvas — não existia nas skills originais isoladas.
 - **Tailwind sempre local (§9.1)** e **português impecável (§9.2)** integrados como portões obrigatórios da Fase 5 — originais permitiam CDN e não validavam norma culta.
 - **Pipeline único auditado:** `paint` como orquestrador + `frontend-design` como princípios, eliminando sobreposição entre as 9; `mobile`+`desktop` unificados em §9.6; `framer-motion` convertido para equivalentes vanilla sem React.
-- **SEO automático por tema:** `og:image`/`twitter:image` do canvas + `json-ld` + `meta description` revisada — geração em uma passada, sem hotlink Unsplash/Pexels.
+- **SEO automático por tema:** `og:image`/`twitter:image` do canvas + `json-ld` + `meta description` revisada — geração em uma passada, sem hotlink Unsplash/Pexels. Em landing page isso sobe de nível no §9.16: capa editorial por URL, com logo, título da página e imagem real.
+- **Separação source/build/dist (§9.9–§9.13):** as skills originais não tratavam publicação; aqui o source é blindado contra ofuscação e todo hardening vive no build, com validação que reprova referência quebrada antes de subir.
 
 ```
-src/main/resources/public/
+src/main/resources/public/   # SOURCE — legível, semântico, nunca ofuscado (§9.9)
   index.html               # shell {content} {page} {%nome_active}
   styles/
     tailwind.css           # Tailwind LOCAL gerado (nunca CDN) — §9.1
     ds.css                 # tokens :root — única fonte visual (complementa o Tailwind)
   scripts/ui.js net.js auth.js app-state.js messages.js
   <pagina>.html            # fragmento sem <head> → /<nome>
-  /emails/*.html
+  assets/og-{tema}.png     # arte generativa exportada — §9.5
+  emails/*.html            # nunca transformados pelo build
+tools/frontend-build.mjs   # BUILD — único lugar autorizado a minificar/ofuscar (§9.10)
+frontend.build.json        # níveis development / production / protected
+dist/public/               # DIST — o que é empacotado e publicado (§9.10)
 target/classes/public/     # espelho sem recompilar (copie tailwind.css também)
 tailwind.input.css         # fonte do Tailwind (na raiz ou src/main/resources/)
 tailwind.config.js         # content: public/**/*.html
 docs/design/MASTER.md      # sistema canônico da Fase 3 (paint)
-public/assets/og-{tema}.png # arte generativa exportada — §9.5
 ```
 
 Shell: `<head>` único, `#nav-menu`, `<main id="app">{content}</main>`, scripts globais. `ds.css`: `.card/.card-pad`, `.btn-primary/secondary/ghost/danger/icon`, `.input/.ds-label`, `.badge`, `.ds-table`, `.modal-overlay/.modal-card`, `.skeleton`, `.nav-grid/.nav-tile`. Helpers: `UI.icon/skeleton/empty/btnLoading/scan`, `net.js` barra em `/api/`, `auth.js` navbar, `showToast`, `AppBus`.
@@ -759,7 +773,7 @@ Antes de cada commit que toque frontend, releia **todas** as strings alteradas e
 | Transição de página (MPA/SPA) | CSS nativo (View Transitions API) |
 | Timeline multi-etapas (5+ tweens) | GSAP |
 | Stagger em lista dinâmica | GSAP ou lógica vanilla com `delay: index*50ms` |
-| Spring físico com interrupção | Motion (Framer) — só em React |
+| Spring físico com interrupção | Motion (Framer) apenas em projeto que **já é** React; nunca adote React por causa disso (§9.12). Em vanilla, aproxime com `linear()` easing ou uma mola em `requestAnimationFrame` |
 
 **Scroll-driven (CSS puro, sem JS):**
 
@@ -820,6 +834,8 @@ document.startViewTransition(() => updateContent());
 ### 9.5 Arte generativa e criação automática por tema — backgrounds, texturas e SEO
 
 > **Geração automática obrigatória:** todo frontend deve ter pelo menos um elemento de arte generativa coerente com o tema (background, textura ou ilustração). Não entregue fundo liso não intencional.
+>
+> **Em landing page, quem cumpre este requisito é o SVG temático do §9.14** — escolha **um** dos dois, SVG temático ou canvas generativo. Os dois no mesmo fundo competem entre si e pesam o dobro.
 
 **Quando gerar arte (obrigatório):** hero com foto/ilustração, avatares, texturas, backgrounds, `og:image`/`twitter:image` para SEO. Prefira imagem raster gerada (PNG/JPG) a SVG complexo; SVG só para ícones/esquemas. Nunca hotlink Unsplash/Pexels — gere localmente e salve em `public/assets/`.
 
@@ -850,7 +866,7 @@ function loop(time){ const dt=Math.min((time-prevTime)/1000,0.1); prevTime=time;
 
 **SEO automático por tema (gerar junto):**
 
-- `og:image` (1200×630) + `twitter:image` a partir do mesmo tema/canvas (exporte com `canvas.toDataURL('image/png')` e salve em `public/assets/og-{tema}.png`).
+- `og:image` (1200×630) + `twitter:image` a partir do mesmo tema/canvas (exporte com `canvas.toDataURL('image/png')` e salve em `public/assets/og-{tema}.png`). **Isto é o piso, válido para telas de aplicação: em landing page e em qualquer URL pública, a capa é por página e segue o §9.16** (uma arte por URL, com logo, título e imagem real, em `public/assets/og/<slug>.jpg`).
 - `favicon`/`apple-touch-icon` derivados da paleta do MASTER.
 - `json-ld` (`Organization`/`Product`/`Article` conforme página) + `meta description` com copy revisada (§9.2).
 - `alt` descritivo em toda imagem gerada; `aria-hidden="true"` apenas em decoração pura (partículas de fundo).
@@ -955,7 +971,7 @@ grep -A5 'exit=' --include='*.js' -rn src/main/resources/public # entrada >= sa�
 - [ ] `grep -rn "<script>" public/*.html` vazio — script de página em arquivo externo, para a política de segurança não bloquear
 - [ ] Rodapé com o logotipo da Angatu presente em todas as páginas (§9.8)
 - [ ] **Toda responsividade via Tailwind `sm:/md:/lg:/xl:/2xl:` — nenhum `@media (min-width` manual fora de `ds.css` (§9.6)**
-- [ ] `og:image` gerada por tema + `json-ld` + `meta description` revisada (§9.2 + §9.5)
+- [ ] `og:image` gerada + `json-ld` + `meta description` revisada (§9.2 + §9.5; landing e URL pública seguem a capa por página do §9.16)
 - [ ] Durações/easings centralizados (≤5 cada) + `view-transition-name`/`@starting-style` onde há entrada/saída
 
 ### 9.8 Rodapé — marca da Angatu Sistemas sempre presente (obrigatório)
@@ -1039,6 +1055,282 @@ de e-mail não renderiza SVG nem resolve caminho relativo.
 </a>
 ```
 
+### 9.9 A lei: source legível, build protege, dist publica (obrigatório)
+
+> **Código fácil de desenvolver; código mais difícil de analisar somente depois do build.**
+> A proteção nunca contamina o código-fonte.
+
+```
+SOURCE  →  BUILD  →  DIST
+legível    protege   publica
+```
+
+**Regra absoluta — o source é sempre legível.** Durante o desenvolvimento o código permanece completamente legível. É **proibido escrever no source**: JavaScript ofuscado, nomes aleatórios de variáveis, classes aleatórias, IDs aleatórios, código propositalmente ilegível, strings codificadas só para dificultar leitura e estruturas artificiais criadas exclusivamente para atrapalhar engenharia reversa.
+
+```js
+// SOURCE — é assim que se escreve, sempre
+function calculateOrderTotal(items) {
+    const subtotal = calculateSubtotal(items);
+    const shipping = calculateShipping(items);
+    return subtotal + shipping;
+}
+
+// PROIBIDO no source (isto é saída de build, e só o build pode produzir)
+function _0x81ab(a,b){return _0x19c(a)+_0x71f(b)}
+```
+
+O source tem de continuar fácil de **entender, depurar, modificar, testar, revisar e manter**. Nomes semânticos em tudo: classes (`product-card`, `checkout-button`, `user-menu`, `modal-container`, `navigation-header`), IDs internos e funções (`loadProducts()`, `calculateTotal()`, `openModal()`, `submitOrder()`, `updateUserProfile()`).
+
+**O build nunca altera o source.** O processo lê `src/main/resources/public/` e grava em `dist/public/`. Nunca `src/ → ofuscação → src modificado`. O diretório de source jamais é sobrescrito pelo processo de proteção — é isso que permite recompilar o projeto a qualquer momento e obter o mesmo resultado.
+
+> **Única exceção, e ela é declarada:** `styles/tailwind.css` é **gerado** pelo Tailwind CLI dentro do source e versionado, porque o Coolify constrói a partir do repositório (§9.1 e §17.3). Ninguém o escreve nem o depura à mão, então ele não é "código-fonte" no sentido desta lei. Mesmo assim, ele nunca é ofuscado nem tem classes renomeadas: ao contrário, é dele que sai a lista de classes intocáveis do §9.10.
+
+**Desenvolvimento normal continua normal.** No dia a dia o programador faz `editar → salvar → recarregar → depurar` sem lidar com classe aleatória, código ofuscado, nome ilegível, asset com hash difícil de rastrear ou pilha de erro inutilizável. Em `development`: código legível, depuração fácil, source maps ligados, sem ofuscação, sem renomeação, sem minificação agressiva. As transformações pertencem à produção.
+
+**Ordem de prioridade — em qualquer conflito, o número menor vence:**
+
+1. Funcionamento correto
+2. Segurança real
+3. Acessibilidade
+4. SEO
+5. Compatibilidade
+6. Performance
+7. Manutenibilidade
+8. Ofuscação/hardening
+
+Nunca sacrifique uma regra de prioridade superior para aumentar a dificuldade de análise do frontend. Uma transformação que quebra funcionalidade, leitor de tela, indexação ou desempenho **não entra**, por mais difícil de analisar que deixe o código.
+
+**Princípio de segurança (vale para o projeto inteiro):**
+
+> «Ofuscação não é criptografia.»
+> «Código enviado ao navegador deve ser considerado acessível ao cliente.»
+> «Classes e IDs dinâmicos não constituem autenticação nem segurança.»
+> «A proteção real de dados, autorização e regras críticas deve estar no backend.» (§16)
+
+### 9.10 Build de produção — níveis, pipeline e validação
+
+> Referência completa, com scripts prontos: [`references/frontend-build.md`](references/frontend-build.md).
+
+**Três níveis, configuráveis:**
+
+| Nível | Uso | Minifica | Ofusca | Renomeia classes | Hash | Source maps |
+|---|---|---|---|---|---|---|
+| `development` | dia a dia, depuração | não | não | não | não | sim |
+| `production` | publicação normal | sim | não | não | opcional | não |
+| `protected` | publicação com hardening pedido | sim | sim | só o que for provado seguro | opcional | nunca |
+
+Chaves de configuração (adapte ao padrão que o projeto já tiver, não invente outro): `minify`, `obfuscate`, `renameClasses`, `renameIds`, `hashAssets`, `removeDeadCode`, `transformStrings`, `controlFlowProtection`.
+
+**Pipeline canônico (a ordem importa):**
+
+```
+HTML · CSS · JavaScript · Assets
+  → Análise → Validação de entrada → Cópia integral para o dist
+  → Renomeação segura → Minificação → Otimização → Ofuscação JavaScript
+  → Hash dos assets → Atualização das referências → Validação pós-build → dist/
+```
+
+**Renomear antes de minificar** (arquivo legível dá substituição provável) e **hashear depois de minificar** (o hash tem de ser do conteúdo final). Trocar essa ordem dessincroniza HTML, CSS e JS.
+
+**JavaScript.** Minificação, remoção de código morto quando seguro, redução de nomes, transformação de strings, ofuscação e transformação de controle de fluxo quando apropriado — tudo com agressividade regulável. Nos scripts clássicos do shell Angatu (`UI`, `net`, `Auth`, `AppBus`, `showToast` são globais compartilhadas) use `minifyIdentifiers: false` e `renameGlobals: false`, senão a tela morre em produção com a API respondendo 100%. Nunca ofusque `sw.js` nem `vendor/**`. **Proibido** `debugProtection` e `disableConsoleOutput`: travar ferramenta de desenvolvimento pune quem não é o alvo. A proteção jamais pode quebrar funcionalidade existente só para dificultar a análise.
+
+**HTML.** Minificar, remover comentário desnecessário, reduzir espaço, otimizar atributo quando seguro, processar script inline (que não deveria existir — §9.7), atualizar referência de asset. **Preservar sempre:** semântica, SEO (`title`, `description`, `robots`, `canonical`, Open Graph, Twitter Card, Schema.org, `hreflang`, `lang`), acessibilidade (`alt`, `aria-*`, `role`, `label for`, par `for`/`id`, `tabindex`), navegação e formulários. Os placeholders do `HtmlRouteAPI` (`{content}`, `{page}`, `{%nome_active}`) atravessam o build intactos.
+
+**CSS.** Minificar, otimizar e remover código morto **só quando seguro** — o Tailwind já faz a própria remoção via `content`, e regra de `ds.css` aplicada por `classList.add()` ou pelo servidor não aparece em HTML nenhum: apagar por "não uso aparente" quebra a tela.
+
+**Renomeação de classes — controlada, no build, com prova.** O objetivo é dificultar automação trivial que dependa de seletor previsível, e só isso. A transformação acontece **no build/deploy, nunca a cada recarregamento do navegador** — randomizar classe em tempo de execução para atrapalhar bot é proibido: quebra acessibilidade, teste e depuração, e não engana quem executa JavaScript. Um build novo pode gerar identificadores novos; o source continua igual:
+
+```
+source :  product-card              checkout-button
+build 1:  product-card → a81Kx      checkout-button → Q72Lm
+build 2:  product-card → z91Pw      checkout-button → m42Rt
+```
+
+**Sincronia é obrigação, não detalhe.** Se `product-card` virou `a81Kx`, HTML, CSS e JS mudam juntos. Sair com HTML `a81Kx`, CSS `a81Kx` e JS `product-card` é **erro de build** — a validação procura o nome antigo no dist e reprova.
+
+**Nunca renomeie automaticamente** (lista de exclusão obrigatória): atributo ARIA, `label`, ID de âncora, ID de formulário, seletor público, integração externa, biblioteca de terceiros, teste automatizado, Web Component, API do navegador, gancho declarado público, utilitário do Tailwind e classe usada no código Java do servidor (inclusive a de `{%nome_active}`). **Quando não for possível provar que a transformação é segura, não a aplique.** `renameIds` fica **desligado por padrão**, inclusive em `protected` — ID carrega contrato (`href="#..."`, `for`, `aria-labelledby`, `url(#...)`) que o build não enxerga.
+
+**Hash de assets (cache busting).** `app.js` → `app.8f91c2.js`, `style.css` → `style.71a82e.css`, com todas as referências atualizadas automaticamente — atenção a `preload`, `modulepreload`, `import()` dinâmico, manifest, service worker e PWA. **Como o padrão Angatu é não usar cache (§15), `hashAssets` fica desligado:** com `no-store` o hash não compra nada. Quando o cliente **pedir** cache, o hash passa a ser obrigatório — `max-age` longo só é seguro em arquivo cujo nome muda com o conteúdo, e o HTML continua `no-store`. Para o hash ser reescrevível, toda referência no source é absoluta a partir da raiz (`/styles/ds.css`).
+
+**PWA e service worker.** `sw.js` e `manifest.webmanifest` nunca são hasheados nem ofuscados, e são atualizados por último. Service worker apontando para arquivo que não existe mais é falha de build. Verifique manifest, estratégia de cache, versionamento, instalação e funcionamento offline quando aplicável (§15).
+
+**Performance manda no nível de agressividade.** Avalie tamanho final, número de requisições, carregamento inicial, JS executado, CSS, imagens, cache e Core Web Vitals. Se uma técnica inchar o arquivo, o tempo de parsing, a execução ou a memória, **reduza a agressividade** — não se aplica ofuscação pesada só porque ela existe. O alvo é o equilíbrio entre performance, manutenibilidade, proteção e compatibilidade.
+
+**Source maps.** Em `development`, ligados. Em `production`, só se explicitamente configurado — e gravados **fora** de `dist/public/`. Em `protected`, nunca: mapa publicado reconstrói o source original e anula a ofuscação.
+
+**Comandos:**
+
+```bash
+# desenvolvimento — source legível dentro do JAR
+mvn package -DskipTests && java -jar target/<app>.jar
+
+# produção protegida — dist dentro do JAR (perfil Maven em references/frontend-build.md §15.1)
+node tools/frontend-build.mjs --level=protected
+mvn -Pfrontend-dist package -DskipTests && java -jar target/<app>.jar
+```
+
+**O build falha quando quebra alguma coisa.** A validação pós-build reprova (`exit 1`) em: referência quebrada, classe fora de sincronia, JS inválido, segredo no dist, CDN do Tailwind, perda de tag de SEO ou de atributo de acessibilidade em relação ao source, source map indevido, script embutido e cache não autorizado.
+
+**Testes (§14 vale igual aqui).** Depois de mexer no build, rode os testes existentes; sem testes, faça a validação equivalente — subindo o JAR. Teste **os dois modos**, `development` e o nível de produção usado, cobrindo: JavaScript, HTML, CSS, links, imports, eventos, formulários, APIs, WebSocket, PWA, service worker, classes, IDs, assets, responsividade, SEO e acessibilidade.
+
+### 9.11 Hardening de frontend e anti-abuso de backend
+
+**São duas camadas diferentes e não se substituem.** Ofuscação não é sistema de segurança; nome dinâmico não é proteção real contra bot. Um bot executa JavaScript, inspeciona o DOM e descobre os identificadores atuais.
+
+**Frontend hardening (o que dá para fazer, sabendo o tamanho do ganho):** reduzir seletor previsível, usar identificador interno gerado no build, não expor detalhe desnecessário da implementação, não deixar API exposta sem necessidade, e erguer pequenas barreiras contra automação trivial.
+
+**Nunca crie mecanismo que prejudique usuário legítimo.** É proibido bloquear ou degradar: leitor de tela, navegação por teclado, usuário com extensão legítima, ferramentas de desenvolvimento e qualquer recurso de acessibilidade. Isso inclui laço de detecção de devtools, `debugProtection`, `disableConsoleOutput` e clique-direito bloqueado.
+
+**Backend anti-abuse — é aqui que mora a proteção real.** Sempre que houver backend, verifique e implemente: rate limiting (§16.8), limites por endpoint, autenticação, autorização em toda rota (§16.5), expiração e revogação de sessão (§16.3), validação de dados, proteção contra abuso, controle de concorrência (`Saveable.mutate`, §4), detecção de padrão anormal, logs e monitoramento. **O frontend nunca é barreira de segurança** — checagem só na tela não vale nada: qualquer pessoa edita o JavaScript da própria página.
+
+**Segredos.** Durante a análise do projeto, procure API key, token privado, credencial, senha, secret, credencial administrativa, chave privada e informação sensível. **Nunca coloque segredo no frontend.** Encontrou segredo exposto no source? Sinalize o problema imediatamente e, quando estiver no escopo e for seguro, mova a operação para o backend (§16.7) — chave de integração fica cifrada no banco, nunca em arquivo versionado, nunca em `public/`. O build valida o dist e reprova quando encontra padrão de segredo, mas isso é a última rede, não a primeira.
+
+### 9.12 Projeto existente — auditoria, desvios e migração
+
+**Nunca presuma que o projeto já segue a skill.** Ao receber um projeto existente, primeiro **analise**, depois compare, só então mexa.
+
+Levante os 20 pontos (o que verificar em cada um está em [`references/frontend-build.md`](references/frontend-build.md) §17): estrutura · tecnologia · sistema de build · dependências · HTML · CSS · JavaScript · assets · SEO · acessibilidade · performance · PWA · service worker · cache · segurança · minificação · ofuscação · classes e IDs · exposição de APIs · possíveis segredos.
+
+**Depois da auditoria:** identifique os desvios, corrija a arquitetura quando ela for incompatível, evite reescrita desnecessária, preserve as funcionalidades e implemente o padrão atualizado. Não empilhe código novo sobre arquitetura incompatível.
+
+**Não troque a tecnologia sem necessidade.** Não introduza React, Vue, Angular, Svelte ou qualquer framework porque um sistema de build ou de proteção trabalha melhor com eles. Se o projeto usa HTML + CSS + JavaScript e isso é suficiente, mantenha — use a solução mais simples e adequada à arquitetura existente. Node, quando entra, entra como **ferramenta de build**, nunca como dependência da aplicação.
+
+**Source já ofuscado?** Não tente desofuscar por adivinhação. Congele o legado em `vendor/` (fora das transformações), escreva toda alteração nova em arquivo novo e legível, e reescreva o legado por módulo só quando houver motivo real — com o plano registrado no `CLAUDE.md`.
+
+**Comportamento esperado do agente em toda alteração de frontend:**
+
+1. analisar o projeto; 2. identificar o padrão atual; 3. comparar com esta skill; 4. identificar desvios; 5. corrigir os desvios relevantes; 6. implementar a alteração pedida; 7. manter o source legível; 8. atualizar o processo de build quando necessário; 9. gerar o código protegido **somente no build**; 10. executar as validações; 11. conferir o resultado final no dist, com o JAR rodando.
+
+**Nunca implemente no source uma transformação que pertence ao build. Nunca torne o código deliberadamente difícil de entender durante o desenvolvimento.**
+
+### 9.13 Checklist obrigatória do frontend (antes de finalizar)
+
+**Source**
+
+- [ ] Código permanece legível e com nomes semânticos (funções, classes, IDs)
+- [ ] Nenhuma ofuscação aplicada ao source
+- [ ] Nenhuma randomização de classes no source nem em tempo de execução
+- [ ] Nenhum segredo exposto (§9.11)
+- [ ] Português impecável em todo texto visível (§9.2)
+
+**Build**
+
+- [ ] Build de produção configurado e reprodutível (`frontend.build.json` ou o padrão do projeto)
+- [ ] Minificação configurada
+- [ ] Ofuscação configurada quando apropriado (`protected`)
+- [ ] Renomeação de classes configurada **apenas onde foi provada segura**; `renameIds` desligado salvo decisão registrada
+- [ ] Hash de assets conforme a política de cache do projeto (§15)
+- [ ] Referências atualizadas automaticamente e sincronizadas entre HTML, CSS e JS
+- [ ] `src/` **não** foi sobrescrito pelo build
+- [ ] Validação pós-build passou (sem referência quebrada, sem source map indevido)
+
+**Segurança**
+
+- [ ] Varredura de segredo no `dist/` limpa (a do source está acima)
+- [ ] Autorização validada no backend em toda rota (§16.5)
+- [ ] API com proteção adequada e rate limiting considerado (§16.8)
+- [ ] Anti-abuso não depende do frontend (§9.11)
+
+**Qualidade**
+
+- [ ] HTML, CSS, JavaScript e assets funcionando no dist, testados pelo JAR (§14.1)
+- [ ] PWA e service worker funcionando quando aplicável
+- [ ] SEO preservado (title, description, canonical, OG, `ld+json`)
+- [ ] Acessibilidade preservada (foco, ARIA, `alt`, teclado, `prefers-reduced-motion`)
+- [ ] Performance verificada (peso, requisições, Core Web Vitals)
+- [ ] Auditoria de design do §9.7 rodada, sem item Crítico em aberto
+- [ ] Rodapé com a marca da Angatu Sistemas presente (§9.8)
+- [ ] Sendo landing page: §9.14 (visual), §9.15 (linguagem) e §9.16 (SEO/Open Graph) aplicados, com as checklists das referências fechadas
+
+### 9.14 Landing pages — apresentação visual rica, temática e autoral (obrigatório)
+
+> **Vale para toda landing page, homepage institucional e página de campanha.** Referência completa, com roteiro, comandos de renderização e orçamentos: [`references/landing-motion.md`](references/landing-motion.md).
+
+> **A promessa:** a landing tem de parecer uma **apresentação profissional daquela empresa**. É proibido entregar página excessivamente limpa, vazia, genérica ou feita só de blocos de texto, cards e imagens estáticas.
+
+**1. Background do `<body>` nunca fica visualmente vazio.** Toda landing recebe um **SVG desenhado para o segmento daquela empresa** — detalhado, ligado ao ramo, criando profundidade e identidade, leve, funcionando em desktop e mobile. **Nunca reaproveite o mesmo fundo entre projetos.** O texto vem antes do fundo: garanta 4,5:1 com véu ou fundo próprio na camada de conteúdo, e entregue variante simplificada para o celular (detalhe fino vira sujeira em 390 px). Teto de 60 KB depois da otimização, que acontece **no build** (§9.10).
+
+> **Um fundo só.** O §9.5 exige arte intencional em todo frontend; na landing, **este SVG temático já cumpre esse papel**. Escolha entre o SVG temático **ou** a arte generativa em canvas — os dois juntos brigam, pesam o dobro e denunciam falta de direção.
+
+**2. Hero com motion graphics feito no Remotion.** Sempre que houver o que mostrar — funcionamento do produto, fluxo de uso, funcionalidades, transformação entregue, processo da empresa, ambiente de trabalho, resultados, diferenciais, antes e depois, demonstração ou informação institucional — o hero recebe um **vídeo exclusivo com função de comunicação, não de decoração**. As animações são controladas pelas APIs do próprio Remotion (`useCurrentFrame`, `interpolate`, `spring`, `Sequence`), com cenas separadas e parametrizadas.
+
+**3. O Remotion é descartável — fica só o vídeo.** Ele é estúdio temporário, criado **fora do repositório**, usado para produzir o vídeo do zero e **apagado em seguida**, com `node_modules` e tudo. Nada de lixo acumulado: o Remotion **nunca** entra no `package.json` da aplicação, no repositório, na imagem Docker ou no build. Registre no `CLAUDE.md` o que o vídeo comunica, proporções, duração, material usado e autorizações — é isso que permite recriá-lo depois. Isso não fere §9.12 (não trocar a tecnologia): a página continua vanilla e recebe uma tag `<video>`.
+
+**4. O vídeo se comporta como GIF: mudo, curto e em laço.** Renderize com `--muted`, sem faixa de áudio, e publique com `autoplay muted loop playsinline preload="metadata"`, sem controles, com pôster. Duração de **8 a 15 s**, com o último quadro conversando com o primeiro. `muted` é o que permite o autoplay no iOS/Android; `playsinline` impede a abertura em tela cheia. **Como não há áudio nem controle, tudo que o vídeo comunica também existe em texto na página** — e com `prefers-reduced-motion: reduce` o pôster assume e o vídeo não roda.
+
+**5. Desktop e mobile são planejados desde o início.** Não redimensione a composição de desktop para o celular quando isso piorar a apresentação: use compositions próprias (16:9 em 1920×1080; 9:16 em 1080×1920) quando o ganho for real. Ajuste por formato: área segura, tamanho do texto, posição da logo, distância das bordas, proporção, velocidade das animações, enquadramento do material real e **quantidade de informação simultânea** — no celular, uma ideia por cena.
+
+**6. Material real tem prioridade sobre ilustração genérica.** Foto da empresa, da equipe, do estabelecimento, de máquinas, produtos, processos, obras, veículos, clientes divulgados pela própria empresa, registro histórico, vídeo institucional ou documentário: quando existir e for relevante, entra — combinado com os gráficos (`foto real → animação → destaque → transição → outra imagem real → demonstração`). **Nada de imagem real aleatória para preencher espaço**, e **nada entra sem autorização de uso confirmada** com o cliente e registrada no `CLAUDE.md`.
+
+**7. A marca do cliente é assinatura constante do vídeo.** Marca d'água com a **logo oficial** (nunca redesenhada), em área segura, discreta (6–10% da largura no desktop, 10–14% no mobile), com contraste suficiente para continuar identificável, opacidade que não domina a composição, proporção e qualidade preservadas, adaptada aos dois formatos. Havendo risco de sobrepor texto ou elemento importante, reposicione para a área segura alternativa. **Não confunda com o crédito da Angatu (§9.8):** a marca d'água é a do cliente; o crédito Angatu continua no rodapé.
+
+**8. Nenhuma seção pobre passa.** Percorra cada seção e pergunte: *"essa informação poderia ser comunicada visualmente de uma maneira melhor?"* Seção excessivamente textual, estática ou vazia pede motion graphics, SVG ilustrativo, microanimação, diagrama, animação de processo, screenshot animado, foto ou vídeo real, composição de foto + gráfico, demonstração ou elemento interativo. **Não adicione animação por adicionar:** todo elemento visual precisa de função declarável em uma frase — explicar, demonstrar, destacar, contextualizar ou reforçar a identidade. Em seção interna a ordem é CSS nativo (§9.4) → SVG animado → vídeo curto.
+
+**9. Performance é limite, não intenção.** Vídeo desktop ≤ 1,5 MB (teto 2,5 MB), mobile ≤ 800 KB (teto 1,2 MB), pôster ≤ 120 KB, SVG de fundo ≤ 60 KB. Otimize SVG, imagem e vídeo, cuide de resolução, codec, carregamento, `lazy` abaixo da dobra, quantidade de animações simultâneas, número de nós no DOM e reprodução no celular. Ilustração complexa vira `<img src="*.svg">`, não 4 000 nós inline. No padrão sem cache (§15) esse vídeo é baixado a cada visita — é o caso em que vale levantar a exceção de cache com hash (§9.10) junto ao cliente.
+
+**10. Organização e legibilidade valem aqui igual (§9.9).** Separe componentes, compositions, cenas, assets, SVGs, imagens, vídeos, dados, configurações e estilos; textos, cores e caminhos vêm de um arquivo de dados, nunca escritos no meio da cena. HTML, CSS, JS, SVG e código de composition permanecem legíveis durante o desenvolvimento — **minificação, compressão, otimização de SVG/imagem/vídeo e ofuscação acontecem só no build** (§9.10).
+
+**11. Identidade antes de template.** É proibido pegar uma estrutura visual genérica e trocar só logo, textos, cores e imagens. Construtora, clínica, restaurante, transportadora, escritório jurídico e empresa de tecnologia têm de sair **visivelmente diferentes**. **O teste:** cubra a logo e os textos — ainda dá para dizer de que ramo é a empresa? Se não der, a identidade ainda não está lá.
+
+**12. Revisão final.** Antes de entregar, releia a página inteira procurando área vazia, genérica, excessivamente textual, sem identidade, estática demais, desconectada do tema ou pobre em comparação com o resto — e resolva com SVG, foto real, vídeo real, motion graphics, ilustração ou outra solução apropriada. A prioridade **não** é acumular efeito: é equilíbrio entre identidade visual, conteúdo, narrativa, autenticidade, performance e responsividade.
+
+### 9.15 Linguagem natural — a landing não pode ter cara de texto gerado (obrigatório)
+
+> **Vale para toda landing page.** Referência completa, com tabelas de substituição e varreduras: [`references/landing-copy.md`](references/landing-copy.md).
+
+> **O resultado final tem de parecer escrito por um profissional de marketing, designer ou redator humano que conhece aquela empresa.** Não por um gerador automático de texto.
+
+Aplica-se a **todo** texto visível: hero, títulos, subtítulos, textos institucionais, cards, benefícios, descrições, FAQ, CTAs, rodapé, textos de SEO, metadados, textos de botão, mensagens auxiliares e os textos que aparecem dentro do vídeo do Remotion (§9.14). Vem **depois** do §9.2, não no lugar dele: primeiro o português está correto, depois ele deixa de soar automático.
+
+**Anti-padrões proibidos.** Uso recorrente de travessão como recurso de ritmo. Frases sempre com a mesma estrutura. Listas repetidas no mesmo formato. Título genérico. Subtítulo que só repete o título. Frase excessivamente polida ou corporativa. Palavra de marketing sem necessidade, principalmente "inovador", "revolucionário", "potencialize", "transforme", "eleve", "solução completa", "experiência única", "jornada", "ecossistema", "estratégico", "inteligente" e "personalizado". Afirmação grandiosa sem comprovação. Frase que só preenche espaço. Introdução longa antes do ponto. Excesso de palavra abstrata. A mesma ideia repetida em seções diferentes. Excesso de emoji e de dois-pontos. As fôrmas "Não é apenas X. É Y.", "Mais do que X, Y." e "De X a Y, fazemos...". Simetria excessiva e ritmo artificialmente perfeito. Palavra em inglês quando existe alternativa natural em português. CTA genérico repetido. Depoimento ou informação sem origem em dado real do projeto.
+
+**Pontuação.** O caractere `—` não é recurso de redação em texto de landing. Use vírgula, ponto, ponto e vírgula quando for mesmo necessário, dois-pontos quando houver relação clara, parênteses quando ajudarem, e quebra de frase. O ritmo do texto não pode depender de travessão, e pontuação sofisticada perde para a frase simples que comunica melhor.
+
+**Escreva para aquela empresa.** Antes de redigir, levante nome, segmento, produto, serviço, público, localização, diferenciais reais, forma de trabalho, materiais fornecidos, fotos e vídeos disponíveis, informações institucionais, dados reais e a linguagem que o próprio negócio usa. Use o vocabulário do cliente: se ele fala "obra", não escreva "projeto arquitetônico". Uma landing de empresa local tem de parecer escrita para aquela empresa.
+
+**Nunca invente informação.** Número, cliente, avaliação, depoimento, certificação, prêmio, tempo de mercado, quantidade de atendimentos, resultado, característica de produto, funcionalidade, parceiro, estatística ou dado institucional: só entra o que foi fornecido pelo projeto ou verificado. **Não existe número de exemplo em página publicada.** Faltou dado, peça ao cliente ou reescreva a seção com o que é verdadeiro. Sem depoimento real, autorizado e atribuível, **não existe seção de depoimentos**.
+
+**Texto curto e humano.** Frase simples e objetiva, sem tom de artigo acadêmico nem de apresentação corporativa. O visitante precisa entender rápido: o que a empresa faz, para quem trabalha, que problema resolve, por que escolher aquela empresa e como contratar. Não aumente o texto para preencher seção: seção sem o que dizer ganha conteúdo real, vira demonstração visual (§9.14) ou some.
+
+**Títulos e CTAs concretos.** Troque "Soluções para o seu negócio" por "Galpões e mezaninos em estrutura metálica em Sorriso". Troque "Saiba mais", "Comece agora", "Descubra mais" e "Fale com um especialista" por "Pedir orçamento", "Chamar no WhatsApp", "Ver nossos serviços", "Agendar atendimento", "Ver produtos", "Conhecer a empresa". O botão explica a ação real; não faz propaganda abstrata.
+
+**A arquitetura nasce do negócio.** Não monte por padrão `hero → 3 cards → números → benefícios → depoimentos → planos → FAQ → CTA`; essa sequência só entra quando fizer sentido. Uma empresa pode precisar de `hero → serviços → processo → trabalhos realizados → localização → contato`; outra de `hero → produto → demonstração → funcionalidades → comparação → preço → FAQ`; outra de `hero → história → estrutura → serviços → fotos reais → localização → contato`.
+
+**Conteúdo real primeiro.** Informação, foto, vídeo e documento institucional da empresa formam a narrativa. Trabalho realizado, produto, instalação, equipe, veículo, equipamento e projeto têm prioridade sobre banco de imagens quando couberem no contexto. E texto não faz o trabalho da imagem: processo, produto ou funcionamento que se demonstram melhor visualmente viram animação, motion graphics, vídeo real, fotografia, SVG, diagrama ou screenshot (§9.14).
+
+**Revisão anti-IA antes de entregar (obrigatória).** A pergunta que decide: *"se eu removesse a marca e o nome da empresa, esse texto poderia pertencer a qualquer outra empresa?"* Se sim, reescreva. Depois confira: excesso de travessão, frase artificial, palavra de marketing desnecessária, título genérico, repetição, afirmação sem comprovação, estrutura repetitiva, texto que não parece escrito para essa empresa, dificuldade de entendimento, leitura em voz alta que soa estranha, conteúdo que não ajuda a decidir. Qualquer trecho com aparência artificial é reescrito antes da entrega.
+
+> **A regra principal:** o objetivo não é o texto parecer sofisticado. É parecer **natural, específico, convincente e verdadeiro** — como se uma pessoa tivesse pesquisado a empresa, entendido o negócio e escrito a página para ela. Estética final: profissional, específica, natural, humana, visualmente rica e objetiva. Nunca genérica, excessivamente corporativa, previsível, artificial e cheia de frase de marketing.
+
+### 9.16 SEO e Open Graph — capa editorial por página (obrigatório)
+
+> **Vale para toda landing page e para toda URL pública.** Referência completa, com bloco de `<head>`, geração das capas e validação: [`references/landing-seo-og.md`](references/landing-seo-og.md).
+
+> **O resultado esperado:** quem recebe a URL compartilhada entende na hora *"essa é a página desta empresa sobre este assunto"*, e não *"esse é o site de alguma empresa"*.
+
+**1. SEO não para em `title`, `description` e `sitemap`.** Toda página entrega, no próprio `<head>`: `title`, `meta description`, `canonical`, Open Graph completo (`og:type`, `og:site_name`, `og:url`, `og:title`, `og:description`, `og:image`, `og:image:width`, `og:image:height`, `og:image:alt`), Twitter/X Cards (`summary_large_image`), idioma correto (`lang="pt-BR"`, `og:locale`), favicon, ícones de PWA quando aplicável e dados estruturados Schema.org do tipo real do conteúdo.
+
+**2. `<head>` próprio por URL.** Neste stack o `HtmlRouteAPI` troca `{page}`/`{content}`/`{%nome_active}` dentro de um HTML base, e o `<head>` mora nesse base. Então a landing ou é **página completa com `<head>` próprio** servida por rota dedicada, ou o base ganha marcadores (`{title}`, `{description}`, `{canonical}`, `{og_image}`) que a rota substitui antes de responder. Várias URLs com o mesmo `<head>` é entrega incompleta.
+
+**3. O robô não faz login.** `og:image` e a página precisam ser públicas, em URL absoluta `https` do domínio de produção. Caminho local, `file://` ou `localhost` não geram prévia; página atrás de sessão também não.
+
+**4. A imagem de compartilhamento é uma capa, não um enfeite.** **Nunca use uma imagem genérica para todas as páginas.** Componha a capa daquela URL com logo da empresa, nome da empresa, nome do produto ou serviço, título principal da página, imagem real do negócio, elementos gráficos e cores da identidade, SVG ou padrões do segmento e uma informação curta que identifique o conteúdo. A logo **entra na composição**, nunca isolada sobre fundo vazio: `LOGO + imagem/ilustração do negócio + título da página + elemento gráfico da identidade`. A marca fica reconhecível antes de a pessoa terminar de ler o título.
+
+**5. Uma capa por página.** Projeto com várias landings tem várias capas, com a mesma identidade e conteúdo diferente: `/servicos/instalacao-de-ar-condicionado` mostra instalação; `/servicos/manutencao` mostra manutenção. Repetir a mesma arte só quando não for possível gerar capas específicas, com o motivo registrado no `CLAUDE.md`.
+
+**6. Foto real na frente da ilustração.** Existindo foto ou vídeo real da empresa, do produto, do serviço ou do local, ele tem prioridade na composição quando for relevante — decisivo para empresa local. Banco de imagens aleatório só para preencher, não. Vale a mesma regra de autorização do §9.14. Contexto geográfico entra quando **for parte real do conteúdo**; nunca insira cidade sem relação com a página.
+
+**7. Geração automatizada e reutilizável.** Guarde os dados das páginas em um arquivo único (`docs/design/pages.json`: slug, título, subtítulo, foto, tipo de schema) e gere todas as capas em laço: `dados da página → logo + identidade → título → imagem relacionada → composição → /assets/og/<slug>.jpg`. Caminhos, em ordem de preferência: **Remotion `still`** com uma composition `OgCover` parametrizada (o estúdio já existe se a landing tem hero em vídeo, e é apagado no fim — §9.14), **canvas 2D** com o motor do §9.5, ou HTML/CSS renderizado por navegador headless se o projeto já tiver isso. Geração acontece em desenvolvimento ou no build; para produção vai o arquivo pronto e otimizado (§9.10).
+
+**8. Tamanho e compatibilidade.** 1200×630 horizontal, **JPEG ou PNG** (evite WebP e AVIF: vários previsualizadores não renderizam), ≤ 300 KB, sRGB, conteúdo crítico dentro dos 1000×500 centrais com 60 px de margem, texto curto e de corpo grande, logo inteira e sem corte. Alguns aplicativos recortam a prévia quase quadrada: nada essencial nas laterais externas.
+
+**9. Texto de SEO segue o §9.15.** `title`, `description`, `og:title`, `og:description` e Schema.org são específicos e verdadeiros. Nada de "Conheça nossas soluções e descubra como podemos ajudar você"; escreva o que o visitante encontra naquela URL. **Nenhuma informação inventada** (nota, número de clientes, prêmio, certificação). E a capa tem de representar a mesma página: serviço mostra o serviço, produto mostra o produto, institucional mostra a empresa. Arte bonita sem relação com o conteúdo é erro, não estilo.
+
+**10. A capa não pode parecer template.** Quadrado com logo centralizada, gradiente genérico, imagem de banco com texto por cima, a mesma arte em todas as páginas, banner genérico de SaaS ou composição automática sem identidade: nenhum deles passa.
+
+**11. Landing nova só fica pronta com a capa pronta.** Criar landing inclui, no mesmo processo, **conteúdo + SEO + Open Graph + imagem de compartilhamento + favicon/identidade quando necessário**. Não existe "o SEO fica para depois".
+
+**12. Validação por página, antes de entregar.** `title` próprio · `description` própria · `canonical` correto · `og:title`, `og:description` e `og:url` correspondentes · `og:image` público e acessível · sem caminho local · dimensões declaradas · logo presente quando existe · imagem representando a página · Twitter/X configurado · Schema.org do tipo real · nada inventado · nenhuma capa genérica reutilizada sem necessidade. Depois do build, repita sobre o `dist/` e teste a prévia real colando a URL de produção em um aplicativo de mensagem.
 
 ---
 
@@ -1144,12 +1436,16 @@ Manter `CLAUDE.md` na raiz sempre atualizado (ver §10.1). Toda feature/correç�
 - [ ] `index.html` shell + `styles/tailwind.css` (local, §9.1) + `styles/ds.css` + helpers
 - [ ] `tailwind.config.js` + `tailwind.input.css` + `tools/tailwindcss[.exe]` e `grep -r "cdn.tailwindcss"` vazio
 - [ ] Todo texto do frontend revisado: acentuação, vírgulas e concordância (§9.2)
+- [ ] Source do frontend legível: sem ofuscação, sem classe/ID aleatório, sem segredo (§9.9)
+- [ ] Build separado configurado (`frontend.build.json` + `tools/frontend-build.mjs` + perfil `frontend-dist`) e `dist/`/`build/` no `.gitignore` (§9.10)
+- [ ] Validação pós-build passando e dist testado pelo JAR antes de publicar (§9.10, §14.1)
 - [ ] `.env` + `.gitignore` (`database.db`, `.env`, `tools/tailwindcss*` se binário não versionado)
 - [ ] `CLAUDE.md` criado/atualizado
 - [ ] Rodapé com a marca da Angatu Sistemas em todas as páginas e e-mails (§9.8)
 - [ ] Sem cache: `AssetsAPI.setCacheEnabled(false)`, `no-store` em toda resposta, service worker que não guarda nada (§15)
 - [ ] Cookie de sessão `HttpOnly` + `SameSite` + `Secure` condicional; token nunca em URL (§16)
 - [ ] Páginas fora do rate limit; API e login com o deles (§16.8)
+- [ ] Sendo landing page: background SVG temático, hero em motion graphics, revisão anti-IA do texto e capa de Open Graph por página (§9.14 a §9.16)
 - [ ] Testado subindo o JAR do projeto, nunca por servidor externo ou `file://` (§14.1)
 - [ ] Commit detalhado sem menção a IA + push
 
@@ -1166,6 +1462,11 @@ Manter `CLAUDE.md` na raiz sempre atualizado (ver §10.1). Toda feature/correç�
 - **`isLocalhost()` agora vem do ambiente** (`ANGATU_ENV`) ou do host local, não da pasta de certificados — cheque quem depende disso (cookie `Secure`, atalhos de desenvolvimento).
 - CSP default permissiva — aperte com `JavalinAPI.setSecurityHeader(...)` antes do `new AngatuLib(...)` em produção.
 - `RateLimitConfig`/`BlockInfo` etc. `final` — não estenda.
+- **Tela morta com a API respondendo 100%:** minificador renomeou identificador de topo e `UI`/`net`/`Auth` sumiram. Script clássico exige `minifyIdentifiers: false` + `renameGlobals: false` (§9.10).
+- **Estilo some depois de ligar `renameClasses`:** classe injetada pelo Java (`{%nome_active}`) foi renomeada só no CSS. A prova de segurança precisa ler `src/main/java/**` (§9.10).
+- **Responsividade quebrada no dist:** utilitário do Tailwind entrou na renomeação. Nada que aparece em `styles/tailwind.css` é renomeável.
+- **`mvn package` sem o perfil publica o source legível** — o dist só entra no JAR com `-Pfrontend-dist` (§9.10).
+- **Dist velho no ar:** build gerado antes da última alteração de source; confira o `sourceHash` do `dist/.build-info.json`.
 
 ---
 
@@ -1255,6 +1556,19 @@ Nunca entregue código sem ter compilado e rodado.
 
 > **Rodando por `java -jar`, copiar para `target/classes/public/` NÃO surte efeito** — o classpath é o próprio JAR. Alterações em HTML/JS/CSS exigem `mvn package` de novo. A cópia para `target/classes` só vale rodando por `mvn exec:java`.
 
+5. **Teste os dois modos quando o projeto tem build de frontend (§9.10).** Primeiro o legível, depois o publicável:
+
+```bash
+mvn package -DskipTests && java -jar target/<app>.jar                    # source legível
+node tools/frontend-build.mjs --level=protected                          # gera o dist
+mvn -Pfrontend-dist package -DskipTests && java -jar target/<app>.jar    # é isto que sobe
+```
+
+> Defeito de minificação/ofuscação **não aparece** no modo legível: é exatamente para isso que o segundo teste existe. Abra as telas no navegador, confira o console sem erro, e teste formulário, API, WebSocket, PWA e service worker no dist.
+
+6. **Shutdown limpo:** ao encerrar, garanta `Saveable.shutdown()`, `Task.shutdown()` e `BrowserAPI.shutdown()` (se usou) em shutdown hook.
+7. Só considere pronto após o servidor subir sem exceção e as rotas responderem com o status/body esperados.
+
 ### 14.1 Nunca suba um servidor externo para testar (obrigatório)
 
 O projeto é testado **pelo próprio JAR**, servido pelo `AngatuLib`. É proibido, para "ver a tela funcionando":
@@ -1273,8 +1587,6 @@ mvn package -DskipTests && java -jar target/<app>.jar
 ```
 
 Ao terminar, encerre o processo em vez de deixá-lo segurando a porta e o banco.
-4. **Shutdown limpo:** ao encerrar, garanta `Saveable.shutdown()`, `Task.shutdown()` e `BrowserAPI.shutdown()` (se usou) em shutdown hook.
-5. Só considere pronto após servidor subir sem exceção e rotas responderem com status/body esperados.
 
 ---
 
@@ -1351,6 +1663,14 @@ API respondia normalmente. Depurar isso é caro, e o usuário final não tem com
 Se o funcionamento sem internet for **pedido**, implemente-o de forma explícita: rede primeiro para
 navegação, cache apenas como reserva de offline, nome de cache versionado, `skipWaiting()` +
 `clients.claim()` e limpeza das versões antigas no `activate`. Nunca "cache primeiro" para página.
+
+**Hash de assets segue esta regra, não a contraria (§9.10).** Enquanto o projeto está sem cache,
+`hashAssets` fica **desligado**: com `no-store` em toda resposta o hash não compra nada e só
+atrapalha rastrear o arquivo. No dia em que o cliente **pedir** cache, o hash passa a ser
+**obrigatório** — `max-age` longo só é seguro em arquivo cujo nome muda quando o conteúdo muda, e
+o HTML continua `no-store` para sempre apontar para os nomes novos. Vídeo de hero e imagem pesada
+(§9.14) são o caso em que vale levantar a pergunta ao cliente: são os arquivos que mais sofrem com
+`no-store`.
 
 ---
 
@@ -1542,10 +1862,21 @@ Projeto com `BrowserAPI`/Playwright: troque a etapa de execução por
 Chromium) — e reserve mais memória ao contêiner no painel, porque o Chromium roda em processo
 separado e não entra na conta do heap.
 
+> **Projeto com build de frontend (§9.10):** o `dist/` tem de ser gerado **dentro** da imagem, com
+> uma etapa `node:22-alpine` antes da etapa Maven, que roda `tools/frontend-build.mjs` e entrega o
+> `dist/` para o `mvn -Pfrontend-dist package`. A etapa de frontend não entra na imagem final — o
+> runtime continua só JRE + JAR. O Dockerfile completo das três etapas está em
+> [`references/frontend-build.md`](references/frontend-build.md) §15.2. Sem essa etapa, o Coolify
+> empacota o source legível: funciona, mas não é o que foi combinado como publicação.
+
 ### 17.3 Erros que só aparecem em produção
 
 - **CSS sumido:** `public/styles/tailwind.css` gerado e não commitado. O Coolify constrói do
   repositório — o que não foi versionado não existe lá. Versione o CSS gerado (§9.1).
+- **Frontend legível em produção:** faltou a etapa de build na imagem, ou o `mvn package` foi sem
+  `-Pfrontend-dist`. O JAR levou `src/main/resources/public` em vez de `dist/public` (§9.10).
+- **Dist velho publicado:** o `dist/` foi versionado e ficou para trás do source. O `sourceHash` do
+  `dist/.build-info.json` reprova esse caso — mantenha a checagem ligada.
 - **Banco zerado a cada deploy:** faltou o volume em `/data` ou o `ANGATU_DB_PATH`.
 - **Todo mundo com o mesmo IP no rate limit:** faltou `setTrustedProxyHops(1)`; o IP visto é o do proxy.
 - **Login some ao publicar:** cookie `Secure` decidido por `ctx.scheme()`, que dentro do contêiner é

@@ -16,10 +16,11 @@ Tom: direto e técnico — o usuário entende APIs, `.env` e HTML. Traduza conce
 ```
 FASE 0         FASE 1        FASE 2          FASE 3                    FASE 4
 PREPARAÇÃO → ENTREVISTA → SISTEMA DE    → GERAR E REVISAR EM LOOP → ENTREGAR
-de marca     (3 partes)    DESIGN          (gerar → mostrar →          (bundle
+de marca     (4 partes)    DESIGN          (gerar → mostrar →          (bundle
              A: Produto    (traduzir →     feedback → editar/           para
              B: Sensação   criar tokens)   variante → repetir)          deploy)
              C: Visual
+             D: Marca e material real
 ```
 
 Estado persiste em `.brand/metadata.json` (espelhando `.stitch/metadata.json` original). Se existir com status além de `interview`, retome da fase salva.
@@ -48,14 +49,16 @@ Pergunte: cores existentes ou sensação de cor, fonte moderna vs tradicional, f
 
 **Transição:** direção de cor + direção tipográfica + direção de forma. Confirme resumo completo antes de gerar.
 
-### Imagens
+### Fase D: marca e material real (obrigatória — §9.14 do SKILL.md)
 
-Não peça imagens/logos. Se o usuário anexar espontaneamente (logo, screenshot, inspiração):
+A landing Angatu não é template com logo trocada: ela usa a **logo oficial** e o **material real** da empresa. Pergunte, sempre:
 
-1. Peça que descreva com palavras (cores dominantes, humor, linguagem de formas, tipografia).
-2. Salve o original em `.brand/user-assets/` com nome descritivo.
-3. Incorpore os atributos descritos no sistema e nos prompts.
-4. Avise: "Anotei o estilo que você descreveu e vou refletir no design. O arquivo original está no bundle para você trocar no HTML com um simples `<img>` ou `ImageAPI`."
+1. **Logo oficial** — arquivo vetorial ou PNG de alta resolução, em variante clara e escura se houver. É ela que vira a marca d'água do vídeo do hero; **nunca redesenhe à mão**.
+2. **Material real disponível** — fotos da empresa, da equipe, do estabelecimento, de máquinas, produtos, processos, obras, veículos, clientes divulgados pela própria empresa, registros históricos, vídeos institucionais, documentários.
+3. **Autorização de uso** — confirme, item a item, que a empresa pode usar aquele material (foto de pessoa, obra de terceiro, trecho de documentário e imagem de cliente têm dono). **Sem autorização confirmada, o material não entra.** Registre a origem e a autorização no `CLAUDE.md`.
+4. **Segmento e vocabulário visual** — de que ramo é a empresa, o que aparece no dia a dia dela (ferramentas, ambientes, artefatos). É daí que sai o **background SVG temático exclusivo** do §9.14.
+
+Salve os arquivos em `.brand/user-assets/` com nome descritivo, peça a descrição em palavras do que cada peça mostra e incorpore no sistema de design. Material real é prioridade sobre ilustração genérica — mas só quando tiver relação clara com o conteúdo; nada entra para preencher espaço.
 
 ## Fase 2 — Criação do sistema de design
 
@@ -91,15 +94,15 @@ Não peça imagens/logos. Se o usuário anexar espontaneamente (logo, screenshot
 
 ### Primeira geração
 
-1. Selecione seções por tipo de produto (hero, benefícios, prova social, FAQ, CTA, footer — taxonomia do `stitch-architecture.md` original, adaptada para HTML vanilla).
+1. **Monte a arquitetura a partir do negócio, não de uma taxonomia fixa (§9.15 do SKILL.md).** Nada de `hero → 3 cards → números → benefícios → depoimentos → planos → FAQ → CTA` por inércia: serviço local costuma pedir `hero → serviços → processo → trabalhos realizados → localização → contato`; produto pede `hero → produto → demonstração → funcionalidades → comparação → preço → FAQ`; institucional pede `hero → história → estrutura → serviços → fotos reais → localização → contato`. **Prova social só existe com depoimento real, autorizado e atribuível.**
 2. Monte o prompt de geração a partir do `DESIGN.md` + tokens do MASTER.
-3. Gere `desktop-v1.html` em `.brand/designs/` (e `mobile-v1.html` se necessário) — HTML vanilla + `styles/tailwind.css` (local, §9.1) + `styles/ds.css`.
-4. Abra no navegador (`start` / `open` / `xdg-open`) e valide responsivo.
+3. Gere `desktop-v1.html` em `.brand/designs/` (e `mobile-v1.html` se necessário) — HTML vanilla + `styles/tailwind.css` (local, §9.1) + `styles/ds.css`. **Já nesta primeira versão entram o background SVG temático e o hero em motion graphics do §9.14, e todo texto nasce sob a revisão anti-IA do §9.15** (ver `landing-motion.md` e `landing-copy.md`).
+4. **Valide rodando o JAR do projeto (§14.1 do SKILL.md), nunca por `file://` nem por servidor estático.** Copie a versão em revisão para `src/main/resources/public/`, rode `mvn package -DskipTests && java -jar target/<app>.jar` e abra `http://localhost:8080/<pagina>`. Fora do servidor real não existem sessão, API, substituição de `{content}` nem política de segurança, e o defeito aparece só em produção. `.brand/designs/` guarda o histórico de versões, não é o lugar de visualizar.
 5. Salve estado em `.brand/metadata.json`.
 
 ### Apresentação
 
-1. Salve e abra o HTML local.
+1. Publique a versão em revisão em `public/` e suba o JAR (§14.1).
 2. Oriente: "Abri a versão mais recente no navegador. Hero no topo com headline e CTA, depois {seções}, footer no final."
 3. Faça as 3 perguntas:
    - "Qual sua reação nos primeiros 5 segundos?"
@@ -137,24 +140,28 @@ Após aprovação desktop: "Quer que eu gere o layout mobile também?" Se sim, g
   assets/
     {imagens do usuário}
   public/assets/
-    og-{tema}.png         # arte generativa por tema (§9.5)
+    og/<slug>.jpg         # capa editorial por página (§9.16)
+    hero-desktop.mp4      # hero em motion graphics (§9.14), se houver
+    bg-<segmento>.svg     # background temático exclusivo (§9.14)
   DEPLOY.md               # checklist de deploy
 ```
 
 1. Copie a última versão aprovada para `index.html`/`mobile.html`.
 2. Gere `color-tokens.json` (cor primária, modo, variante, fontes, roundness).
 3. Copie `DESIGN.md` e assets do usuário.
-4. Gere `og:image` via canvas generativo (§9.5) + `favicon`.
-5. Gere `DEPLOY.md` (checklist: `new AngatuLib("loja.angatusistemas.com.br", 1716, true)`, `HtmlRouteAPI`, env vars).
-6. Zip: `Compress-Archive` / `zip -r "{project-name}-landing-page.zip" "{project-name}-landing-page/"`.
+4. Gere a **capa de compartilhamento por página** conforme o §9.16 (logo + imagem real + título da página + grafismo da identidade, 1200×630, em `public/assets/og/<slug>.jpg`) e o `favicon`. Ver `landing-seo-og.md`. Uma arte genérica repetida em todas as URLs não passa.
+5. Escreva o `<head>` completo de cada URL (title, description, canonical, Open Graph, Twitter, Schema.org, favicon) conforme o §9.16.
+6. **Revisão anti-IA obrigatória (§9.15):** releia todo o texto com a pergunta "se eu tirasse a marca, esse texto serviria para qualquer empresa?" e reescreva o que passar. Rode a validação de 15 pontos do §9.16.
+7. Gere `DEPLOY.md` (checklist: `new AngatuLib("loja.angatusistemas.com.br", 1716, true)`, `HtmlRouteAPI`, env vars).
+8. Zip: `Compress-Archive` / `zip -r "{project-name}-landing-page.zip" "{project-name}-landing-page/"`.
 
 ## Recuperação
 
-- **Sessão interrompida:** carregue `.brand/metadata.json`, abra o último HTML e pergunte onde continuar.
+- **Sessão interrompida:** carregue `.brand/metadata.json`, suba o JAR com a última versão e pergunte onde continuar.
 - **Geração falhou:** não tente de novo imediatamente; verifique estado; tente uma vez com prompt simplificado.
 - **Projeto expirado:** "Projeto anterior expirou, mas os dados de marca estão salvos. Recriando."
 
 ---
 *Fonte original: `brand-landingpage/SKILL.md` + `references/{interview-framework,stitch-architecture,state-and-pitfalls}.md` · Tradução, adaptação vanilla e auditoria Angatu Sistemas — @author Angatu Sistemas*
 
-**Otimização Angatu nesta versão:** fluxo sem dependência de Stitch SDK; entrevista condensada em português com validação via `AskUserQuestion`; geração direta em vanilla + Tailwind local; arte generativa obrigatória por tema (canvas 2D §9.5) + `og:image`/`favicon` automáticos; entrega já no padrão `public/` da AngatuLibraries.
+**Otimização Angatu nesta versão:** fluxo sem dependência de Stitch SDK; entrevista condensada em português com validação via `AskUserQuestion`, agora com a Fase D de marca e material real; geração direta em vanilla + Tailwind local; background SVG temático e hero em motion graphics obrigatórios (§9.14, `landing-motion.md`); redação sob revisão anti-IA (§9.15, `landing-copy.md`); capa editorial de Open Graph por página (§9.16, `landing-seo-og.md`); validação sempre pelo JAR do projeto (§14.1); entrega já no padrão `public/` da AngatuLibraries.

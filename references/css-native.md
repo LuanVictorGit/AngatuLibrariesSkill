@@ -172,4 +172,4 @@ Morfologia entre `circle()`/`ellipse()`/`polygon()`/`inset()` quando tipo e cont
 Consulte `tailwind.config.js` e o `Can I Use` para `animation-timeline`, View Transitions, `@starting-style` e anchor positioning; ofereça fallback progressivo (reveal via `IntersectionObserver` + `transform` quando `animation-timeline` não suportado) e teste `prefers-reduced-motion`.
 
 ---
-*Fonte: `css-native/SKILL.md` + `references/modern-css.md` · Tradução, compressão e auditoria Angatu Sistemas — @author Angatu Sistemas*
+*Fonte original: a skill `css-native` (seu `SKILL.md` e o `modern-css.md` dela) · Tradução, compressão e auditoria Angatu Sistemas — @author Angatu Sistemas*
