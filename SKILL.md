@@ -2058,12 +2058,59 @@ POST /api/v1/payments/{id}/refund      estorna o que já foi, total ou parcial
   vira ponto flutuante binário, e centavo em ponto flutuante desanda.
 - **Toda criação leva `X-Idempotency-Key`.** A mesma chave devolve a mesma cobrança, com `200`
   em vez de `201`. Sem ela, o clique duplo do usuário vira duas cobranças.
-- **Cobrança criada não é cobrança paga.** Quem confirma é o webhook ou
-  `GET /api/v1/payments/{id}?refresh=true` — nunca uma consulta em laço.
+- **Cobrança criada não é cobrança paga.** Quem confirma é o CRM, junto ao Mercado Pago. O
+  aviso do provedor chega ao **CRM**, não ao seu projeto: não há nada para configurar no
+  painel do Mercado Pago e nada para implementar em `/api/v1/webhooks/...`. Para saber da
+  aprovação sem perguntar, use o webhook de saída (§19.5). Consulta em laço continua errado.
 - **`422` é recusa por regra e não se repete; `502` é falha do provedor e pode.** Tratar os
   dois igual é como duplicata nasce.
 
-### 19.5 O que nunca fazer
+### 19.5 Saber da aprovação sem perguntar — o webhook de saída do CRM
+
+O CRM faz `POST` num endereço `https` que você cadastra no painel dele (em **Aplicações**),
+a cada mudança de situação de uma cobrança da sua aplicação. O corpo é
+`{ id, type: "payment.updated", previous_status, payment }`, com `payment` na **mesma forma**
+de `GET /api/v1/payments/{id}`.
+
+```
+X-Angatu-Event: payment.updated
+X-Angatu-Delivery: 8f3c1ab29de4771b
+X-Angatu-Timestamp: 1757600000000
+X-Angatu-Signature: sha256=<hmac>
+```
+
+**Confira a assinatura antes de confiar no aviso, sempre.** O seu endereço fica na internet
+pública: sem conferência, quem o descobrir manda um `"approved"` e o seu projeto entrega
+produto de graça. A assinatura é `sha256=` mais o HMAC-SHA256 hexadecimal de
+`<X-Angatu-Timestamp>.<corpo>` com o segredo gerado no painel.
+
+Quatro coisas que decidem entre funcionar e falhar em silêncio:
+
+- **Use o corpo CRU, byte a byte.** É o erro mais comum de todos: um framework que já leu o
+  JSON e o reserializou muda espaços e ordem de chaves, e a assinatura deixa de bater em
+  tudo — sem que nada pareça errado. No Javalin, `ctx.body()` antes de qualquer parse.
+- **Compare em tempo constante e recuse o que for velho.** `MessageDigest.isEqual`, e
+  descarte instante com mais de alguns minutos: assinatura válida não impede alguém de
+  reenviar amanhã um aviso legítimo capturado hoje.
+- **Responda `2xx` em até 15 segundos, assim que gravar**; processe depois. Segurar a
+  resposta enquanto trabalha faz a entrega vencer o tempo e voltar — e aí você processa duas
+  vezes o que já tinha processado uma.
+- **O mesmo aviso pode chegar duas vezes**, e isso não é defeito. Deduplique por
+  `X-Angatu-Delivery`, que não muda entre as tentativas do mesmo aviso e é diferente a cada
+  acontecimento novo.
+
+Sem resposta, o CRM repete seis vezes (30s, 2min, 10min, 1h, 6h) e depois deixa a entrega no
+painel para reenvio manual — nada se perde por o seu sistema ter passado a madrugada fora do
+ar. `4xx` é recusa e **não** se repete.
+
+**O aviso não é uma ordem.** Ele conta o que o CRM já confirmou junto ao provedor; chega
+depois do fato, nunca no lugar dele. Para liberar algo caro com certeza, confira em
+`GET /api/v1/payments/{id}` — o aviso diz *quando* perguntar, não substitui a pergunta.
+
+Receita completa, com exemplo em Java e em Node:
+https://crm.angatusistemas.com.br/docs-pagamentos
+
+### 19.6 O que nunca fazer
 
 - Pedir, gerar ou gravar `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY` ou
   `MP_ACCESS_TOKEN` num projeto de cliente. Se alguma dessas existe no `.env`, está no lugar
@@ -2073,7 +2120,7 @@ POST /api/v1/payments/{id}/refund      estorna o que já foi, total ou parcial
   passado, e só pode ser exibido junto do horário em que foi apurado.
 - Repetir automaticamente uma chamada de IA ou uma criação de cobrança.
 
-### 19.6 Antes de integrar
+### 19.7 Antes de integrar
 
 1. Peça ao dono do projeto um **token do AngatuCRM** com as permissões necessárias e nada
    além (`ai:chat`, `payments:create`, `payments:read`…). Não há autocadastro.
