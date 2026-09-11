@@ -221,6 +221,8 @@ JavaScriptObfuscator.obfuscate(code, {
 
 Só o que a ferramenta prova ser inalcançável (`removeDeadCode` do nível). É proibido "limpar" função que parece não usada: ela pode ser chamada por atributo `onclick=`, por outro script ou por markup gerado no servidor. Toda função referenciada a partir do HTML entra em `reservedGlobals`.
 
+**E todo nome lido entre arquivos também.** `window.UI`, `window.Live`, qualquer coisa escrita num arquivo e usada em outro: fora da lista, o nome é renomeado em cada arquivo separadamente, e o resultado não se parece com um erro — a página carrega e o recurso simplesmente não existe, sem uma linha no console do build. A lista é a única guarda; escreva um teste que a confira quando o global for de um recurso que não aparece em toda tela.
+
 ---
 
 ## 7. HTML
@@ -757,6 +759,7 @@ Situação real e delicada: o projeto chegou com o source já ofuscado, ou com c
 - **Estilo some depois de ligar `renameClasses`:** classe injetada pelo Java (`{%nome_active}`) foi renomeada só no CSS. A prova do §9.3 tem de ler `src/main/java/**`.
 - **Responsividade quebrada:** utilitário do Tailwind entrou na lista de candidatas. Nenhuma classe presente em `styles/tailwind.css` é renomeável (§9.1).
 - **Botão para de funcionar depois de ofuscar:** função chamada por `onclick=` no HTML não estava em `reservedGlobals`.
+- **Recurso inteiro some sem erro nenhum:** global compartilhado entre arquivos (`Live`, `UI`, `AppBus`) fora de `reservedGlobals` — cada arquivo passou a ver um nome diferente.
 - **Service worker preso em versão antiga:** `sw.js` foi hasheado ou ofuscado. Nunca (§12).
 - **`og:image` some do compartilhamento:** arquivo hasheado sem atualizar a meta tag, ou hasheado quando não devia (§8).
 - **Dist velho publicado:** build gerado antes da última alteração no source. O `sourceHash` do `.build-info.json` resolve (§15.3).

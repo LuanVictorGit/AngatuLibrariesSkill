@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveable e frontend vanilla com sistema de design obrigatório (Tailwind local, ds.css, arte generativa por tema). Link oficial https://github.com/LuanVictorGit/AngatuLibraries. Projetos hospedados no Coolify, com Dockerfile obrigatório, inicialização HTTP por padrão e HTTPS apenas por parâmetro explícito. Saveable sem cache em RAM — leitura e gravação direto no SQLite, com mutate/transaction para concorrência. Ao salvar imagens, pergunte sempre ao programador qual estratégia de compressão usar. Frontend segue a lei SOURCE → BUILD → DIST — source sempre legível, e minificação, ofuscação, renomeação de classes e hash de assets só no build, em níveis development/production/protected, com validação que reprova referência quebrada. Landing page exige apresentação rica — background SVG temático do segmento, hero em motion graphics feito no Remotion (ferramenta descartável, renderiza o vídeo e é apagada), vídeo mudo em laço, marca d’água do cliente, fotos e vídeos reais autorizados, redação com revisão anti-IA (sem travessão como muleta, sem palavra de marketing vazia, sem título ou CTA genérico, sem dado inventado) e SEO próprio por URL com capa editorial de Open Graph por página. Inclui 13 referências de frontend auditadas como Angatu Sistemas. PAGAMENTO E IA PASSAM PELA API DO AngatuCRM — nunca pelo provedor direto nem pelas classes MercadoPagoAPI e DeepSeek desta lib, e essa regra vence a seção de integrações: a origem da verdade é https://crm.angatusistemas.com.br/docs-ia para geração de texto (com formatos compatíveis com OpenAI e Anthropic, inclusive Claude Code) e https://crm.angatusistemas.com.br/docs-pagamentos para dinheiro; a credencial é um token do AngatuCRM, e chave de provedor nunca fica no projeto do cliente. Cobre ainda cache (nunca usar sem pedido), rodapé com a marca da Angatu Sistemas, segurança de sessão e API (cookie HttpOnly, token fora da URL, isolamento multi-tenant) e teste sempre pelo JAR do projeto. Dispara em AngatuLibraries, Saveable, Route, JavalinAPI, Coolify, Docker, deploy, HTTPS, criar projeto do zero, nova rota/entidade/tela, imagem, compressão, cache, cookie, sessão, segurança, build de produção, dist, minificar, ofuscar, proteger frontend, renomear classes, hash de assets, anti-bot, hardening, PWA, service worker, source map, landing page, hero, motion graphics, Remotion, background SVG, marca d’água, identidade visual, texto de IA, copywriting, título, CTA, SEO, Open Graph, og:image, Schema.org, canonical, favicon, pagamento, cobrança, PIX, cartão, boleto, checkout, Mercado Pago, split, estorno, webhook de pagamento, conciliação, saldo, extrato, IA, LLM, geração de texto, OpenRouter, OpenAI, Anthropic, Claude Code, chave de API, token da API, teto de gasto, ai:chat.
+description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveable e frontend vanilla com sistema de design obrigatório (Tailwind local, ds.css, arte generativa por tema). Link oficial https://github.com/LuanVictorGit/AngatuLibraries. Projetos hospedados no Coolify, com Dockerfile obrigatório, inicialização HTTP por padrão e HTTPS apenas por parâmetro explícito. Saveable sem cache em RAM — leitura e gravação direto no SQLite, com mutate/transaction para concorrência. Ao salvar imagens, pergunte sempre ao programador qual estratégia de compressão usar. Frontend segue a lei SOURCE → BUILD → DIST — source sempre legível, e minificação, ofuscação, renomeação de classes e hash de assets só no build, em níveis development/production/protected, com validação que reprova referência quebrada. Landing page exige apresentação rica — background SVG temático do segmento, hero em motion graphics feito no Remotion (ferramenta descartável, renderiza o vídeo e é apagada), vídeo mudo em laço, marca d’água do cliente, fotos e vídeos reais autorizados, redação com revisão anti-IA (sem travessão como muleta, sem palavra de marketing vazia, sem título ou CTA genérico, sem dado inventado) e SEO próprio por URL com capa editorial de Open Graph por página. Inclui 13 referências de frontend auditadas como Angatu Sistemas. PAGAMENTO E IA PASSAM PELA API DO AngatuCRM — nunca pelo provedor direto nem pelas classes MercadoPagoAPI e DeepSeek desta lib, e essa regra vence a seção de integrações: a origem da verdade é https://crm.angatusistemas.com.br/docs-ia para geração de texto (com formatos compatíveis com OpenAI e Anthropic, inclusive Claude Code) e https://crm.angatusistemas.com.br/docs-pagamentos para dinheiro; a credencial é um token do AngatuCRM, e chave de provedor nunca fica no projeto do cliente. Cobre ainda cache (nunca usar sem pedido), rodapé com a marca da Angatu Sistemas, segurança de sessão e API (cookie HttpOnly, token fora da URL, isolamento multi-tenant) e teste sempre pelo JAR do projeto. Rota WebSocket tem porteiro proprio: a requisicao de upgrade nao passa pelos filtros da biblioteca, entao a sessao e conferida dentro da rota, um porteiro so por projeto, e canal ao vivo nunca e fonte da verdade. Dispara em AngatuLibraries, Saveable, Route, JavalinAPI, Coolify, Docker, deploy, HTTPS, criar projeto do zero, nova rota/entidade/tela, WebSocket, canal ao vivo, tempo real, notificacao ao vivo, imagem, compressão, cache, cookie, sessão, segurança, build de produção, dist, minificar, ofuscar, proteger frontend, renomear classes, hash de assets, anti-bot, hardening, PWA, service worker, source map, landing page, hero, motion graphics, Remotion, background SVG, marca d’água, identidade visual, texto de IA, copywriting, título, CTA, SEO, Open Graph, og:image, Schema.org, canonical, favicon, pagamento, cobrança, PIX, cartão, boleto, checkout, Mercado Pago, split, estorno, webhook de pagamento, conciliação, saldo, extrato, IA, LLM, geração de texto, OpenRouter, OpenAI, Anthropic, Claude Code, chave de API, token da API, teto de gasto, ai:chat.
 ---
 
 # AngatuLibraries — https://github.com/LuanVictorGit/AngatuLibraries
@@ -12,7 +12,7 @@ description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveabl
 
 ## 0. Princípios do agente neste repo
 
-1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits sempre na branch `development`, nunca na `main`; `main` só com confirmacao explicita do dono do projeto; nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. **Nunca fixe teto de heap com `-Xmx`:** use `-XX:MaxRAMPercentage` junto de `ExitOnOutOfMemoryError` e deixe o limite de memória no painel da hospedagem. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho. 21. **SOURCE legível, BUILD protege, DIST publica (§9.9):** o código-fonte do frontend permanece semântico e depurável do começo ao fim; minificação, ofuscação, renomeação de classes e hash de assets existem **só** no build, gravando em `dist/` — o build nunca reescreve `src/`. 22. **Ofuscação não é segurança (§9.11):** o que chega ao navegador é acessível ao cliente; autorização, regra crítica e anti-abuso ficam no backend (§16), e nenhuma proteção de frontend pode custar funcionamento, acessibilidade ou SEO (ordem de prioridade em §9.9). 23. **Pagamento e IA passam pela API do AngatuCRM (§19):** nunca pelo provedor direto, e **nunca** por `MercadoPagoAPI` ou `DeepSeek` desta lib. A origem da verdade é https://crm.angatusistemas.com.br/docs-ia (IA) e https://crm.angatusistemas.com.br/docs-pagamentos (dinheiro) — **esta regra vence o §8**.
+1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits sempre na branch `development`, nunca na `main`; `main` só com confirmacao explicita do dono do projeto; nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. **Nunca fixe teto de heap com `-Xmx`:** use `-XX:MaxRAMPercentage` junto de `ExitOnOutOfMemoryError` e deixe o limite de memória no painel da hospedagem. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho. 21. **SOURCE legível, BUILD protege, DIST publica (§9.9):** o código-fonte do frontend permanece semântico e depurável do começo ao fim; minificação, ofuscação, renomeação de classes e hash de assets existem **só** no build, gravando em `dist/` — o build nunca reescreve `src/`. 22. **Ofuscação não é segurança (§9.11):** o que chega ao navegador é acessível ao cliente; autorização, regra crítica e anti-abuso ficam no backend (§16), e nenhuma proteção de frontend pode custar funcionamento, acessibilidade ou SEO (ordem de prioridade em §9.9). 23. **Pagamento e IA passam pela API do AngatuCRM (§19):** nunca pelo provedor direto, e **nunca** por `MercadoPagoAPI` ou `DeepSeek` desta lib. A origem da verdade é https://crm.angatusistemas.com.br/docs-ia (IA) e https://crm.angatusistemas.com.br/docs-pagamentos (dinheiro) — **esta regra vence o §8**. 24. **Rota WebSocket confere a sessão dentro dela (§20):** a requisição de *upgrade* não passa pelos filtros da lib — sem filtro de entrada maliciosa, sem limite de requisição, sem cabeçalho de segurança. Rota `WS` sem porteiro **não dá erro**: atende quem chegar. Um porteiro só para o projeto, conferir antes de registrar, e canal ao vivo nunca é fonte da verdade.
 
 ---
 
@@ -409,7 +409,11 @@ public class CreateUserRoute extends Route {
     }
 }
 /**
- * Rota de chat WebSocket.
+ * Rota de chat WebSocket — a FORMA da API, e nao um modelo a copiar.
+ *
+ * Nao ha conferencia de sessao aqui, e a requisicao de upgrade nao passa
+ * pelos filtros da lib: esta rota atende quem chegar. Antes de escrever
+ * uma rota WS de verdade, leia a secao 20.
  *
  * @author Angatu Sistemas
  */
@@ -418,7 +422,8 @@ public class ChatRoute extends Route {
 }
 ```
 
-`RouteType`: `GET, POST, PUT, DELETE, PATCH, WS`. Construtores `protected`. Descoberta via Reflections: toda subclasse concreta com construtor vazio é `newInstance().register()` no `setup` (`app.unsafe.routes.*`). Path params: `"/api/users/{id}"` → `ctx.pathParam("id")`. Não instancie `Route` direto nem chame `register()` antes do setup. Todos os nomes de pacotes/classes/métodos/variáveis sempre em inglês; Javadocs em português com `@author Angatu Sistemas` (§13.4).
+`RouteType`: `GET, POST, PUT, DELETE, PATCH, WS`. **Rota `WS` tem porteiro proprio e regras
+proprias — §20; a requisicao de *upgrade* nao passa por filtro nenhum da lib.** Construtores `protected`. Descoberta via Reflections: toda subclasse concreta com construtor vazio é `newInstance().register()` no `setup` (`app.unsafe.routes.*`). Path params: `"/api/users/{id}"` → `ctx.pathParam("id")`. Não instancie `Route` direto nem chame `register()` antes do setup. Todos os nomes de pacotes/classes/métodos/variáveis sempre em inglês; Javadocs em português com `@author Angatu Sistemas` (§13.4).
 
 ---
 
@@ -1452,6 +1457,7 @@ Manter `CLAUDE.md` na raiz sempre atualizado (ver §10.1). Toda feature/correç�
 - [ ] Cookie de sessão `HttpOnly` + `SameSite` + `Secure` condicional; token nunca em URL (§16)
 - [ ] Páginas fora do rate limit; API e login com o deles (§16.8)
 - [ ] Tem cobrança? Pela API do AngatuCRM (§19), nunca por `MercadoPagoAPI` nem pelo SDK do provedor
+- [ ] Tem rota `WS`? Sessão conferida **dentro** dela, antes de registrar a conexão; 4401 combinado com a tela; ping ligado; canal não empurra o que a tela não pediria (§20)
 - [ ] Tem IA? Pela API do AngatuCRM (§19), nunca por `DeepSeek` nem por chave de provedor no projeto
 - [ ] Sendo landing page: background SVG temático, hero em motion graphics, revisão anti-IA do texto e capa de Open Graph por página (§9.14 a §9.16)
 - [ ] Testado subindo o JAR do projeto, nunca por servidor externo ou `file://` (§14.1)
@@ -1725,8 +1731,12 @@ return null;
 em log de servidor, em log de proxy e no cabeçalho `Referer` ao clicar num link externo.
 
 **Única exceção justificada:** o handshake do WebSocket, porque a API do navegador não permite
-cabeçalho personalizado. Aceite o token na consulta **apenas ali**, prefira o cookie quando ele
-vier, e valide com a mesma função usada nas rotas HTTP.
+cabeçalho personalizado. Aceite o token na consulta **apenas ali**, e valide com a mesma função
+usada nas rotas HTTP.
+
+**E ela só vale quando não há sessão em cookie.** O handshake é um `GET` comum: o navegador manda
+o cookie do mesmo domínio sozinho. Com sessão em cookie `HttpOnly` não há exceção a abrir — confira
+o cookie como em qualquer rota (§20.2).
 
 ### 16.3 Sessão: geração, validade e revogação
 
@@ -2074,3 +2084,166 @@ POST /api/v1/payments/{id}/refund      estorna o que já foi, total ou parcial
    teste do CRM a mantém honesta.
 4. `https://crm.angatusistemas.com.br/llms.txt` traz o mesmo índice em texto puro, para
    agente que prefere ler sem HTML.
+
+---
+
+## 20. Canal ao vivo — WebSocket (obrigatório)
+
+Vale para toda rota `RouteType.WS`. Escrito depois de um canal de IA e um canal de painel
+irem a produção no AngatuCRM; o que está aqui foi apurado lendo o `JavalinJettyServlet` da
+biblioteca, não deduzido.
+
+### 20.1 A requisição de *upgrade* não passa por filtro nenhum
+
+**O porteiro fica dentro da rota, ou não existe.** O servlet do Javalin desvia a requisição
+de *upgrade* **antes** dos handlers de `before`, e é ali que vivem o filtro de entrada
+maliciosa, o limite de requisição e os cabeçalhos de segurança da `AngatuLib`. Só rodam os
+handlers de `WEBSOCKET_BEFORE_UPGRADE`, que a lib não usa.
+
+Consequência: uma rota `WS` que esqueça de conferir a sessão **não dá erro nenhum**. Ela
+atende quem chegar, o console mostra dados reais, e o defeito só aparece no dia em que
+alguém descobre o endereço. Não há segunda camada para pegar isso.
+
+```java
+// ERRADO — e nada avisa. Este é o exemplo que a §5 traz para ilustrar a API,
+// não um modelo a copiar.
+public class ChatRoute extends Route {
+    public ChatRoute() { super("/ws/chat", ws -> ws.onMessage(ctx -> ctx.send(ctx.message()))); }
+}
+```
+
+### 20.2 O cookie viaja no handshake — não coloque token na URL
+
+O *handshake* é um `GET` HTTP comum: o navegador manda o cookie de sessão do mesmo domínio
+sem que o código peça. Com sessão em cookie `HttpOnly`, **não há exceção a abrir**: confira
+o cookie exatamente como nas rotas HTTP.
+
+A exceção da §16.2 (token na consulta, porque a API `WebSocket` do navegador não aceita
+cabeçalho personalizado) vale **só** quando o projeto não tem sessão em cookie. Token em
+URL vaza em histórico, log de proxy e `Referer`; usá-lo tendo cookie é abrir mão de graça.
+
+### 20.3 Um porteiro, não um por canal
+
+Com dois canais, duas cópias da conferência são duas chances de esquecer — e esquecer não
+quebra nada, só abre a porta. Concentre a porta num lugar e faça o canal cuidar só do que
+ele carrega:
+
+```java
+public final class LiveHub {
+
+    private static final int PING_SECONDS = 25;
+    public static final int SESSION_EXPIRED = 4401;
+
+    private final Set<WsContext> viewers = ConcurrentHashMap.newKeySet();
+
+    /** @param ask o que fazer com mensagem da tela; null quando o canal só empurra. */
+    public void accept(WsConfig ws, BiConsumer<WsContext, String> ask) {
+        ws.onConnect(ctx -> {
+            if (Auth.accountOf(ctx) == null) {            // 1. confere
+                ctx.closeSession(SESSION_EXPIRED, "Sessao expirada");
+                return;
+            }
+            ctx.enableAutomaticPings(PING_SECONDS, TimeUnit.SECONDS);
+            viewers.add(ctx);                              // 2. só então registra
+            send(ctx, event("ready"));
+        });
+        ws.onMessage(ctx -> {
+            if (ask == null || !viewers.contains(ctx)) return;   // não passou, não pede
+            ask.accept(ctx, ctx.message());
+        });
+        ws.onClose(viewers::remove);
+        ws.onError(viewers::remove);
+    }
+}
+```
+
+**A ordem é a regra:** conferir, depois registrar. Registrar antes entrega os eventos a
+quem só descobriu o endereço. E mensagem de conexão não registrada é descartada antes de
+virar consulta ao banco — senão o porteiro vale só para o `onConnect`.
+
+### 20.4 4401, e por que um número inventado
+
+O navegador não tem código de fechamento para "sessão expirada". Use **4401** (intervalo
+reservado à aplicação) e trate-o na tela: sessão morta pede login de novo, queda de rede
+pede paciência. **Os dois lados precisam concordar no número** — se o servidor troca e a
+tela não sabe, o painel reconecta em laço contra uma sessão que nunca mais vai abrir, de
+segundo em segundo, enchendo o log com um erro que ninguém vê.
+
+### 20.5 O proxy derruba conexão ociosa
+
+`ctx.enableAutomaticPings(25, TimeUnit.SECONDS)`. O proxy do Coolify fecha conexão parada,
+e um canal honesto fica ocioso a maior parte do tempo — é exatamente quando nada acontece
+que ele não pode cair calado. No navegador, espera crescente entre tentativas
+(`1s, 2s, 5s, 10s, 20s`): reconectar a cada segundo contra um servidor fora do ar
+transforma uma queda em duas.
+
+### 20.6 Canal ao vivo não é fonte da verdade
+
+Ele empurra o que **acabou** de acontecer, e nada mais. Quem abre a tela depois, ou volta
+de uma queda, lê pela rota REST de sempre — uma tela que dependesse só do canal ficaria
+vazia para quem chegou tarde, e vazia é indistinguível de quebrada.
+
+Regras que caem disso:
+
+- **Quem recebe um evento relê, em vez de remendar a tela.** Duas formas de montar a mesma
+  lista divergem no dia em que um campo mudar de um lado só.
+- **Número que a tela mostra sai da rota que o calcula, nunca do evento.** Mandar a
+  contagem junto cria uma segunda fonte, e as duas discordam assim que alguém mexer noutra
+  aba.
+- **Emita um sinal de reconexão** (`open`) para a tela saber a hora de reler. O que passou
+  durante a queda não volta pelo canal.
+
+### 20.7 Uma conexão por aba
+
+Um canal por assunto vira três conexões por aba carregando quase nada cada uma — e três
+reconexões a cada queda. Abra **uma** e deixe as telas se inscreverem:
+
+```js
+const off = Live.on("payment", function (e) { /* ... */ });   // devolve o desinscrever
+```
+
+O conector nasce na primeira inscrição e **só quando há sessão**: a tela de login carrega
+os mesmos scripts e não tem por que abrir nada. Se o projeto tem esteira de ofuscação, o
+global do conector entra em `reservedGlobals` (§9 e `references/frontend-build.md`).
+
+### 20.8 Não empurre o que a tela não pediria
+
+O canal fica aberto em **toda aba**. Tudo que trafega nele chega a quem está em outra tela,
+sem ter pedido nada — e um campo a mais não dá erro, só passa a ser enviado. Fora do canal:
+segredo, token, assinatura recebida, código de pagamento, dado pessoal que a tela busca
+quando alguém clica. A pergunta é "esta pessoa pediria isto agora?", não "esta pessoa teria
+permissão?".
+
+### 20.9 Anunciar nunca pode derrubar quem anuncia
+
+O canal é reflexo, e reflexo não decide nada. Envolva o anúncio em `try/catch` no ponto de
+saída: uma falha ao desenhar uma linha de console não pode virar erro numa rota de webhook
+— o provedor leria o erro como indisponibilidade e reenviaria em cascata.
+
+Anuncie **uma vez por acontecimento**. Método público que chama outro método público do
+mesmo serviço anuncia duas vezes; resolva com uma casca que anuncia e um miolo privado que
+não:
+
+```java
+public static Reception receive(...) { return announce(doReceive(...)); }
+public static Reception process(...) { return announce(doProcess(...)); }
+// doReceive chama doProcess, nunca process
+```
+
+E anuncie **só o que é notícia**: uma confirmação que devolve o mesmo estado de antes faria
+a tela de todo mundo recarregar para mostrar o que já estava nela.
+
+### 20.10 O que dá para testar sem servidor
+
+Conexão de verdade exige o Jetty de pé. O que **não** exige, e é o que mais importa:
+
+- a ordem do porteiro (conferir antes de registrar) e a existência da guarda no `onMessage`;
+- `onConnect(` não aparecer em nenhum arquivo além da porta única, e toda rota
+  `super("/ws...` delegar a um canal em vez de configurar sozinha;
+- o mesmo endereço e o mesmo 4401 nos dois lados (servidor e script da tela);
+- a forma da linha que o canal empurra: os campos que a tela desenha presentes, e os
+  proibidos ausentes;
+- a ordem de gravar antes de anunciar, e o `try/catch` do anúncio.
+
+São testes de texto de fonte, e parecem grosseiros — mas cada um deles trava um defeito que
+não produz erro nenhum em execução.
