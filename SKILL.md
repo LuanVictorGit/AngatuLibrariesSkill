@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveable e frontend vanilla com sistema de design obrigatório (Tailwind local, ds.css, arte generativa por tema). Link oficial https://github.com/LuanVictorGit/AngatuLibraries. Projetos hospedados no Coolify, com Dockerfile obrigatório, inicialização HTTP por padrão e HTTPS apenas por parâmetro explícito. Saveable sem cache em RAM — leitura e gravação direto no SQLite, com mutate/transaction para concorrência. Ao salvar imagens, pergunte sempre ao programador qual estratégia de compressão usar. Frontend segue a lei SOURCE → BUILD → DIST — source sempre legível, e minificação, ofuscação, renomeação de classes e hash de assets só no build, em níveis development/production/protected, com validação que reprova referência quebrada. Landing page exige apresentação rica — background SVG temático do segmento, hero em motion graphics feito no Remotion (ferramenta descartável, renderiza o vídeo e é apagada), vídeo mudo em laço, marca d’água do cliente, fotos e vídeos reais autorizados, redação com revisão anti-IA (sem travessão como muleta, sem palavra de marketing vazia, sem título ou CTA genérico, sem dado inventado) e SEO próprio por URL com capa editorial de Open Graph por página. Inclui 13 referências de frontend auditadas como Angatu Sistemas. Cobre ainda cache (nunca usar sem pedido), rodapé com a marca da Angatu Sistemas, segurança de sessão e API (cookie HttpOnly, token fora da URL, isolamento multi-tenant) e teste sempre pelo JAR do projeto. Dispara em AngatuLibraries, Saveable, Route, JavalinAPI, Coolify, Docker, deploy, HTTPS, criar projeto do zero, nova rota/entidade/tela, imagem, compressão, cache, cookie, sessão, segurança, build de produção, dist, minificar, ofuscar, proteger frontend, renomear classes, hash de assets, anti-bot, hardening, PWA, service worker, source map, landing page, hero, motion graphics, Remotion, background SVG, marca d’água, identidade visual, texto de IA, copywriting, título, CTA, SEO, Open Graph, og:image, Schema.org, canonical, favicon.
+description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveable e frontend vanilla com sistema de design obrigatório (Tailwind local, ds.css, arte generativa por tema). Link oficial https://github.com/LuanVictorGit/AngatuLibraries. Projetos hospedados no Coolify, com Dockerfile obrigatório, inicialização HTTP por padrão e HTTPS apenas por parâmetro explícito. Saveable sem cache em RAM — leitura e gravação direto no SQLite, com mutate/transaction para concorrência. Ao salvar imagens, pergunte sempre ao programador qual estratégia de compressão usar. Frontend segue a lei SOURCE → BUILD → DIST — source sempre legível, e minificação, ofuscação, renomeação de classes e hash de assets só no build, em níveis development/production/protected, com validação que reprova referência quebrada. Landing page exige apresentação rica — background SVG temático do segmento, hero em motion graphics feito no Remotion (ferramenta descartável, renderiza o vídeo e é apagada), vídeo mudo em laço, marca d’água do cliente, fotos e vídeos reais autorizados, redação com revisão anti-IA (sem travessão como muleta, sem palavra de marketing vazia, sem título ou CTA genérico, sem dado inventado) e SEO próprio por URL com capa editorial de Open Graph por página. Inclui 13 referências de frontend auditadas como Angatu Sistemas. PAGAMENTO E IA PASSAM PELA API DO AngatuCRM — nunca pelo provedor direto nem pelas classes MercadoPagoAPI e DeepSeek desta lib, e essa regra vence a seção de integrações: a origem da verdade é https://crm.angatusistemas.com.br/docs-ia para geração de texto (com formatos compatíveis com OpenAI e Anthropic, inclusive Claude Code) e https://crm.angatusistemas.com.br/docs-pagamentos para dinheiro; a credencial é um token do AngatuCRM, e chave de provedor nunca fica no projeto do cliente. Cobre ainda cache (nunca usar sem pedido), rodapé com a marca da Angatu Sistemas, segurança de sessão e API (cookie HttpOnly, token fora da URL, isolamento multi-tenant) e teste sempre pelo JAR do projeto. Dispara em AngatuLibraries, Saveable, Route, JavalinAPI, Coolify, Docker, deploy, HTTPS, criar projeto do zero, nova rota/entidade/tela, imagem, compressão, cache, cookie, sessão, segurança, build de produção, dist, minificar, ofuscar, proteger frontend, renomear classes, hash de assets, anti-bot, hardening, PWA, service worker, source map, landing page, hero, motion graphics, Remotion, background SVG, marca d’água, identidade visual, texto de IA, copywriting, título, CTA, SEO, Open Graph, og:image, Schema.org, canonical, favicon, pagamento, cobrança, PIX, cartão, boleto, checkout, Mercado Pago, split, estorno, webhook de pagamento, conciliação, saldo, extrato, IA, LLM, geração de texto, OpenRouter, OpenAI, Anthropic, Claude Code, chave de API, token da API, teto de gasto, ai:chat.
 ---
 
 # AngatuLibraries — https://github.com/LuanVictorGit/AngatuLibraries
@@ -12,7 +12,7 @@ description: Biblioteca Java 21 da Angatu Sistemas — servidor Javalin, Saveabl
 
 ## 0. Princípios do agente neste repo
 
-1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits sempre na branch `development`, nunca na `main`; `main` só com confirmacao explicita do dono do projeto; nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. **Nunca fixe teto de heap com `-Xmx`:** use `-XX:MaxRAMPercentage` junto de `ExitOnOutOfMemoryError` e deixe o limite de memória no painel da hospedagem. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho. 21. **SOURCE legível, BUILD protege, DIST publica (§9.9):** o código-fonte do frontend permanece semântico e depurável do começo ao fim; minificação, ofuscação, renomeação de classes e hash de assets existem **só** no build, gravando em `dist/` — o build nunca reescreve `src/`. 22. **Ofuscação não é segurança (§9.11):** o que chega ao navegador é acessível ao cliente; autorização, regra crítica e anti-abuso ficam no backend (§16), e nenhuma proteção de frontend pode custar funcionamento, acessibilidade ou SEO (ordem de prioridade em §9.9).
+1. **Lib sempre atualizada (§1.1).** 2. **CLAUDE.md sempre atualizado (§10).** 3. **Commits sempre na branch `development`, nunca na `main`; `main` só com confirmacao explicita do dono do projeto; nunca mencionar Claude/IA (§10.2).** 4. Só adicione deps dos módulos usados. 5. `Saveable` e `Route` só via `extends` (`protected`). 6. **Arquitetura limpa sempre (§13):** extraia utilitários, zero repetição (DRY), Javadocs em toda API pública, código otimizado. 7. **Jetty alinhado ao Javalin (§1.4).** 8. **Sempre testar rodando o servidor (§14).** 9. **Código em inglês, documentação em português (§13.4):** pacotes, classes, métodos e variáveis sempre em inglês; apenas Javadocs/comentários em português; toda classe com auditoria `@author Angatu Sistemas`. 10. **Tailwind sempre local, nunca CDN (§9.1).** Baixe o binário/CLI e gere `public/styles/tailwind.css` local. 11. **Português impecável no frontend (§9.2):** todo texto visível ao usuário com semântica, acentuação, vírgulas e concordância revisadas. 12. **Responsividade sempre em Tailwind CSS (§9.6):** qualquer layout, breakpoint, grid, visibilidade, espaçamento ou tipografia responsiva obrigatoriamente via utilitários responsivos do Tailwind (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca `@media` manual como primeira opção. 13. **Nunca usar cache, a menos que seja pedido (§15):** todo conteúdo vem do servidor a cada requisição — sem service worker que guarda telas, sem `Cache-Control` longo, sem cache de assets. 14. **Rodapé sempre com a marca d'água da Angatu Sistemas (§9.8):** toda página e todo e-mail com rodapé exibem o crédito com o logotipo oficial. 15. **Segurança de sessão e API (§16):** cookie `HttpOnly` + `SameSite`, token nunca em URL, autorização validada no backend em toda rota. 16. **Testar sempre pelo JAR do próprio projeto (§14):** nunca subir servidor externo, nem `python -m http.server`, nem abrir o HTML por `file://`. 17. **Todo projeto tem `Dockerfile` (§17):** a hospedagem é o **Coolify**; sem `Dockerfile` e `.dockerignore` na raiz o projeto não sobe. **Nunca fixe teto de heap com `-Xmx`:** use `-XX:MaxRAMPercentage` junto de `ExitOnOutOfMemoryError` e deixe o limite de memória no painel da hospedagem. 18. **HTTP por padrão, HTTPS só se pedido (§2.1):** `new AngatuLib(host, port, rateLimit)` sobe em HTTP na porta informada e o TLS é do Coolify; o quarto parâmetro (`manageSsl`) só existe para quem roda fora dele com Let's Encrypt próprio. 19. **`Saveable` não guarda dados em RAM (§4):** toda leitura vai ao banco, toda alteração exige `save()`, registro disputado usa `Saveable.mutate(...)` e consulta frequente por campo exige índice. O formato do banco continua o mesmo (`id`, `data`, um `database.db` por projeto) — nunca altere o esquema de bancos existentes. 20. **Salvou imagem? Pergunte a estratégia de compressão antes (§18)** — nunca escolha sozinho. 21. **SOURCE legível, BUILD protege, DIST publica (§9.9):** o código-fonte do frontend permanece semântico e depurável do começo ao fim; minificação, ofuscação, renomeação de classes e hash de assets existem **só** no build, gravando em `dist/` — o build nunca reescreve `src/`. 22. **Ofuscação não é segurança (§9.11):** o que chega ao navegador é acessível ao cliente; autorização, regra crítica e anti-abuso ficam no backend (§16), e nenhuma proteção de frontend pode custar funcionamento, acessibilidade ou SEO (ordem de prioridade em §9.9). 23. **Pagamento e IA passam pela API do AngatuCRM (§19):** nunca pelo provedor direto, e **nunca** por `MercadoPagoAPI` ou `DeepSeek` desta lib. A origem da verdade é https://crm.angatusistemas.com.br/docs-ia (IA) e https://crm.angatusistemas.com.br/docs-pagamentos (dinheiro) — **esta regra vence o §8**.
 
 ---
 
@@ -535,6 +535,9 @@ Bot.onButtonClick("btn_ok", e -> e.reply("Ok!").setEphemeral(true).queue());
 ```
 
 ### DeepSeek — https://api.deepseek.com/v1/chat/completions
+
+> **Não use em projeto de cliente. Geração de texto vai pela API do AngatuCRM (§19).** Aqui a chave do provedor vive dentro do projeto, o gasto não é medido por aplicação e não há teto: um laço com defeito consome o crédito do mês em minutos.
+
 ```java
 DeepSeek.initialize(); // DEEPSEEK_API_KEY
 String r = DeepSeek.ask("Responda em português", "Capital do Brasil?");
@@ -575,6 +578,9 @@ QRCodeAPI.generateQRCodeWithLogo("texto",300,300, logo, 60);
 ```
 
 ### MercadoPagoAPI — sdk-java 2.9.2
+
+> **Não use em projeto de cliente. Cobrança vai pela API do AngatuCRM (§19).** Esta classe exige o Access Token do Mercado Pago dentro do projeto, e é exatamente isso que a §19 existe para impedir: credencial espalhada, sem split, sem conciliação e sem estorno idempotente. Ela fica aqui para o **próprio AngatuCRM**, que é quem fala com o provedor.
+
 ```java
 MercadoPagoAPI.init("ACCESS_TOKEN"); // ou initFromEnv() MP_ACCESS_TOKEN
 PaymentDTO pix = MercadoPagoAPI.createPixPayment(99.90, "a@x.com", "Compra #123", "pedido-123");
@@ -1445,6 +1451,8 @@ Manter `CLAUDE.md` na raiz sempre atualizado (ver §10.1). Toda feature/correç�
 - [ ] Sem cache: `AssetsAPI.setCacheEnabled(false)`, `no-store` em toda resposta, service worker que não guarda nada (§15)
 - [ ] Cookie de sessão `HttpOnly` + `SameSite` + `Secure` condicional; token nunca em URL (§16)
 - [ ] Páginas fora do rate limit; API e login com o deles (§16.8)
+- [ ] Tem cobrança? Pela API do AngatuCRM (§19), nunca por `MercadoPagoAPI` nem pelo SDK do provedor
+- [ ] Tem IA? Pela API do AngatuCRM (§19), nunca por `DeepSeek` nem por chave de provedor no projeto
 - [ ] Sendo landing page: background SVG temático, hero em motion graphics, revisão anti-IA do texto e capa de Open Graph por página (§9.14 a §9.16)
 - [ ] Testado subindo o JAR do projeto, nunca por servidor externo ou `file://` (§14.1)
 - [ ] Commit detalhado sem menção a IA + push
@@ -1940,3 +1948,129 @@ ImageAPI.createThumbnail(origem, destino, 400, 400);
   entidade `Image` da lib existe para casos pequenos e pontuais (ícone, QR Code) — não para galeria.
 - **Valide antes de gravar:** `ImageAPI.isValidImage(...)`, tamanho máximo e extensão (§16.6).
 - **Nomeie por ID gerado**, nunca pelo nome enviado pelo usuário.
+
+---
+
+## 19. Pagamento e IA passam pela API do AngatuCRM (obrigatório)
+
+> **Fonte da verdade, e não este arquivo:**
+> **IA** → https://crm.angatusistemas.com.br/docs-ia
+> **Dinheiro** → https://crm.angatusistemas.com.br/docs-pagamentos
+> **Contrato completo** → https://crm.angatusistemas.com.br/openapi.json
+>
+> Esta seção resume o que vale na hora de decidir. Antes de escrever a primeira linha de
+> integração, **leia a página** — ela é montada do `openapi.json`, que um teste do CRM confere
+> contra as rotas que existem de verdade, nos dois sentidos. Este arquivo aqui pode
+> envelhecer; aquela página não pode.
+
+### 19.1 A regra
+
+Todo projeto da Angatu que cobra dinheiro ou gera texto por IA **chama a API do AngatuCRM**.
+Nunca o provedor direto, nunca o SDK do provedor, e **nunca as classes de conveniência da
+própria AngatuLibraries** — `MercadoPagoAPI` e `DeepSeek` do §8 ficam fora deste caminho.
+
+**Esta regra vence o §8.** Se o §8 mostra uma classe que resolve o mesmo problema, a §19
+manda. As classes continuam documentadas porque o **próprio AngatuCRM** as usa: ele é quem
+fala com o provedor, e é o único lugar onde a credencial existe.
+
+### 19.2 Por que, em uma frase cada
+
+- **A chave é uma só, e ela paga.** Espalhada em cinco projetos, ela existe em cinco lugares
+  para vazar, não dá para saber qual deles gastou o crédito do mês, e revogá-la derruba os
+  cinco de uma vez.
+- **O gasto fica atribuído a quem pediu.** Cada projeto autentica com um token **do CRM**, que
+  pode ser revogado sozinho, e o consumo aparece por aplicação.
+- **O teto existe antes da chamada.** Um laço com defeito num projeto consumiria o crédito
+  inteiro em minutos; a cota é conferida antes de a chamada sair, e a recusa custa zero.
+- **Dinheiro precisa de mais que criar cobrança.** Split para a conta do cliente, conciliação
+  contra o extrato oficial, estorno idempotente e webhook com assinatura verificada já estão
+  feitos no CRM. Refazer isso por projeto é refazer os bugs também.
+
+### 19.3 IA — três formatos, o mesmo teto
+
+Escolha pelo cliente que o projeto **já tem**, e não pelo que é mais bonito:
+
+| Formato | Endereço base | Quando |
+|---|---|---|
+| Nativo | `https://crm.angatusistemas.com.br/api/v1` | Código novo, sem dependência |
+| OpenAI | `https://crm.angatusistemas.com.br/api/v1/ai/openai` | SDK da OpenAI, LangChain, LlamaIndex |
+| Anthropic | `https://crm.angatusistemas.com.br/api/v1/ai/anthropic` | Claude Code, SDK da Anthropic |
+
+A credencial é sempre o **token do AngatuCRM** com a permissão `ai:chat`, em
+`Authorization: Bearer` ou `x-api-key`. **Nunca em query string.**
+
+```java
+// Nativo — POST /api/v1/ai/chat
+JsonObject body = new JsonObject();
+body.addProperty("model", "openai/gpt-4o-mini");   // id do OpenRouter, liberado no CRM
+body.add("messages", messages);                     // [{role, content}]
+body.addProperty("max_tokens", 400);
+// Authorization: Bearer <token do CRM>
+// Resposta: content, finish_reason, usage{prompt_tokens, completion_tokens, cost}, latency_ms
+```
+
+Para o **Claude Code**, duas variáveis e ele passa a gastar pelo teto do CRM:
+
+```bash
+export ANTHROPIC_BASE_URL="https://crm.angatusistemas.com.br/api/v1/ai/anthropic"
+export ANTHROPIC_AUTH_TOKEN="<token do CRM>"
+export ANTHROPIC_MODEL="anthropic/claude-3.5-sonnet"
+```
+
+**Três coisas que mudam o código de quem integra:**
+
+1. `stream: true` responde SSE válido, mas **o texto chega de uma vez** — não há entrega
+   incremental. Interface que depende de texto sendo digitado precisa saber disso.
+2. Só **blocos de texto**. Imagem, uso de ferramenta e resultado de ferramenta são recusados
+   pelo nome do bloco, nunca descartados em silêncio.
+3. `429` é limite de **dinheiro**, não de tráfego: respeite o `Retry-After` e **não repita em
+   laço**. Cada tentativa gera texto e custa de novo.
+
+O `model` é sempre um id do **OpenRouter** (`openai/gpt-4o-mini`,
+`anthropic/claude-3.5-sonnet`), nos três formatos, e precisa estar liberado no CRM. Não há
+tradução de apelido — `GET /api/v1/ai/models` lista os que valem.
+
+### 19.4 Dinheiro — o que o projeto chama
+
+```
+POST /api/v1/payments                  PIX
+POST /api/v1/payments/card             cartão, a partir do token gerado no navegador
+POST /api/v1/payments/boleto           boleto, com pagador completo
+POST /api/v1/checkout/preferences      checkout hospedado
+GET  /api/v1/payments/{id}             consulta  (?refresh=true força o provedor)
+POST /api/v1/payments/{id}/cancel      cancela o que ainda não foi aprovado
+POST /api/v1/payments/{id}/refund      estorna o que já foi, total ou parcial
+```
+
+**Quatro regras que evitam os erros caros:**
+
+- **Dinheiro trafega como texto decimal** (`"49.90"`), nunca como número JSON: número JSON
+  vira ponto flutuante binário, e centavo em ponto flutuante desanda.
+- **Toda criação leva `X-Idempotency-Key`.** A mesma chave devolve a mesma cobrança, com `200`
+  em vez de `201`. Sem ela, o clique duplo do usuário vira duas cobranças.
+- **Cobrança criada não é cobrança paga.** Quem confirma é o webhook ou
+  `GET /api/v1/payments/{id}?refresh=true` — nunca uma consulta em laço.
+- **`422` é recusa por regra e não se repete; `502` é falha do provedor e pode.** Tratar os
+  dois igual é como duplicata nasce.
+
+### 19.5 O que nunca fazer
+
+- Pedir, gerar ou gravar `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY` ou
+  `MP_ACCESS_TOKEN` num projeto de cliente. Se alguma dessas existe no `.env`, está no lugar
+  errado — o certo é um token do AngatuCRM.
+- Chamar `MercadoPagoAPI` ou `DeepSeek` (§8) fora do próprio AngatuCRM.
+- Somar cobranças para obter saldo. Saldo vem do extrato oficial, é sempre de um instante
+  passado, e só pode ser exibido junto do horário em que foi apurado.
+- Repetir automaticamente uma chamada de IA ou uma criação de cobrança.
+
+### 19.6 Antes de integrar
+
+1. Peça ao dono do projeto um **token do AngatuCRM** com as permissões necessárias e nada
+   além (`ai:chat`, `payments:create`, `payments:read`…). Não há autocadastro.
+2. Leia a página do assunto: [docs-ia](https://crm.angatusistemas.com.br/docs-ia) ou
+   [docs-pagamentos](https://crm.angatusistemas.com.br/docs-pagamentos).
+3. Confira os campos exatos em
+   [openapi.json](https://crm.angatusistemas.com.br/openapi.json) — é a fonte única, e um
+   teste do CRM a mantém honesta.
+4. `https://crm.angatusistemas.com.br/llms.txt` traz o mesmo índice em texto puro, para
+   agente que prefere ler sem HTML.
