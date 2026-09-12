@@ -87,6 +87,7 @@ about not having a JAR — it never applies to a project that has one.
 - [ ] Build configured with obfuscation on (R19) and `dist/`/`build/` in `.gitignore`
 - [ ] Post-build validation passing, and the dist tested through the JAR before publishing
 - [ ] Every rendered surface on the design system, error and block pages included (R13)
+- [ ] Presentational media and text protected per element; contact data and form fields still copyable (R30)
 - [ ] `.env` + `.gitignore` (`database.db`, `.env`, `tools/tailwindcss*` when not committed)
 - [ ] `CLAUDE.md` created, with the `angatu-skill` block (R1)
 - [ ] Angatu footer on every page and e-mail (R17)

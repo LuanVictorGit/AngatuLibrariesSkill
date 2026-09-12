@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project; once a repo's CLAUDE.md names it, it governs every session there. Rules that override default behaviour - payments and AI go through the AngatuCRM API, never MercadoPagoAPI, DeepSeek or a provider SDK; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable and only the build obfuscates into dist, mandatory even on projects that never asked for it; every project ships a Dockerfile for Coolify; WebSocket routes check the session inside the route; the client is hostile, so never trust what the browser sends. Always ask first - backend or static landing page, image compression strategy, Cloudflare Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, hero, Remotion, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, minify, obfuscate, WebSocket, live channel, session, cookie, security, rate limit, Turnstile, captcha, cache, image, compression, payment, PIX, Mercado Pago, checkout, webhook, AI, LLM, ai:chat.
+description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project; once a repo's CLAUDE.md names it, it governs every session there. Rules that override default behaviour - payments and AI go through the AngatuCRM API, never MercadoPagoAPI, DeepSeek or a provider SDK; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable and only the build obfuscates into dist, mandatory even on projects that never asked for it; every project ships a Dockerfile for Coolify; WebSocket routes check the session inside the route; the client is hostile, so never trust what the browser sends. Always ask first - backend or static landing page, image compression strategy, Cloudflare Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, hero, Remotion, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, minify, obfuscate, WebSocket, live channel, session, cookie, security, rate limit, Turnstile, captcha, cache, image, compression, block download, copy protection, watermark, gallery, payment, PIX, Mercado Pago, checkout, webhook, AI, LLM, ai:chat.
 ---
 
 # AngatuLibraries — Angatu Sistemas engineering standard
@@ -55,6 +55,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Static site with no Java: nginx, Coolify Static | `references/static-site.md` |
 | Transactional e-mail HTML | `references/email-design.md` |
 | Previewing a frontend and actually looking at it | `references/frontend-preview.md` |
+| Blocking image/video saving and text copying | `references/content-protection.md` |
 
 ---
 
@@ -148,6 +149,13 @@ rule says which one wins.
   until it has been rendered and inspected at desktop and mobile widths, and what was seen has been
   stated. Starting a server is not the verification; looking is.
   → `references/frontend-preview.md`
+- **R30 — Presentational media and text are protected from casual copying.** Images and videos that are
+  on the page as presentation block right-click saving and dragging; presentational text blocks copying.
+  **Applied per element, never page-wide**, and bounded by R20: anything the visitor legitimately needs
+  to copy stays copyable — phone, address, e-mail, PIX, order and tracking codes, and every form field.
+  No page-wide `contextmenu` block, no intercepted keyboard shortcut, no devtools detection. This is
+  deterrence, not protection: what actually protects media is a watermark plus a reduced public version
+  with the original behind an authenticated route. → `references/content-protection.md`
 
 ### Security
 
@@ -237,11 +245,14 @@ visto rodando antes de ser entregue · R22 o cliente é hostil: presuma um proxy
 R23 cookie HttpOnly, token fora da URL, autorização em toda rota · R24 rota WS confere a sessão
 dentro dela · R25 nunca usar cache sem pedido · R26 pagamento e IA pela API do AngatuCRM ·
 R27 Turnstile: chaves no `.env` e aviso na política de privacidade · R28 perguntar a estratégia de
-compressão antes de salvar imagem · R29 testar pelo JAR do próprio projeto.
+compressão antes de salvar imagem · R29 testar pelo JAR do próprio projeto · R30 mídia e texto de
+apresentação protegidos de cópia casual, por elemento e nunca na página inteira — telefone, endereço,
+PIX, código de pedido e campo de formulário continuam copiáveis.
 
 ### Decisões registradas deste projeto
 - Compressão de imagem (G2): _(a definir)_
 - Turnstile (G4): _(a definir)_
+- Proteção de conteúdo (R30): _(a definir)_
 - Cache (G3): não usar
 <!-- angatu-skill:end -->
 ```

@@ -216,6 +216,9 @@ Same rule: 3–5 named easings, centralised in `--ease-*`.
 - [ ] `prefers-reduced-motion` implemented and tested
 - [ ] Run again against `dist/` after the build — obfuscation defects exist only there
       (`frontend-build.md`)
+- [ ] Content protection applied per element, never page-wide, with contact data and form fields still
+      copyable (R30, `content-protection.md`):
+      `grep -rn "oncontextmenu\|document.oncontextmenu\|addEventListener..contextmenu" --include='*.js' --include='*.html' src/main/resources/public`
 
 ---
 
@@ -231,6 +234,9 @@ Same rule: 3–5 named easings, centralised in `--ease-*`.
 - A rendered surface that never got the design system (R13) — an error page, an e-mail or a print view
   left on browser defaults
 - Anything scrolling horizontally at 375px
+- A page-wide `contextmenu` block, an intercepted keyboard shortcut, or a devtools-detection loop (R30,
+  `frontend-build.md`) — these punish honest visitors and stop nobody
+- Content protection blocking a phone number, address, PIX key, order code or form field (R30)
 
 ### Important — current sprint
 
