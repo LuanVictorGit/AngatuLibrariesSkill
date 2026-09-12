@@ -1,53 +1,63 @@
-# Redação de Landing Page — linguagem natural e anti-padrões de IA
+# Landing page copy — natural language, and none of the machine-written tells
 
-> **Auditoria:** Angatu Sistemas · Referência completa do **§9.15** do `SKILL.md` · Vale para todo texto visível da landing e também para os textos que aparecem dentro dos motion graphics (§9.14)
-
-> **A regra principal:** o objetivo não é fazer o texto parecer sofisticado. É fazer o texto parecer **natural, específico, convincente e verdadeiro**. A página tem de transmitir que uma pessoa pesquisou aquela empresa, entendeu o negócio e escreveu para ela.
+> Audit: Angatu Sistemas · applies to every visible string on a landing, including the text that appears
+> inside the Remotion motion graphics (`landing-motion.md`).
 >
-> Estética final: **profissional, específica, natural, humana, visualmente rica e objetiva.**
-> Nunca: genérica, excessivamente corporativa, previsível, artificial e cheia de frase de marketing.
-
-Este documento não substitui o §9.2 do `SKILL.md` (português impecável: acentuação, vírgula, concordância). Ele vem depois: primeiro o texto está correto, depois ele deixa de parecer automático.
+> **The main rule:** the goal is not to make the text sound sophisticated. It is to make it sound
+> **natural, specific, convincing and true**. The page has to read as though a person researched that
+> company, understood the business and wrote for it.
+>
+> Final register: **professional, specific, natural, human, visually rich and objective.** Never:
+> generic, over-corporate, predictable, artificial, stuffed with marketing phrases.
+>
+> This does not replace R16 (correct Portuguese: accents, commas, agreement). It comes after: first the
+> text is correct, then it stops sounding automatic.
+>
+> **The copy is in Brazilian Portuguese** — that is the deliverable, and every example below stays in
+> Portuguese for that reason. Only the instructions here are in English.
 
 ---
 
-## 1. Onde a regra se aplica
+## 1. Scope
 
-Hero, títulos, subtítulos, textos institucionais, cards, benefícios, descrições, FAQ, CTAs, rodapé, textos de SEO, metadados, textos de botão, mensagens auxiliares e **os textos que aparecem dentro do vídeo do Remotion**. Não existe trecho isento.
+Hero, headings, subheadings, institutional text, cards, benefits, descriptions, FAQ, CTAs, footer, SEO
+text, metadata, button labels, helper messages, and **the text inside the Remotion video**. No passage
+is exempt. Transactional e-mails follow the same rules (`email-design.md`).
 
 ---
 
-## 2. Anti-padrões que denunciam texto automático
+## 2. Anti-patterns that give machine writing away
 
-Evite deliberadamente:
+Deliberately avoid:
 
-- travessão usado como recurso recorrente de ritmo;
-- frases sempre com a mesma estrutura;
-- listas repetidas com exatamente o mesmo formato;
-- títulos genéricos;
-- subtítulo que apenas repete o título;
-- frase excessivamente polida ou corporativa;
-- palavra de marketing usada sem necessidade;
-- exagero em "inovador", "revolucionário", "potencialize", "transforme", "eleve", "solução completa", "experiência única", "jornada", "ecossistema", "estratégico", "inteligente", "personalizado" e parentes;
-- afirmação grandiosa que não pode ser comprovada;
-- frase que só existe para preencher espaço;
-- introdução longa antes de chegar ao ponto;
-- excesso de palavra abstrata;
-- a mesma ideia repetida em seções diferentes;
-- excesso de emoji;
-- excesso de dois-pontos;
-- "Não é apenas X. É Y.";
-- "Mais do que X, Y.";
-- "De X a Y, fazemos...";
-- simetria excessiva entre frases;
-- ritmo artificialmente perfeito;
-- palavra em inglês quando existe alternativa natural em português;
-- CTA genérico e repetido;
-- depoimento ou informação sem origem em dado real fornecido para o projeto.
+- the em dash used as a recurring rhythm device;
+- sentences that always take the same shape;
+- lists repeated in exactly the same format;
+- generic headings;
+- a subheading that only restates the heading;
+- excessively polished or corporate phrasing;
+- marketing words used without need;
+- overuse of "inovador", "revolucionário", "potencialize", "transforme", "eleve", "solução completa",
+  "experiência única", "jornada", "ecossistema", "estratégico", "inteligente", "personalizado" and
+  their relatives;
+- grand claims that cannot be substantiated;
+- sentences that exist only to fill space;
+- a long run-up before the point;
+- too many abstract words;
+- the same idea repeated in different sections;
+- too many emoji; too many colons;
+- the moulds "Não é apenas X. É Y.", "Mais do que X, Y." and "De X a Y, fazemos...";
+- excessive symmetry between sentences, and artificially perfect rhythm;
+- an English word where a natural Portuguese one exists;
+- a generic CTA, repeated;
+- a testimonial or fact with no origin in real project data.
 
-### 2.1 Vícios de pontuação
+### 2.1 Punctuation
 
-O caractere `—` não é recurso de redação. Use pontuação natural do português: vírgula, ponto, ponto e vírgula quando realmente necessário, dois-pontos quando houver relação clara, parênteses quando forem úteis, e quebra de frase. O texto não pode depender de travessão para criar ritmo. Pontuação sofisticada também não vale a pena quando uma frase simples comunica melhor.
+The character `—` is not a writing device. Use natural Portuguese punctuation: the comma, the full stop,
+the semicolon when genuinely needed, the colon when there is a clear relation, parentheses when they
+help, and simply starting a new sentence. The rhythm must not depend on the em dash, and sophisticated
+punctuation loses to the simple sentence that communicates better.
 
 ```
 Ruim:  Estruturas metálicas — projeto, fabricação e montagem — com equipe própria.
@@ -56,41 +66,52 @@ Bom:   Projetamos, fabricamos e montamos estruturas metálicas com equipe própr
 
 ---
 
-## 3. Escrever para aquela empresa, não para qualquer uma
+## 3. Write for that company, not for any company
 
-Antes de escrever, levante: nome da empresa, segmento, produto, serviço, público, localização, diferenciais reais, como a empresa trabalha, materiais fornecidos, fotos e vídeos disponíveis, informações institucionais, dados reais e a linguagem que o próprio negócio usa.
+Before writing, gather: the company name, sector, product, service, audience, location, real
+differentiators, how they work, materials provided, available photos and videos, institutional
+information, real figures, and **the language the business itself uses**.
 
-Use essas informações. Uma landing de empresa local tem de parecer escrita para aquela empresa, com o vocabulário dela. Se o dono fala "obra", não escreva "projeto arquitetônico"; se ele fala "conserto", não escreva "manutenção corretiva especializada".
-
----
-
-## 4. Não inventar informação
-
-Nunca invente número, cliente, avaliação, depoimento, certificação, prêmio, tempo de mercado, quantidade de atendimentos, resultado, característica do produto, funcionalidade, parceiro, estatística ou informação institucional.
-
-Informação que não foi fornecida ou não pode ser confirmada **não é apresentada como verdadeira**. Não existe "número de exemplo" numa página publicada: ou o dado é real, ou a seção que dependia dele não existe. Quando faltar dado, peça ao cliente ou reescreva a seção com o que é verdadeiro.
-
-Isso vale especialmente para prova social: sem depoimento real, autorizado e atribuível, **não existe seção de depoimentos**.
+Then use it. A local company's landing has to read as though written for that company, in their
+vocabulary. If the owner says "obra", do not write "projeto arquitetônico"; if he says "conserto", do
+not write "manutenção corretiva especializada".
 
 ---
 
-## 5. Texto curto e humano
+## 4. Never invent information
 
-Frase simples e objetiva. Não escreva como artigo acadêmico nem como apresentação corporativa. O visitante precisa entender rápido:
+Never invent a number, a client, a rating, a testimonial, a certification, an award, years in business,
+a volume of work, a result, a product feature, a partner, a statistic or any institutional fact.
 
-1. o que a empresa faz;
-2. para quem ela trabalha;
-3. qual problema resolve;
-4. por que escolher aquela empresa;
-5. como entrar em contato ou contratar.
+Information that was not provided, or cannot be confirmed, **is not presented as true**. There is no
+"example number" on a published page: either the figure is real, or the section that depended on it does
+not exist. When a figure is missing, ask the client or rewrite the section with what is true.
 
-Não aumente a quantidade de texto para preencher seção. Seção com pouco a dizer ou ganha conteúdo real, ou some, ou vira demonstração visual (§9.14).
+This matters most for social proof: without a real, authorised, attributable testimonial, **there is no
+testimonials section**.
 
 ---
 
-## 6. Títulos
+## 5. Short, human text
 
-Título específico, ligado ao negócio. Substitua o genérico por uma mensagem concreta que já explique a oferta.
+Simple, direct sentences. Not an academic article, not a corporate deck. The visitor needs to understand
+quickly:
+
+1. what the company does;
+2. who it works for;
+3. what problem it solves;
+4. why to choose this company;
+5. how to get in touch or hire them.
+
+Do not inflate the text to fill a section. A section with little to say either gains real content,
+disappears, or becomes a visual demonstration (`landing-motion.md`).
+
+---
+
+## 6. Headings
+
+Specific, tied to the business. Replace the generic with a concrete message that already explains the
+offer.
 
 | Genérico | Específico |
 |---|---|
@@ -103,13 +124,13 @@ Título específico, ligado ao negócio. Substitua o genérico por uma mensagem 
 | Qualidade e inovação | Corte a laser em chapa de até 20 mm |
 | O futuro começa agora | Energia solar instalada por equipe própria, com 12 anos de garantia |
 
-O subtítulo acrescenta informação. Se ele só repete o título com outras palavras, apague.
+The subheading adds information. If it only restates the heading in other words, delete it.
 
 ---
 
 ## 7. CTAs
 
-O botão explica a ação real, não faz propaganda abstrata.
+The button explains the real action; it does not advertise abstractly.
 
 | Genérico | Real |
 |---|---|
@@ -120,15 +141,18 @@ O botão explica a ação real, não faz propaganda abstrata.
 | Descubra mais | Conhecer a empresa |
 | Fale com um especialista | Agendar atendimento |
 
-Um mesmo CTA repetido cinco vezes na página também é vício. Varie conforme o que a seção acabou de mostrar, mantendo a ação principal clara (§9.3 do `SKILL.md`: mesmo nome do início ao fim para a mesma ação).
+The same CTA repeated five times down the page is itself a tell. Vary it with what the section just
+showed, while keeping the primary action clear — and keep the same name for the same action from
+beginning to end (`frontend-design.md`).
 
 ---
 
-## 8. A arquitetura nasce do negócio
+## 8. The architecture comes from the business
 
-Não monte a estrutura previsível `hero → 3 cards → números → benefícios → depoimentos → planos → FAQ → CTA` por padrão. Ela só entra quando fizer sentido para aquele negócio.
+Do not default to the predictable `hero → 3 cards → numbers → benefits → testimonials → plans → FAQ →
+CTA`. It belongs only when it makes sense for that business.
 
-Arcos que costumam funcionar, cada um para um tipo de empresa:
+Arcs that tend to work, each for a different kind of company:
 
 ```
 Serviço local:  hero → serviços → processo → trabalhos realizados → localização → contato
@@ -136,50 +160,59 @@ Produto/SaaS:   hero → produto → demonstração → funcionalidades → comp
 Institucional:  hero → história → estrutura → serviços → fotos reais → localização → contato
 ```
 
-A seção existe porque a empresa precisa dela, não porque a lista pedia.
+A section exists because the company needs it, not because a list asked for it.
 
 ---
 
-## 9. Conteúdo real antes de conteúdo genérico
+## 9. Real content before generic content
 
-Quando houver informação, foto, vídeo, documento institucional ou material real, ele vira a base da narrativa. Foto de trabalho realizado, produto, instalação, equipe, veículo, equipamento, projeto e registro da empresa têm prioridade sobre banco de imagens quando forem adequados ao contexto. O visitante precisa perceber que a empresa existe e atua naquele segmento (§9.14, com a regra de autorização).
-
----
-
-## 10. Texto não faz o trabalho da imagem
-
-Não use texto para explicar o que seria demonstrado melhor visualmente. Processo, produto, serviço ou funcionamento pedem animação, motion graphics, vídeo real, fotografia, SVG, diagrama, screenshot ou demonstração (§9.14). O objetivo é reduzir texto desnecessário e aumentar a compreensão.
+Where there is real information, a photo, a video, an institutional document or real material, that
+becomes the basis of the narrative. A photo of completed work, a product, an installation, the team, a
+vehicle, equipment, a project or a company record outranks stock imagery when it suits the context. The
+visitor needs to perceive that the company exists and works in that sector (`landing-motion.md`, with
+the permission rule).
 
 ---
 
-## 11. Revisão anti-IA antes de entregar
+## 10. Text does not do the image's job
 
-**A pergunta que decide:** *"se eu removesse a marca e o nome da empresa, esse texto poderia pertencer a qualquer outra empresa?"* Se sim, reescreva.
+Do not use text to explain what would be better demonstrated visually. A process, a product, a service
+or a mechanism calls for animation, motion graphics, real video, photography, SVG, a diagram, a
+screenshot or a demonstration (`landing-motion.md`). The aim is less unnecessary text and more
+understanding.
 
-Depois verifique, item a item:
+---
 
-- [ ] Existe excesso de travessão?
-- [ ] Existe frase artificial?
-- [ ] Existe palavra de marketing desnecessária?
-- [ ] Existe título genérico?
-- [ ] Existe repetição da mesma ideia?
-- [ ] Existe afirmação sem comprovação?
-- [ ] Existe estrutura repetitiva?
-- [ ] O texto parece escrito para essa empresa?
-- [ ] Uma pessoa comum entende rápido?
-- [ ] O texto soa natural lido em voz alta?
-- [ ] O conteúdo ajuda o visitante a decidir?
+## 11. The anti-machine review, before delivering
 
-Qualquer trecho com aparência artificial é reescrito antes da entrega.
+**The deciding question:** *"se eu removesse a marca e o nome da empresa, esse texto poderia pertencer a
+qualquer outra empresa?"* If yes, rewrite it.
 
-### 11.1 Varredura de apoio
+Then check, item by item:
 
-Os comandos abaixo **sinalizam**, não condenam. Cada ocorrência precisa de justificativa no negócio real ou é reescrita. Uma empresa de mudas pode falar de ecossistema; uma serralheria, não.
+- [ ] Too many em dashes?
+- [ ] Any artificial-sounding sentence?
+- [ ] Any unnecessary marketing word?
+- [ ] Any generic heading?
+- [ ] The same idea repeated?
+- [ ] Any claim without substantiation?
+- [ ] Repetitive structure?
+- [ ] Does it read as written for *this* company?
+- [ ] Would an ordinary person understand it quickly?
+- [ ] Does it sound natural read aloud?
+- [ ] Does the content help the visitor decide?
+
+Anything that looks artificial is rewritten before delivery.
+
+### 11.1 Supporting sweeps
+
+These commands **flag**, they do not condemn. Each hit needs a justification in the real business, or it
+is rewritten. A plant nursery may legitimately talk about an ecosystem; a metalworking shop may not.
 
 ```bash
 LP=src/main/resources/public          # ajuste para os arquivos da landing
 
-# travessão usado como recurso de ritmo (some com o texto dentro de tags e conta)
+# travessão usado como recurso de ritmo
 grep -o "—" $LP/index.html | wc -l
 
 # palavras de marketing vazias
@@ -190,14 +223,11 @@ grep -rniE "não é apenas .+\. é |mais do que .+, |de .+ a .+, (nós )?(fazemo
 
 # CTAs genéricos
 grep -rniE ">[[:space:]]*(saiba mais|comece agora|descubra mais|fale com um especialista|conheça nossas soluções)[[:space:]]*<" $LP --include="*.html"
-
-# emoji e dois-pontos em excesso
-grep -oE ":" $LP/index.html | wc -l
 ```
 
 ---
 
-## 12. Antes e depois
+## 12. Before and after
 
 ```
 Antes (genérico, com cara de gerado)
@@ -213,7 +243,7 @@ Depois (específico, humano)
   CTA:       Chamar no WhatsApp
 ```
 
-O segundo texto não é mais bonito. Ele é mais verdadeiro, mais específico e responde ao que o visitante precisa saber.
+The second is not prettier. It is truer, more specific, and it answers what the visitor needs to know.
 
 ---
-*Auditoria e otimização: Angatu Sistemas · Referência do §9.15 do `SKILL.md`*
+*Audit and optimisation: Angatu Sistemas*

@@ -1,17 +1,20 @@
-# SEO e Open Graph — capa editorial por página
+# SEO and Open Graph — an editorial cover per page
 
-> **Auditoria:** Angatu Sistemas · Referência completa do **§9.16** do `SKILL.md` · Stack Angatu (Javalin + `HtmlRouteAPI` + vanilla)
-
-> **O resultado esperado:** quem recebe a URL compartilhada entende na hora *"essa é a página desta empresa sobre este assunto"*, e não *"esse é o site de alguma empresa"*.
+> Audit: Angatu Sistemas · Angatu stack (Javalin + `HtmlRouteAPI` + vanilla, or the static track).
+> Applies to every landing page and **every public URL**.
 >
-> Priorize: logo real, conteúdo específico, imagem real quando existir, identidade visual, composição profissional e informação objetiva.
-> Evite: logo isolada, fundo genérico, texto genérico e a mesma imagem para o site inteiro.
+> **The expected result:** whoever receives the shared URL understands immediately *"essa é a página
+> desta empresa sobre este assunto"*, and not *"esse é o site de alguma empresa"*.
+>
+> Prioritise: the real logo, specific content, a real image where one exists, the visual identity, a
+> professional composition, objective information.
+> Avoid: an isolated logo, a generic background, generic text, and the same image across the whole site.
 
 ---
 
-## 1. O conjunto completo (não é só `title` e `description`)
+## 1. The complete set — it is not just `title` and `description`
 
-Toda página entrega, no próprio `<head>`:
+Every page delivers, in its own `<head>`:
 
 ```html
 <html lang="pt-BR">
@@ -46,13 +49,22 @@ Toda página entrega, no próprio `<head>`:
 </head>
 ```
 
-Também entram, quando fizerem sentido: ícones de PWA, `robots`, `hreflang` e dados estruturados do tipo certo (`LocalBusiness`, `Organization`, `Service`, `Product`, `FAQPage`).
+Also include, where they make sense: PWA icons, `robots`, `hreflang`, and structured data of the right
+type (`LocalBusiness`, `Organization`, `Service`, `Product`, `FAQPage`).
 
-### 1.1 Como servir `<head>` próprio neste stack
+### 1.1 Serving a per-URL `<head>` in this stack
 
-O `HtmlRouteAPI` monta a página trocando `{page}`, `{content}` e `{%nome_active}` dentro de um HTML base. Como o `<head>` mora nesse base, uma landing precisa de uma destas duas saídas:
+This depends on which track gate G1 chose (`landing-intake.md`).
 
-**Opção A (recomendada para landing):** a landing é uma **página completa**, com `<head>` próprio, servida por rota dedicada.
+**Static track:** nothing to do. Each page is its own file with its own complete `<head>`
+(`static-site.md`).
+
+**Backend track:** `HtmlRouteAPI` assembles the page by substituting `{page}`, `{content}` and
+`{%nome_active}` inside a base HTML, and the `<head>` lives in that base. So a landing needs one of two
+exits:
+
+**Option A, recommended for a landing** — the landing is a **complete page** with its own `<head>`,
+served by a dedicated route.
 
 ```java
 /**
@@ -63,7 +75,7 @@ O `HtmlRouteAPI` monta a página trocando `{page}`, `{content}` e `{%nome_active
 public class ServiceLandingRoute extends Route {
     public ServiceLandingRoute() { super("/servicos/{slug}", RouteType.GET, ServiceLandingRoute::handle); }
 
-    /** Aceita apenas slug em minúsculas com hífen: qualquer outra coisa vira 404 (§16.6). */
+    /** Aceita apenas slug em minúsculas com hífen: qualquer outra coisa vira 404. */
     private static final java.util.regex.Pattern SLUG = java.util.regex.Pattern.compile("[a-z0-9-]{1,60}");
 
     private static void handle(Context ctx) {
@@ -78,57 +90,75 @@ public class ServiceLandingRoute extends Route {
 }
 ```
 
-**Opção B:** o HTML base ganha marcadores próprios de `<head>` (`{title}`, `{description}`, `{canonical}`, `{og_image}`) e a rota os substitui antes de responder. Simples substituição de texto sobre o que o `AssetsAPI` leu.
+The slug pattern is not cosmetic: the path parameter comes from the client, so it is validated before it
+touches the filesystem (R22, and the traversal rule in `security.md`).
 
-O que não vale: várias URLs entregando o mesmo `<head>`. Uma landing sem `title`, `description`, `canonical` e Open Graph próprios está incompleta.
+**Option B** — the base HTML gains its own `<head>` markers (`{title}`, `{description}`, `{canonical}`,
+`{og_image}`) and the route substitutes them before responding.
 
-### 1.2 O robô não faz login
+What does not pass: several URLs delivering the same `<head>`. A landing without its own `title`,
+`description`, `canonical` and Open Graph is incomplete.
 
-`og:image` e a própria página precisam ser **públicas**. URL absoluta com `https`, servida pelo domínio de produção. Caminho local (`/home/...`, `file://`, `http://localhost:8080`) não é imagem de compartilhamento. Página atrás de sessão não gera prévia.
+### 1.2 The crawler does not log in
+
+`og:image` and the page itself have to be **public**, at an absolute `https` URL on the production
+domain. A local path (`/home/...`, `file://`, `http://localhost:8080`) is not a share image. A page
+behind a session generates no preview.
 
 ---
 
-## 2. A imagem é uma capa, não um enfeite
+## 2. The image is a cover, not an ornament
 
-**Nunca use uma imagem genérica para todas as páginas.** O `og:image` é a **capa editorial** daquela URL. Componha com: logo da empresa, nome da empresa, nome do produto ou serviço, título principal da página, imagem real do negócio, elementos gráficos da identidade, cores da marca, elementos SVG, padrões do segmento e uma informação curta que ajude a identificar o conteúdo.
+**Never use one generic image for every page.** The `og:image` is the **editorial cover** of that URL.
+Compose it from: the company logo, the company name, the product or service name, the page's main title,
+a real image of the business, identity graphics, brand colours, SVG elements, sector patterns, and one
+short piece of information that identifies the content.
 
-**A logo entra na composição, não sozinha no meio de um fundo vazio:**
+**The logo goes into the composition, not alone in the middle of an empty background:**
 
 ```
 LOGO + imagem/ilustração do negócio + título da página + elemento gráfico da identidade
 ```
 
-A arte tem de parecer produzida para aquela empresa. A marca fica identificável **antes** de a pessoa terminar de ler o título.
+The artwork has to look produced for that company. The brand is identifiable **before** the reader
+finishes the title.
 
-### 2.1 Uma capa por URL
+### 2.1 One cover per URL
 
-Projeto com várias landings, várias capas — mesma identidade, conteúdo diferente:
+A project with several landings has several covers — same identity, different content:
 
-| URL | Capa |
+| URL | Cover |
 |---|---|
-| `/servicos/instalacao-de-ar-condicionado` | logo + foto real de instalação + título de instalação + grafismo da marca |
-| `/servicos/manutencao` | mesma identidade + conteúdo visual de manutenção + título específico |
-| `/sobre` | mesma identidade + equipe ou sede reais + nome da empresa |
+| `/servicos/instalacao-de-ar-condicionado` | logo + real installation photo + installation title + brand graphics |
+| `/servicos/manutencao` | same identity + maintenance visuals + its own title |
+| `/sobre` | same identity + the real team or premises + the company name |
 
-Só repita a mesma arte quando **não** for possível gerar capas específicas, e registre o motivo no `CLAUDE.md`.
+Reuse one artwork only when specific covers genuinely cannot be generated, and record the reason in
+`CLAUDE.md`.
 
-### 2.2 Foto real na frente da ilustração
+### 2.2 Real photography before illustration
 
-Havendo foto ou vídeo real da empresa, do produto, do serviço ou do local, ele tem prioridade na composição quando for relevante. Para empresa local isso é decisivo: uma foto do serviço realizado transmite mais contexto do que qualquer ilustração. Banco de imagens aleatório para preencher composição, não. Vale a mesma regra de autorização do §9.14.
+Where a real photo or video of the company, product, service or location exists, it takes priority in
+the composition when relevant. For a local business this is decisive: a photo of the work done conveys
+more context than any illustration. Random stock imagery to fill the composition does not. The same
+permission rule as `landing-motion.md` applies.
 
-### 2.3 Contexto geográfico
+### 2.3 Geographic context
 
-Landing de cidade, bairro ou região pode incorporar o local discretamente na composição quando isso **for parte real do conteúdo**: "Instalação de ar-condicionado em Porangatu". Nunca insira localidade sem relação real com a página.
+A landing for a city, neighbourhood or region may incorporate the place discreetly **when it is genuinely
+part of the content**: "Instalação de ar-condicionado em Porangatu". Never insert a location with no real
+relationship to the page.
 
-### 2.4 O que a capa não pode parecer
+### 2.4 What the cover must not look like
 
-Quadrado com a logo centralizada. Gradiente genérico. Imagem de banco com texto por cima. A mesma arte em todas as páginas. Banner genérico de SaaS. Composição automática sem identidade.
+A square with a centred logo. A generic gradient. A stock photo with text over it. The same artwork on
+every page. A generic SaaS banner. An automatic composition with no identity.
 
 ---
 
-## 3. Geração automatizada das capas
+## 3. Generating the covers
 
-Monte um processo **reutilizável**, alimentado pelos dados da página:
+Build a **reusable** process fed by the page data:
 
 ```
 dados da página (slug, título, subtítulo, foto)
@@ -140,44 +170,52 @@ composição 1200×630
 /assets/og/<slug>.jpg   (otimizado)
 ```
 
-Três caminhos, em ordem de preferência neste stack:
+Three routes, in order of preference:
 
-1. **Remotion `still`** (melhor resultado, e o estúdio já existe se a landing tem hero em vídeo — §9.14). Uma composition `OgCover` parametrizada por props, uma renderização por página, e o estúdio é apagado no fim:
+1. **Remotion `still`** — the best result, and the studio already exists if the landing has a video hero
+   (`landing-motion.md`). One `OgCover` composition parameterised by props, one render per page, and the
+   studio is deleted at the end:
 
 ```bash
 npx remotion still src/index.ts OgCover out/og/instalacao.jpg \
   --props='{"titulo":"Instalação de ar-condicionado em Porangatu","foto":"footage/instalacao-01.jpg"}'
 ```
 
-2. **Canvas 2D** com o mesmo motor do §9.5: uma página geradora local desenha a composição a partir de um JSON de páginas e exporta com `canvas.toBlob()`. Zero ferramenta nova.
+2. **Canvas 2D** with the same engine as `canvas-generative.md`: a local generator page draws the
+   composition from a pages JSON and exports with `canvas.toBlob()`. No new tooling.
 
-3. **HTML/CSS renderizado** por navegador headless, quando o projeto já tiver isso na esteira.
+3. **HTML/CSS rendered** by a headless browser, when the project already has that in its pipeline.
 
-Guarde os dados das páginas em um único arquivo (`docs/design/pages.json`: slug, título, subtítulo, foto, tipo de schema) e gere todas as capas em um laço. Assim, página nova ganha capa nova sem trabalho manual.
+Keep the page data in a single file (`docs/design/pages.json`: slug, title, subtitle, photo, schema
+type) and generate every cover in a loop. A new page then gets a new cover with no manual work.
 
-**A geração acontece em desenvolvimento ou no build; o arquivo final é otimizado** (§9.10). O que vai para produção é o `.jpg` pronto em `public/assets/og/`.
+**Generation happens in development or in the build; the final file is optimised**
+(`frontend-build.md`, `images.md`). What goes to production is the finished `.jpg` in
+`public/assets/og/`.
 
 ---
 
-## 4. Tamanho, compatibilidade e peso
+## 4. Size, compatibility and weight
 
-| Item | Regra |
+| Item | Rule |
 |---|---|
-| Dimensão | 1200×630 (proporção 1,91:1), horizontal |
-| Formato | **JPEG ou PNG.** Evite WebP e AVIF: vários previsualizadores não renderizam |
-| Peso | ≤ 300 KB (alvo 150 KB) |
-| Cor | sRGB |
-| Área segura | conteúdo crítico dentro dos 1000×500 centrais, ≥ 60 px de margem |
-| Texto | poucas palavras, corpo grande, contraste alto (o preview aparece pequeno) |
-| Logo | inteira, sem corte, com respiro |
+| Dimensions | 1200×630 (1.91:1), landscape |
+| Format | **JPEG or PNG.** Avoid WebP and AVIF: several preview engines do not render them |
+| Weight | ≤ 300 KB (target 150 KB) |
+| Colour | sRGB |
+| Safe area | critical content inside the central 1000×500, ≥ 60px margin |
+| Text | few words, large size, high contrast — the preview is shown small |
+| Logo | whole, uncropped, with breathing room |
 
-Teste o recorte: alguns aplicativos mostram a prévia quase quadrada. Se o título encosta na borda ou a logo fica no canto extremo, ela some no recorte. Nada essencial nas laterais externas.
+Test the crop: some apps show the preview almost square. If the title touches the edge or the logo sits
+in the extreme corner, it disappears in the crop. Nothing essential in the outer sides.
 
 ---
 
-## 5. Texto de SEO também não pode ser genérico
+## 5. SEO text cannot be generic either
 
-`title`, `description`, `og:title`, `og:description`, Schema.org e textos de compartilhamento seguem o §9.15: específicos, verdadeiros e escritos para aquela página.
+`title`, `description`, `og:title`, `og:description`, Schema.org and share text all follow
+`landing-copy.md`: specific, true, and written for that page.
 
 ```
 Ruim:  Conheça nossas soluções e descubra como podemos ajudar você.
@@ -185,37 +223,40 @@ Bom:   Instalação de split residencial e comercial em Porangatu, com equipe pr
        e garantia de 1 ano no serviço.
 ```
 
-A descrição explica o que o visitante encontra naquela URL. E **nada inventado**: sem nota, sem número de clientes, sem prêmio, sem certificação que não tenha origem em dado fornecido (§9.15).
+The description explains what the visitor finds at that URL. And **nothing invented**: no rating, no
+client count, no award, no certification that did not come from supplied data.
 
-**Coerência entre texto e imagem.** Página de serviço, capa do serviço. Página de produto, capa do produto. Página institucional, capa da empresa. Arte bonita sem relação com o conteúdo da URL é erro, não estilo.
-
----
-
-## 6. Landing nova só está pronta com a capa pronta
-
-Criar landing inclui, no mesmo processo: **conteúdo da página + SEO + Open Graph + imagem de compartilhamento + favicon e identidade quando necessário**. Não existe "o SEO fica para depois": a página e a identidade dela para compartilhamento nascem juntas.
+**Coherence between text and image.** A service page shows the service. A product page shows the
+product. An institutional page shows the company. Beautiful artwork unrelated to the URL's content is an
+error, not a style.
 
 ---
 
-## 7. Validação
+## 6. A new landing is not done until the cover is done
 
-Confira, página por página:
+Creating a landing includes, in the same pass: **page content + SEO + Open Graph + share image + favicon
+and identity where needed**. There is no "SEO comes later" — the page and its share identity are born
+together.
 
-1. `title` próprio.
-2. `description` própria.
-3. `canonical` correto e absoluto.
-4. `og:title` corresponde à página.
-5. `og:description` corresponde à página.
-6. `og:url` é a URL correta.
-7. `og:image` existe e é acessível publicamente.
-8. A imagem não aponta para caminho local.
-9. Dimensões adequadas (1200×630) declaradas em `og:image:width`/`height`.
-10. Logo presente quando existe logo.
-11. A imagem representa visualmente a página.
-12. Twitter/X configurado (`summary_large_image` + título, descrição e imagem).
-13. Schema.org do tipo real do conteúdo.
-14. Nenhuma informação inventada.
-15. Nenhuma imagem genérica reutilizada sem necessidade.
+---
+
+## 7. Validation, page by page
+
+1. Its own `title`.
+2. Its own `description`.
+3. A correct, absolute `canonical`.
+4. `og:title` matches the page.
+5. `og:description` matches the page.
+6. `og:url` is the correct URL.
+7. `og:image` exists and is publicly reachable.
+8. The image does not point at a local path.
+9. Dimensions declared in `og:image:width` / `height`.
+10. Logo present where a logo exists.
+11. The image visually represents the page.
+12. Twitter/X configured (`summary_large_image` plus title, description and image).
+13. Schema.org of the content's real type.
+14. Nothing invented.
+15. No generic image reused without need.
 
 ```bash
 LP=src/main/resources/public
@@ -236,7 +277,9 @@ grep -rhoE "og:image\" content=\"[^\"]+" $LP --include="*.html" | sort | uniq -c
 ls -lh $LP/assets/og/
 ```
 
-Depois do build, valide o dist: as mesmas verificações rodam sobre `dist/public` (o §9.10 já reprova o build que perde `meta` em relação ao source). E teste a prévia real colando a URL de produção num aplicativo de mensagem antes de considerar entregue.
+After the build, validate the dist: the same checks run over `dist/public`, and the build already fails
+when a `meta` tag is lost relative to the source (`frontend-build.md`). Then test the real preview by
+pasting the production URL into a messaging app before calling it delivered.
 
 ---
-*Auditoria e otimização: Angatu Sistemas · Referência do §9.16 do `SKILL.md`*
+*Audit and optimisation: Angatu Sistemas*
