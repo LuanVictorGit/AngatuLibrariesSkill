@@ -1,204 +1,252 @@
-# Auditoria de Design — Checklist Final
+# Design audit — the final checkpoint
 
-> **Auditoria:** Angatu Sistemas · Tradução e adaptação de `design-audit` para AngatuLibraries (vanilla + Tailwind local + `ds.css`) · Código em inglês, documentação em português · Adaptado para `src/main/resources/public` e `target/classes/public`
-
-> **Regra Global Angatu — Responsividade sempre em Tailwind CSS (§9.6 do SKILL.md):** todo layout responsivo (breakpoints, grids, visibilidade, espaçamento, tipografia, ordem, largura/altura) é feito **exclusivamente com utilitários responsivos do Tailwind** (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca com `@media (min-width: ...)` manual como primeira opção. Princípios de `mobile-principles` e `desktop-principles` permanecem válidos, mas sua implementação no HTML/CSS vanilla é sempre via classes Tailwind (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`, `hidden lg:block`, `text-sm md:text-base` etc.).
-
-
-> **Quando rodar:** checkpoint final obrigatório (§9.7 do `SKILL.md`). Carregue ao fim de todo frontend, antes do push. Classifique por severidade: Crítico (bloqueia entrega) → Importante (sprint atual) → Bom ter (backlog).
+> Audit: Angatu Sistemas · adapted from `design-audit` for AngatuLibraries (vanilla + local Tailwind +
+> `ds.css`), for `src/main/resources/public` and `dist/public`.
+>
+> **When to run it:** at the end of every frontend, before the push — even when the user said they liked
+> it. Classify by severity: Critical (blocks delivery) → Important (current sprint) → Nice to have
+> (backlog).
+>
+> This is the grep half of verification. The eye half is `frontend-preview.md` (R21), and both are
+> required: greps do not see an ugly layout, and looking does not catch an inconsistent easing token.
 
 ---
 
-## 1. Gaps de Movimento
+## 0. Scope — every rendered surface (R13)
 
-Detecte animações faltantes. Em vanilla Angatu, troque `AnimatePresence` por `@starting-style` + `allow-discrete` e `view-transition-name`.
+Run the audit over everything the project renders, not only the main screens:
 
-### Renders condicionais sem animação de saída
+- application screens and landing pages;
+- error and blocked pages — 404, 500, and the inline 429/403 pages the rate limiter serves;
+- login, password recovery and public screens;
+- e-mail templates (with the caveats in `email-design.md` — table layout and inline CSS are correct
+  there, and the movement greps do not apply);
+- print and report views;
+- development preview pages created by the agent.
+
+A surface that was never audited because nobody thought of it as "the frontend" is exactly what R13
+exists to catch.
+
+---
+
+## 1. Movement gaps
+
+In this stack, an exit animation is `@starting-style` + `allow-discrete` or `view-transition-name` —
+never a library (`css-native.md`).
+
+### Conditional renders with no exit animation
 
 ```bash
-grep -rn '{.*&&\s*<\|{.*?\s*:\s*<' --include='*.html' --include='*.js' src/main/resources/public | grep -vE 'starting-style|view-transition|allow-discrete|popover|dialog'
+grep -rn '{.*&&\s*<\|{.*?\s*:\s*<' --include='*.html' --include='*.js' src/main/resources/public \
+  | grep -vE 'starting-style|view-transition|allow-discrete|popover|dialog'
 ```
-Procure: `{show && <Component />}` ou ternários sem `@starting-style`/`View Transitions`. Toda montagem/desmontagem condicional precisa de animação de saída.
 
-### Estados hover sem transition
+Every conditional mount and unmount needs an exit animation.
+
+### Hover states with no transition
 
 ```bash
 grep -rn ':hover' --include='*.css' src/main/resources/public | grep -vE 'transition|animation'
 ```
-Toda regra `:hover` deve ter `transition` no seletor base. Troca instantânea parece quebrada.
 
-### Listas dinâmicas sem stagger
+Every `:hover` rule needs a `transition` on the base selector. An instant swap looks broken.
+
+### Dynamic lists with no stagger
 
 ```bash
-grep -rn '\.map(' --include='*.js' src/main/resources/public | grep -vE 'stagger|delay.*index|animationDelay|animation-delay'
+grep -rn '\.map(' --include='*.js' src/main/resources/public \
+  | grep -vE 'stagger|delay.*index|animationDelay|animation-delay'
 ```
-Listas via `.map()` devem escalonar entrada (`animation-delay: calc(var(--i)*80ms)`). Entrada simultânea parece barata.
 
-### Mudanças de estilo sem transition
+Lists built with `.map()` should stagger their entry
+(`animation-delay: calc(var(--i) * 80ms)`). Everything arriving at once looks cheap.
 
-```bash
-grep -rn 'style\.\|style="' --include='*.js' --include='*.html' src/main/resources/public | grep -vE 'transition|transform|opacity'
-```
-Mudanças de `style` dinâmicas (fundo, cor) precisam de `transition` ou wrapper com animação.
-
-### Entradas sem saídas correspondentes
+### Style changes with no transition
 
 ```bash
-grep -rn '@starting-style\|view-transition-name' --include='*.css' --include='*.html' src/main/resources/public | head -n 20
-# e cruze com elementos que têm entrada animada mas não definem estado de saída/hidden
+grep -rn 'style\.\|style="' --include='*.js' --include='*.html' src/main/resources/public \
+  | grep -vE 'transition|transform|opacity'
 ```
 
 ---
 
-## 2. Auditoria de Acessibilidade
+## 2. Accessibility
 
-### Reduced motion — OBRIGATÓRIO
-
-Projeto com animação **deve** ter pelo menos um handler:
+### Reduced motion — mandatory
 
 ```bash
-grep -rn 'prefers-reduced-motion' --include='*.css' --include='*.js' src/main/resources/public 2>/dev/null
+grep -rn 'prefers-reduced-motion' --include='*.css' --include='*.js' src/main/resources/public
 ```
 
-**Zero resultados em projeto animado = violação crítica.** No mínimo:
+**Zero results in an animated project is a critical violation.** The minimum:
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 ```
 
-### Contraste 4.5:1
+### Contrast 4.5:1
 
-- DevTools → Inspect → color swatch → contrast ratio
-- `npx pa11y <url>` ou Lighthouse
-- Verifique texto animado no meio da transição — com `opacity > 0.4` ainda precisa ser legível
+DevTools → inspect → the colour swatch shows the ratio; or `npx pa11y <url>`, or Lighthouse. Check
+animated text mid-transition too — above `opacity: 0.4` it still has to be legible. On a landing page
+this is where a themed background most often fails: text over art needs its own veil or surface
+(`landing-motion.md`).
 
-### Foco visível em todo interativo
+### Visible focus on everything interactive
 
 ```bash
 grep -rn 'outline:\s*none\|outline:\s*0' --include='*.css' src/main/resources/public
 ```
-Todo `outline: none` deve vir com `:focus-visible` customizado. Remover anel de foco sem substituto é falha WCAG.
 
-### HTML semântico — sem div clicável
+Every `outline: none` must come with a custom `:focus-visible`. Removing the focus ring with no
+replacement is a WCAG failure (`desktop-principles.md`).
 
-```bash
-grep -rn 'onClick\|onclick' --include='*.html' --include='*.js' src/main/resources/public | grep -E '<div|<span' | grep -v 'role='
-```
-Todo `<div onclick>` deve ser `<button>`/`<a>` ou ter `role="button" + tabindex="0" + onKeyDown`.
-
-### ARIA em animações decorativas
+### Semantic HTML — no clickable div
 
 ```bash
-grep -rn '<canvas\|class=".*particles\|class=".*ambient' --include='*.html' src/main/resources/public | grep -v 'aria-hidden'
+grep -rn 'onClick\|onclick' --include='*.html' --include='*.js' src/main/resources/public \
+  | grep -E '<div|<span' | grep -v 'role='
 ```
-Animações puramente decorativas (partículas de fundo, `canvas` generativo) devem ter `aria-hidden="true"`.
+
+Every `<div onclick>` should be a `<button>` or `<a>`, or carry `role="button"` + `tabindex="0"` + a
+keydown handler.
+
+### ARIA on decorative animation
+
+```bash
+grep -rn '<canvas\|class=".*particles\|class=".*ambient' --include='*.html' src/main/resources/public \
+  | grep -v 'aria-hidden'
+```
+
+Purely decorative animation (background particles, a generative canvas) carries `aria-hidden="true"`.
 
 ---
 
-## 3. Auditoria de Performance
+## 3. Performance
 
-### Layout thrashing — animar propriedades de layout
+### Layout thrashing
 
 ```bash
-grep -rn 'transition.*\(width\|height\|top\|left\|right\|bottom\|margin\|padding\)' --include='*.css' src/main/resources/public
+grep -rn 'transition.*\(width\|height\|top\|left\|right\|bottom\|margin\|padding\)' \
+  --include='*.css' src/main/resources/public
 ```
-Substitua por `transform: translate/scale` e `opacity` (GPU, sem reflow).
 
-### Gatilhos excessivos de paint
+Replace with `transform` and `opacity` — GPU, no reflow.
+
+### Excessive paint triggers
 
 ```bash
 grep -rn 'will-change' --include='*.css' src/main/resources/public
 ```
-Deve ser raro e escopado. >5 elementos com `will-change` permanente = custo de GPU > benefício. Aplique dinamicamente (hover/focus).
 
-### Custo de bundle de animação
+Should be rare and scoped. More than five elements with a permanent `will-change` costs more GPU memory
+than it buys. Apply it dynamically, on hover or focus.
+
+### Animation bundle cost
 
 ```bash
 npx source-map-explorer dist/**/*.js 2>/dev/null | head -n 20
 ```
 
-| Biblioteca | Custo gz | Quando justificar |
+| Library | gz cost | When it is justified |
 |---|---|---|
-| CSS puro | 0 KB | <3 animações, scroll, `@starting-style` |
-| GSAP | ~25 KB | Timeline 5+ tweens, stagger dinâmico, morph |
-| Motion (Framer) | ~30 KB | Só em React |
+| Pure CSS | 0 KB | fewer than 3 animations, scroll, `@starting-style` |
+| GSAP | ~25 KB | timelines of 5+ tweens, dynamic stagger, morphing |
+| Motion (Framer) | ~30 KB | React only |
 
-Se o projeto só usa fade+slide, 30 KB é exagero — fique no CSS nativo (§9.4).
+If the project only does fade and slide, 30 KB is excessive — stay in native CSS.
 
-### requestAnimationFrame vs setTimeout
+### `requestAnimationFrame`, not `setTimeout`
 
 ```bash
-grep -rn 'setTimeout\|setInterval' --include='*.js' src/main/resources/public | grep -iE 'anim|motion|scroll|position|style|transform'
+grep -rn 'setTimeout\|setInterval' --include='*.js' src/main/resources/public \
+  | grep -iE 'anim|motion|scroll|position|style|transform'
 ```
-Loops de animação devem usar `requestAnimationFrame`. `setTimeout` causa frame drops e não pausa em aba inativa.
+
+`setTimeout` drops frames and does not pause in an inactive tab.
 
 ---
 
-## 4. Auditoria de Consistência
+## 4. Consistency
 
-### Durações
+### Durations
 
 ```bash
-grep -rnoE 'duration[:"'\''= ]+[0-9.]+' --include='*.css' --include='*.js' src/main/resources/public | sort | uniq -c | sort -rn
+grep -rnoE 'duration[:"'\''= ]+[0-9.]+' --include='*.css' --include='*.js' src/main/resources/public \
+  | sort | uniq -c | sort -rn
 ```
-Projeto bem desenhado usa 3–5 durações distintas (ex: 120ms, 220ms, 360ms, 500ms). >8 = extraia para tokens em `ds.css`/`tailwind.config.js`.
+
+A well-designed project uses 3–5 distinct durations. More than 8 means extracting tokens into `ds.css`
+and `tailwind.config.js`.
 
 ### Easings
 
 ```bash
-grep -rnoE 'ease[A-Za-z]*|cubic-bezier\([^)]+\)' --include='*.css' --include='*.js' src/main/resources/public | sort | uniq -c | sort -rn
-```
-Mesma regra: 3–5 easings nomeados. Valores espalhados = inconsistência visual. Centralize em `--ease-*`.
-
-### Entrada/saída simétricas
-
-- Duração de entrada >= duração de saída (nunca o inverso)
-- Entrada usa `ease-out`, saída usa `ease-in`
-- Entrada com coreografia completa (`translate + opacity + scale`), saída mais simples (`opacity` ou `opacity + scale` leve)
-
-```bash
-grep -rn 'exit\|@starting-style\|view-transition' --include='*.css' --include='*.js' src/main/resources/public | head -n 40
+grep -rnoE 'ease[A-Za-z]*|cubic-bezier\([^)]+\)' --include='*.css' --include='*.js' src/main/resources/public \
+  | sort | uniq -c | sort -rn
 ```
 
----
+Same rule: 3–5 named easings, centralised in `--ease-*`.
 
-## 5. Checklist específico de stack
+### Symmetry of entry and exit
 
-### Web (padrão AngatuLibraries)
-- [ ] Lighthouse + DevTools Performance (alvo <16.67ms por frame)
-- [ ] `grep -r "cdn.tailwindcss"` vazio (§9.1)
-- [ ] `og:image` + `json-ld` + `meta description` revisada (§9.2 + §9.5)
-- [ ] Canvas generativo com `setupCanvas` DPR-aware (§9.5)
-- [ ] `prefers-reduced-motion` implementado e testado
+- Entry duration ≥ exit duration, never the reverse.
+- Entry uses `ease-out`, exit uses `ease-in`.
+- Entry can be fully choreographed (`translate` + `opacity` + `scale`); exit stays simpler.
 
 ---
 
-## 6. Formato de Saída
+## 5. Stack checks
 
-Classifique por severidade:
-
-### Crítico (corrigir antes de entregar)
-- Sem `prefers-reduced-motion`
-- `div` clicável sem teclado
-- `outline: none` sem `:focus-visible`
-- Animação de `width`/`height`/`top`/`left`
-- `cdn.tailwindcss` presente
-
-### Importante (sprint atual)
-- Condicionais sem animação de saída
-- Hover sem `transition`
-- `aria-hidden` faltando em decoração (`canvas`/partículas)
-- `setTimeout` em loop de animação
-- Durações inconsistentes (>8 valores)
-
-### Bom ter (backlog)
-- Listas sem stagger
-- Estilos inline sem `transition`
-- `will-change` excessivo
-- Entrada/saída assimétricas (direção errada)
-- Biblioteca de animação superdimensionada
+- [ ] Lighthouse plus DevTools Performance (target under 16.67ms per frame)
+- [ ] `grep -r "cdn.tailwindcss"` empty (R14)
+- [ ] `grep -rn "caches.put\|caches.match"` empty, unless cache was requested (R25)
+- [ ] `grep -rn "<script>" public/*.html` empty — page scripts live in external files, or the content
+      security policy blocks them
+- [ ] No hand-written `@media (min-width` outside `ds.css` (R15):
+      `grep -rn "@media.*min-width" --include="*.css" src/main/resources/public`
+- [ ] Angatu footer present on every page (R17)
+- [ ] Generative canvas uses the DPR-aware `setupCanvas` (`canvas-generative.md`)
+- [ ] `og:image` generated, `json-ld` present, `meta description` reviewed — and on a landing or any
+      public URL, the per-page cover of `landing-seo-og.md`
+- [ ] `prefers-reduced-motion` implemented and tested
+- [ ] Run again against `dist/` after the build — obfuscation defects exist only there
+      (`frontend-build.md`)
 
 ---
-*Fonte original: `design-audit/SKILL.md` · Tradução, adaptação vanilla/public e auditoria Angatu Sistemas — @author Angatu Sistemas*
+
+## 6. Output format
+
+### Critical — fix before delivering
+
+- No `prefers-reduced-motion`
+- A clickable `div` with no keyboard access
+- `outline: none` with no `:focus-visible`
+- Animation of `width` / `height` / `top` / `left`
+- `cdn.tailwindcss` present
+- A rendered surface that never got the design system (R13) — an error page, an e-mail or a print view
+  left on browser defaults
+- Anything scrolling horizontally at 375px
+
+### Important — current sprint
+
+- Conditionals with no exit animation
+- Hover with no `transition`
+- Missing `aria-hidden` on decoration
+- `setTimeout` in an animation loop
+- Inconsistent durations (more than 8 values)
+
+### Nice to have — backlog
+
+- Lists with no stagger
+- Inline styles with no `transition`
+- Excessive `will-change`
+- Asymmetric entry and exit
+- An oversized animation library
+
+---
+*Original source: `design-audit/SKILL.md` · translation, adaptation and audit by Angatu Sistemas*

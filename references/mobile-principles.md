@@ -1,25 +1,35 @@
-# Princípios Mobile — UX Touch-First
+# Mobile principles — touch-first UX
 
-> **Auditoria:** Angatu Sistemas · Tradução e adaptação de `mobile-principles` para AngatuLibraries (vanilla + Tailwind local) · Código em inglês, documentação em português · Original cross-platform (web mobile, iOS, Android)
+> Audit: Angatu Sistemas · adapted from `mobile-principles` for AngatuLibraries (vanilla + local
+> Tailwind). Original is cross-platform (mobile web, iOS, Android).
+>
+> R15 governs how all of this reaches the markup: layout, breakpoints, visibility, spacing and
+> typography go through Tailwind utilities, never a hand-written `@media (min-width: …)`. The
+> `@media (hover: …)` and `prefers-reduced-motion` queries below are the exception — Tailwind does not
+> cover them, and they belong in `ds.css`.
 
-> **Regra Global Angatu — Responsividade sempre em Tailwind CSS (§9.6 do SKILL.md):** todo layout responsivo (breakpoints, grids, visibilidade, espaçamento, tipografia, ordem, largura/altura) é feito **exclusivamente com utilitários responsivos do Tailwind** (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) — nunca com `@media (min-width: ...)` manual como primeira opção. Princípios de `mobile-principles` e `desktop-principles` permanecem válidos, mas sua implementação no HTML/CSS vanilla é sempre via classes Tailwind (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`, `hidden lg:block`, `text-sm md:text-base` etc.).
+---
 
+## Touch targets
 
-## Alvos de toque (touch targets)
-
-| Plataforma | Mínimo | Recomendado | Especificação |
+| Platform | Minimum | Recommended | Specification |
 |---|---|---|---|
-| iOS | 44pt | 44pt + 8pt espaçamento | Apple HIG |
-| Android | 48dp | 48dp + 8dp espaçamento | Material Design |
-| Web mobile | 44px | 44px + 8px espaçamento | WCAG 2.5.5 |
+| iOS | 44pt | 44pt + 8pt spacing | Apple HIG |
+| Android | 48dp | 48dp + 8dp spacing | Material Design |
+| Mobile web | 44px | 44px + 8px spacing | WCAG 2.5.5 |
 
-**Regra de ouro:** qualquer alvo tocável abaixo do mínimo é bug de usabilidade. O hit area pode exceder o glifo visível (`padding`, `hitSlop` ou espaçador transparente), mas a superfície interativa deve atingir o mínimo. Espaçamento importa tanto quanto tamanho: dois botões de 44pt colados ainda são erráveis.
+**The golden rule:** any touchable target below the minimum is a usability bug. The hit area may exceed
+the visible glyph (`padding`, `hitSlop`, a transparent spacer), but the interactive surface has to reach
+the minimum. Spacing matters as much as size: two 44pt buttons touching each other are still
+mis-tappable.
 
-## Doutrina sem-hover
+In Tailwind: `min-h-11 min-w-11` (44px) plus `gap-2` between targets; the hit area can grow with
+`p-2` / `px-3`.
 
-`:hover` não existe em touch. Tornar algo visível só no hover significa escondê-lo em todo celular. Visível-por-padrão é a regra; hover é melhoria de desktop, nunca interação estrutural.
+## The no-hover doctrine
 
-**Web — proteja hovers com media query:**
+`:hover` does not exist on touch. Making something visible only on hover means hiding it on every
+phone. Visible-by-default is the rule; hover is a desktop enhancement, never structural interaction.
 
 ```css
 .card { opacity: 1; transform: translateY(0); }
@@ -29,11 +39,12 @@
 }
 ```
 
-**Padrão Angatu:** todo `.card`/`.btn` em `public/` deve ser usável sem hover; adicione hover apenas dentro do `@media` acima.
+**Angatu standard:** every `.card` and `.btn` in `public/` must be usable without hover; add hover only
+inside that media query. Never use `group-hover` with no visible fallback on mobile.
 
-## Zonas de polegar (Hoober)
+## Thumb zones (Hoober)
 
-Uso em retrato é majoritariamente com uma mão, polegar pivotando do canto inferior. A tela se divide em zonas:
+Portrait use is mostly one-handed, with the thumb pivoting from the bottom corner:
 
 ```
 +------+----+------+
@@ -45,83 +56,107 @@ Uso em retrato é majoritariamente com uma mão, polegar pivotando do canto infe
 +------+----+------+
 ```
 
-- **Terço inferior (EASY):** CTA primário, enviar, confirmar, FAB, tab bar.
-- **Meio (OK):** conteúdo, ações secundárias.
-- **Topo (HARD):** voltar, fechar, busca, perfil — o usuário espera alcançar, não acertar por reflexo.
+- **Bottom third (EASY):** primary CTA, submit, confirm, FAB, tab bar.
+- **Middle (OK):** content, secondary actions.
+- **Top (HARD):** back, close, search, profile — the user expects to reach for these, not hit them by
+  reflex.
 
-**Regra Angatu:** CTA primário sempre na metade inferior em mobile. Nunca `Pagar` no canto superior direito.
+**Angatu rule:** the primary CTA is always in the lower half on mobile. Never put `Pagar` in the top
+right corner of a phone. In Tailwind:
+`fixed bottom-0 inset-x-0 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:static`.
 
-## Safe areas (notch / home indicator)
+## Safe areas (notch and home indicator)
 
-| Plataforma | API | Insets respeitados |
+| Platform | API | Insets respected |
 |---|---|---|
 | Web | `env(safe-area-inset-*)` + `viewport-fit=cover` | notch, home indicator |
 | SwiftUI | `.safeAreaInset(edge:)` | nav/tab bar, notch |
 | Compose | `WindowInsets.safeDrawing` | system bars, IME |
 
-**Web (padrão AngatuLibraries):**
-
 ```html
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 ```
+
 ```css
-.fab { position: fixed; bottom: calc(env(safe-area-inset-bottom) + 16px); right: calc(env(safe-area-inset-right) + 16px); }
+.fab {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 16px);
+  right:  calc(env(safe-area-inset-right)  + 16px);
+}
 ```
 
-Sempre teste em iPhone com notch + home indicator; FAB/tab bar sob o indicador é falha crítica.
+Always check this on a notched iPhone. A FAB or tab bar sitting under the home indicator is a critical
+failure, and it is exactly what the 375px pass of `frontend-preview.md` is for.
 
-## Reduced motion (unificado cross-platform)
+## Reduced motion
 
-| Plataforma | API |
+| Platform | API |
 |---|---|
 | Web CSS | `@media (prefers-reduced-motion: reduce)` |
 | Web JS | `matchMedia('(prefers-reduced-motion: reduce)')` |
 | SwiftUI | `@Environment(\.accessibilityReduceMotion)` |
 | Compose | `Settings.Global.ANIMATOR_DURATION_SCALE == 0f` |
 
-**CSS mínimo obrigatório (todo projeto Angatu):**
+Mandatory minimum in every Angatu project:
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 ```
 
-**Web JS (quando precisar desativar lógica):**
+When logic has to be disabled too:
 
 ```js
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const duration = reduceMotion ? 0 : 300;
 ```
 
-## Gestos mobile (padrões canônicos)
+A landing hero video also obeys this: with reduced motion the poster takes over and the video does not
+play (`landing-motion.md`).
 
-Os 5 gestos que o usuário já conhece — reusar é UX grátis; reinventar é fricção:
+## Canonical gestures
 
-- **Swipe-back:** iOS — deslize da borda esquerda para voltar. Nunca sobrescreva; no Android espelhe com predictive back (Android 14+).
-- **Pull-to-refresh:** arraste para baixo no topo para recarregar (feeds, listas).
-- **Drag-to-dismiss:** modais e viewers fecham ao arrastar para baixo além de 100–150pt.
-- **Pinch-to-zoom:** pinça em imagens/mapas/canvas com escala mín/máx respeitada.
-- **Swipe em linha:** deslize horizontal na linha para revelar ações (excluir, arquivar). Leading vs trailing = conjuntos diferentes.
+The five gestures users already know — reusing them is free UX, reinventing them is friction:
 
-## Orçamentos de performance mobile
+- **Swipe-back:** iOS, from the left edge. Never override it; on Android mirror it with predictive back
+  (Android 14+).
+- **Pull-to-refresh:** drag down at the top to reload (feeds, lists).
+- **Drag-to-dismiss:** modals and viewers close when dragged down past 100–150pt.
+- **Pinch-to-zoom:** on images, maps and canvases, with min/max scale respected.
+- **Row swipe:** horizontal swipe on a row reveals actions (delete, archive). Leading and trailing are
+  different sets.
 
-- **Cold start:** <2s em dispositivo médio (Pixel 4a, iPhone SE 2ª gen). Se leva 4s no Pixel 4a, leva 8s em aparelho de entrada.
-- **Frame:** 16.67ms@60fps, 8.33ms@120fps (ProMotion). Síncrono na main thread acima disso = jank.
-- **Bundle web:** Tailwind local minificado (§9.1) já é purged; evite libs de animação >25KB se só usa fade/slide.
-- **Bateria:** sem CPU contínua em background. Use schedulers da plataforma; respeite `Save-Data` / `allowsCellularAccess`.
+## Performance budgets
 
-## Anti-padrões (ERRADO / CERTO)
+- **Cold start:** under 2s on a mid-range device (Pixel 4a, iPhone SE 2nd gen). If it takes 4s on a
+  Pixel 4a, it takes 8s on an entry-level phone.
+- **Frame:** 16.67ms at 60fps, 8.33ms at 120fps (ProMotion). Synchronous work on the main thread beyond
+  that is jank.
+- **Bundle:** the local minified Tailwind (R14) is already purged; avoid animation libraries over 25KB
+  when all you use is fade and slide.
+- **Battery:** no continuous background CPU. Use the platform's schedulers; respect `Save-Data` and
+  `allowsCellularAccess`.
+- On a landing page these budgets tighten further — a mobile hero video is capped at 800KB
+  (`landing-motion.md`).
 
-### 1. Hover como única revelação
+---
+
+## Anti-patterns
+
+### 1. Hover as the only reveal
 
 ```css
-/* ERRADO — no mobile o botão nunca aparece */
+/* ERRADO — no celular o botão nunca aparece */
 .card .actions { opacity: 0; }
 .card:hover .actions { opacity: 1; }
 ```
+
 ```css
-/* CERTO — visível por padrão, hover só em desktop */
+/* CERTO — visível por padrão, hover só no desktop */
 .card .actions { opacity: 1; }
 @media (hover: hover) and (pointer: fine) {
   .card .actions { opacity: 0; transition: opacity 150ms ease-out; }
@@ -129,39 +164,42 @@ Os 5 gestos que o usuário já conhece — reusar é UX grátis; reinventar é f
 }
 ```
 
-### 2. Alvo abaixo do mínimo
+### 2. A target below the minimum
 
 ```css
 /* ERRADO — 32px, errável */
 .icon-btn { width: 32px; height: 32px; }
 ```
+
 ```css
-/* CERTO — hit area 44px mesmo com ícone 24px */
+/* CERTO — área de toque de 44px mesmo com ícone de 24px */
 .icon-btn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; }
 .icon-btn svg { width: 24px; height: 24px; }
 ```
 
-### 3. Ignorar safe area
+### 3. Ignoring the safe area
 
 ```css
-/* ERRADO — CTA sob o home indicator */
+/* ERRADO — CTA sob o indicador de início */
 .cta { position: fixed; bottom: 0; }
 ```
+
 ```css
 /* CERTO */
 .cta { position: fixed; bottom: calc(env(safe-area-inset-bottom) + 16px); }
 ```
 
-## Checklist Angatu (mobile)
+## Checklist
 
-- [ ] Todo alvo tocável ≥44px + 8px espaçamento
-- [ ] Nenhuma ação depende só de hover
-- [ ] CTA primário no terço inferior
-- [ ] `viewport-fit=cover` + `env(safe-area-inset-*)` onde há FAB/tab fixa
-- [ ] `prefers-reduced-motion` implementado
-- [ ] Gestos canônicos preservados (não quebre swipe-back)
+- [ ] Every touchable target ≥44px with ≥8px spacing
+- [ ] No action depends on hover alone
+- [ ] Primary CTA in the bottom third
+- [ ] `viewport-fit=cover` + `env(safe-area-inset-*)` wherever there is a fixed FAB or tab bar
+- [ ] `prefers-reduced-motion` implemented
+- [ ] Canonical gestures preserved (swipe-back not broken)
+- [ ] Nothing scrolls horizontally at 375px
+- [ ] Checked at 375px on a running server, and described (R21)
 
 ---
-*Fonte original: `mobile-principles/SKILL.md` + `references/{accessibility-mobile,gestures-deep}.md` · Tradução, adaptação vanilla/public e auditoria Angatu Sistemas — @author Angatu Sistemas*
-
-*Otimização Angatu: `mobile-principles` e `desktop-principles` foram unificados no pipeline §9.6 — use este arquivo como referência detalhada quando o briefing exigir mobile. Para web vanilla, as regras de hit area, sem-hover e safe areas são obrigatórias em todo `public/`.*
+*Original source: `mobile-principles/SKILL.md` + `references/{accessibility-mobile,gestures-deep}.md` ·
+adaptation and audit by Angatu Sistemas*
