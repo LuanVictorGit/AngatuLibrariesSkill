@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project; once a repo's CLAUDE.md names it, it governs every session there. Rules that override default behaviour - payments and AI go through the AngatuCRM API, never MercadoPagoAPI, DeepSeek or a provider SDK; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable and only the build obfuscates into dist, mandatory even on projects that never asked for it; every project ships a Dockerfile for Coolify; WebSocket routes check the session inside the route; the client is hostile, so never trust what the browser sends. Always ask first - backend or static landing page, image compression strategy, Cloudflare Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, hero, Remotion, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, minify, obfuscate, WebSocket, live channel, session, cookie, login, OAuth, Google sign-in, security, rate limit, Turnstile, captcha, cache, image, compression, block download, copy protection, watermark, gallery, payment, PIX, Mercado Pago, checkout, webhook, AI, LLM, ai:chat.
+description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project; once a repo's CLAUDE.md names it, it governs every session there. Rules that override default behaviour - payments and AI go through the AngatuCRM API, never MercadoPagoAPI, DeepSeek or a provider SDK; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable and only the build obfuscates into dist, mandatory even on projects that never asked for it; every project ships a Dockerfile for Coolify, not for dev; WebSocket routes check the session inside the route; the client is hostile, so never trust what the browser sends. Always ask first - backend or static landing page, image compression strategy, Cloudflare Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, hero, Remotion, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, minify, obfuscate, WebSocket, live channel, session, cookie, login, OAuth, Google sign-in, security, rate limit, Turnstile, captcha, cache, image, compression, block download, copy protection, watermark, gallery, payment, PIX, Mercado Pago, checkout, webhook, AI, LLM, ai:chat.
 ---
 
 # AngatuLibraries — Angatu Sistemas engineering standard
@@ -100,10 +100,12 @@ rule says which one wins.
   → `references/backend-server.md`
 - **R7 — HTTP by default; HTTPS only when explicitly asked.** Coolify terminates TLS. Asking
   Javalin for SSL inside the container breaks the deploy. → `references/backend-server.md`
-- **R8 — Every project ships `Dockerfile` and `.dockerignore`.** Hosting is Coolify; without them
-  the project does not deploy. Never cap the heap with `-Xmx` — use `-XX:MaxRAMPercentage` together
-  with `ExitOnOutOfMemoryError` and let the hosting panel own the memory limit.
-  → `references/deploy-coolify.md`
+- **R8 — Every project ships `Dockerfile` and `.dockerignore` — and they are for production.**
+  Hosting is Coolify; without them the project does not deploy. **Development never runs inside the
+  container:** it runs on the JVM (`mvn exec:java`, `java -jar`), where the loop is seconds instead of
+  an image rebuild. `docker build` is a gate before deploying, not a step repeated while working.
+  Never cap the heap with `-Xmx` — use `-XX:MaxRAMPercentage` with `ExitOnOutOfMemoryError` and let
+  the hosting panel own the memory limit. → `references/deploy-coolify.md`
 
 ### Persistence
 

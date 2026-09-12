@@ -372,6 +372,18 @@ exige "$BS" 'BlockInfo|remaining time|tempo restante'             'backend-serve
 exige "$BS" 'self-contained|inline .style' 'backend-server.md faz a pagina de bloqueio autocontida'                                            'backend-server.md nao trata a pagina de bloqueio como autocontida'
 exige "$IB" 'not licence to strip|429' 'ip-blocklist.md separa o 403 do DROP da pagina de 429'                                        'ip-blocklist.md pode fazer o agente apagar a pagina de 429'
 
+# Docker so entra na producao. Sem isso escrito, o reflexo e oferecer
+# docker-compose para desenvolver e trocar um laco de segundos por um rebuild.
+TS_=references/testing.md
+exige "$TS_" 'production, not the workbench|Docker is only for going to production'              'testing.md separa o conteiner do laco de desenvolvimento'              'testing.md ainda trata docker como passo do laco'
+exige "$TS_" 'mvn exec:java' 'testing.md aponta o ambiente real de desenvolvimento'                              'testing.md nao diz onde se desenvolve, se nao e no conteiner'
+exige references/deploy-coolify.md 'about production|producao'      'deploy-coolify.md se declara de producao' 'deploy-coolify.md nao se enquadra como producao'
+if grep -qE '^4\. \*\*Validate the container' "$TS_"; then
+  falha 'testing.md voltou a por docker build dentro do laco'
+else
+  ok 'docker build fora do laco de desenvolvimento'
+fi
+
 CV=references/conventions.md
 exige "$CV" 'R31' 'conventions.md cita R31' 'conventions.md nao cita R31'
 exige "$CV" 'Co-Authored-By' 'conventions.md nomeia o trailer proibido' \

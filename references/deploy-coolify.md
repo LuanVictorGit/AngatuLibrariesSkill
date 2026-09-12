@@ -2,6 +2,11 @@
 
 > Covers R8. Use this when creating a new project, migrating an old one (VPS + Let's Encrypt), or when
 > a deploy breaks. For a static project with no Java, see `static-site.md` instead.
+>
+> **Everything here is about production.** The `Dockerfile` exists in every project from day one
+> because it is how the project deploys — but it is not the development environment, and nothing in
+> this file describes a working loop. Development runs on the JVM; `docker build` happens before the
+> deploy (`testing.md` 2).
 
 ---
 

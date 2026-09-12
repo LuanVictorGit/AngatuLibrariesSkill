@@ -21,6 +21,10 @@
 Run layer 1 constantly, layer 2 on every change to a route, and layer 3 **before delivering and before
 deploying** — not after every edit. Layer 3 stays mandatory (section 5); it just stops being the loop.
 
+**The container half of layer 3 is production-only** (R8, `testing.md` 2). Development never runs
+inside Docker: `mvn exec:java` and `java -jar` are the working environment, and `docker build` is what
+you do before the image goes up.
+
 ---
 
 ## 2. Layer 1 — services, with no HTTP at all

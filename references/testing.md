@@ -19,15 +19,11 @@
    **HTTP mode**, environment, and `Javalin configurado`.
 3. **Validate for real:** `curl` or `httpie` against the routes you created (`GET /health`,
    `POST /api/...`), open the HTML at `http://localhost:8080/<pagina>`, and read the `Console` output.
-4. **Validate the container** whenever you touch `Dockerfile`, dependencies or startup:
-   `docker build -t <app> . && docker run --rm -p 8080:8080 -v <app>-data:/data <app>`. That image is
-   what Coolify will run.
-
 > **Running through `java -jar`, copying into `target/classes/public/` has no effect** — the classpath
 > is the JAR itself. Changes to HTML/JS/CSS require another `mvn package`. Copying into
 > `target/classes` only works when running through `mvn exec:java`.
 
-5. **Test both modes when the project has a frontend build** (`frontend-build.md`). First the readable
+4. **Test both modes when the project has a frontend build** (`frontend-build.md`). First the readable
    one, then the one that ships:
 
 ```bash
@@ -40,12 +36,34 @@ mvn -Pfrontend-dist package -DskipTests && java -jar target/<app>.jar    # é is
 > the second test exists. Open the screens, check the console for errors, and test forms, API,
 > WebSocket, PWA and service worker against the `dist`.
 
-6. **Clean shutdown:** make sure `Saveable.shutdown()`, `Task.shutdown()` and `BrowserAPI.shutdown()`
+5. **Clean shutdown:** make sure `Saveable.shutdown()`, `Task.shutdown()` and `BrowserAPI.shutdown()`
    (if used) run in a shutdown hook.
-7. Only call it done once the server starts with no exception and the routes answer with the expected
+6. Only call it done once the server starts with no exception and the routes answer with the expected
    status and body.
 
-## 2. Never start a *fake* server to test (R29)
+## 2. The container is production, not the workbench (R8)
+
+**Docker is only for going to production.** Development runs on the JVM — `mvn exec:java` for the fast
+visual loop, `java -jar` for the real artefact (`frontend-preview.md`). Rebuilding an image to see a
+changed CSS rule turns a two-second loop into a minute, and nothing about the container makes the
+answer more correct at that stage.
+
+So `docker build` runs at exactly two moments, and neither is "while working":
+
+1. **Before deploying**, whatever changed — the image is what Coolify runs, and it is the only thing
+   that proves the base image, `EXPOSE`/`PORT`, the `/data` volume and the healthcheck.
+2. **When you touch what the image is made of** — the `Dockerfile` itself, dependencies, or startup.
+
+```bash
+# antes de subir, nao durante o trabalho
+docker build -t <app> . && docker run --rm -p 8080:8080 -v <app>-data:/data <app>
+```
+
+The `Dockerfile` still exists in **every** project from day one (R8): it is how the project deploys,
+and writing it at the end is how `PORT`, the volume and the healthcheck end up wrong under time
+pressure. Present from the start, exercised before the deploy.
+
+## 3. Never start a *fake* server to test (R29)
 
 The project is tested **through its own JAR**, served by `AngatuLib`. To "see the screen working", the
 following are forbidden:
@@ -79,11 +97,12 @@ has one.
 `target/classes/public/` gives the fast visual loop with the real server underneath
 (`frontend-preview.md` 1.3).
 
-## 3. New-project checklist
+## 4. New-project checklist
 
 - [ ] `Main` with `new AngatuLib(dominio, porta de PORT, true)` (HTTP, no `manageSsl`) +
       `setTrustedProxyHops(1)` + rate limits
-- [ ] `Dockerfile` + `.dockerignore` at the root, `EXPOSE`/`PORT` consistent, `docker build` tested
+- [ ] `Dockerfile` + `.dockerignore` at the root from day one, `EXPOSE`/`PORT` consistent — and
+      `docker build` exercised **before the deploy**, not during development (R8)
 - [ ] `GET /health` route (200) outside the rate limit, used by `HEALTHCHECK`
 - [ ] `ANGATU_DB_PATH=/data/database.db` + `/data` volume configured in Coolify
 - [ ] `public/styles/tailwind.css` **committed** (Coolify builds from the repository, not your machine)
@@ -131,7 +150,7 @@ has one.
       branch names and the pull request (R31). Checked with the grep in `conventions.md` **before**
       the push, never after
 
-## 4. Traps that cost hours
+## 5. Traps that cost hours
 
 - `.java` needs recompiling; HTML/JS copied into `target/classes/public/` only counts under
   `mvn exec:java`.
