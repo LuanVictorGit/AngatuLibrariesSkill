@@ -105,7 +105,9 @@ has one.
 - [ ] Presentational media and text protected per element; contact data and form fields still copyable (R30)
 - [ ] `.env` + `.gitignore` (`database.db`, `.env`, `tools/tailwindcss*` when not committed)
 - [ ] `CLAUDE.md` created, with the `AngatuLibrariesSkill` block (R1)
-- [ ] Angatu footer on every page and e-mail (R17)
+- [ ] Angatu watermark on every page and e-mail — **the 429 and 403 block pages included** (R17);
+      block page shows the real remaining time, is `noindex`, self-contained, and leaks no limit values
+      (`backend-server.md` 6.2)
 - [ ] No cache: `AssetsAPI.setCacheEnabled(false)`, `no-store` on every response, a service worker that
       stores nothing (R25)
 - [ ] Session cookie `HttpOnly` + `SameSite` + conditional `Secure`; token never in a URL (R23)

@@ -209,7 +209,8 @@ Same rule: 3–5 named easings, centralised in `--ease-*`.
       security policy blocks them
 - [ ] No hand-written `@media (min-width` outside `ds.css` (R15):
       `grep -rn "@media.*min-width" --include="*.css" src/main/resources/public`
-- [ ] Angatu footer present on every page (R17)
+- [ ] Angatu watermark present on every page, **block pages included** (R17) — open a 429 on purpose
+      and look at it, instead of assuming
 - [ ] Generative canvas uses the DPR-aware `setupCanvas` (`canvas-generative.md`)
 - [ ] `og:image` generated, `json-ld` present, `meta description` reviewed — and on a landing or any
       public URL, the per-page cover of `landing-seo-og.md`

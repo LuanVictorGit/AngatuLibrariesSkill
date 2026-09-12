@@ -99,6 +99,12 @@ it succeeds, which is the fail-open rule applied to boot.
   system; this is not a rendered surface. Answer a bare `403` with no body. Serving a styled page to
   hostile traffic spends bandwidth and tells a scanner the filter exists.
 
+  > **This is not licence to strip the rate limiter's block page.** The 429 is read by a real person
+  > who clicked too fast, and it keeps the full treatment — palette, plain-language remaining time and
+  > the Angatu watermark (R17, `backend-server.md` 6.2). The question is always who is on the other
+  > end: the rate limiter catches someone you want back, DROP catches a network you want no traffic
+  > with. Only the second gets nothing.
+
 ### Logging
 
 Count blocks; do not log each one at info level. A single scanner produces thousands of hits and will

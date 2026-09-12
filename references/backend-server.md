@@ -237,10 +237,43 @@ JavalinAPI.unblockAll();
   project uses Turnstile, the tightened policy must allow `challenges.cloudflare.com` in `script-src`
   and `frame-src`, or the widget silently fails to render (`turnstile.md`).
 - Block pages are inline, served with `skipRemainingHandlers()` (429 / 403). **They are a rendered
-  surface, so R13 applies**: they carry the project's palette, typography and footer, not a bare
-  default. See `paint.md` and `email-design.md` for how tokens travel to non-app surfaces.
+  surface, so R13 and R17 apply** — see 6.2.
 
-### 6.2 What rate limiting is not
+### 6.2 The block page is read by a real person (R13, R17)
+
+The rate limiter catches ordinary users: someone clicking twice, a page that fired three requests, a
+person reloading because the connection stalled. They are not attackers, and the 429 is often the only
+screen of the system they will see that day. It gets the same care as any other surface.
+
+**What it carries:**
+
+- **The Angatu Sistemas watermark** (R17). This is the part most often missed, because nobody thinks
+  of a block page as "a page". It is.
+- **The project's palette and typography**, from `ds.css` tokens (`paint.md`).
+- **How long the block lasts, in plain PT-BR** — "Espere 4 minutos e tente de novo", with the real
+  remaining time from `BlockInfo`, not a generic "tente mais tarde". A person who knows when to come
+  back does not hammer the server, so this is a load control as much as a courtesy.
+- **`<meta name="robots" content="noindex">`** — a 429 must never be indexed in place of the real page.
+
+**What it must not carry:** the limit values, the counters, how many violations remain, the internal
+rule name, or anything else that hands an attacker the shape of the defence. Say that there were too
+many requests and when to return; nothing else.
+
+**It is self-contained.** Inline `<style>`, no external stylesheet and no script. The client is already
+being throttled, and a block page that depends on a second request is a block page that renders
+unstyled at the worst moment. The default CSP allows `style-src 'unsafe-inline'`, so this is the one
+rendered surface where an inline `<style>` is correct rather than a violation — and the logo comes from
+its asset URL, which the limiter never throttles (static assets are outside the limit), never redrawn
+as inline SVG.
+
+**The `403` for a DROP-listed netblock is the exception, and the only one** (R34,
+`ip-blocklist.md`): that response has no body at all. The distinction is who is on the other end — the
+rate limiter catches a person you want back, while DROP catches a network you want no traffic with.
+Never apply this section's treatment to a DROP refusal, and never strip it from a rate-limit page.
+
+See `paint.md` and `email-design.md` for how tokens travel to non-app surfaces.
+
+### 6.3 What rate limiting is not
 
 It filters traffic volume, not intent. Authorization still happens on every route (R23), values
 coming from the browser are still recalculated server-side (R22), and Turnstile — when present —

@@ -355,6 +355,16 @@ exige "$IB" 'Task' 'ip-blocklist.md atualiza a lista pelo Task da lib'          
 exige "$IB" 'edrop|eDROP' 'ip-blocklist.md avisa que o eDROP foi fundido'                           'ip-blocklist.md nao avisa da fusao do eDROP'
 exige references/cache.md 'R34' 'cache.md diz que a blocklist nao e conteudo'                                 'cache.md nao reconcilia R25 com R34'
 
+# A pagina de bloqueio e a superficie que todo mundo esquece por nao pensar
+# nela como pagina. R17 so pega se estiver escrito que 429 e 403 entram.
+BS=references/backend-server.md
+exige "$BS" 'watermark|marca' 'backend-server.md poe a marca na pagina de bloqueio'                               'backend-server.md sem a marca na pagina de bloqueio'
+exige "$BS" 'R17' 'backend-server.md liga a pagina de bloqueio a R17'                   'backend-server.md nao cita R17 na pagina de bloqueio'
+exige "$BS" 'noindex' 'backend-server.md marca a pagina de bloqueio como noindex'                       'backend-server.md sem noindex na pagina de bloqueio'
+exige "$BS" 'BlockInfo|remaining time|tempo restante'             'backend-server.md exige o tempo restante real'             'backend-server.md nao exige o tempo restante na pagina de bloqueio'
+exige "$BS" 'self-contained|inline .style' 'backend-server.md faz a pagina de bloqueio autocontida'                                            'backend-server.md nao trata a pagina de bloqueio como autocontida'
+exige "$IB" 'not licence to strip|429' 'ip-blocklist.md separa o 403 do DROP da pagina de 429'                                        'ip-blocklist.md pode fazer o agente apagar a pagina de 429'
+
 CV=references/conventions.md
 exige "$CV" 'R31' 'conventions.md cita R31' 'conventions.md nao cita R31'
 exige "$CV" 'Co-Authored-By' 'conventions.md nomeia o trailer proibido' \

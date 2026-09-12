@@ -154,8 +154,11 @@ rule says which one wins.
 - **R16 — Impeccable Portuguese in every user-visible string.** Accents, commas, agreement and
   meaning reviewed before commit — screens, toasts, errors and e-mails alike.
   → `references/landing-copy.md`
-- **R17 — The Angatu Sistemas footer is on every page and every e-mail that has a footer.** The
-  logo is an official file and is never redrawn. → `references/email-design.md`
+- **R17 — The Angatu Sistemas watermark is on every page and every e-mail, block pages included.**
+  "Every page" has no exception for the ones nobody planned: the rate limiter's inline 429 and 403,
+  404 and 500. A page a person actually reads carries the mark; the only surface without it is the
+  bare `403` served to a DROP-listed netblock (R34), which renders nothing at all. The logo is an
+  official file and is never redrawn. → `references/email-design.md`, `references/backend-server.md`
 - **R18 — SOURCE readable, BUILD protects, DIST publishes.** The source stays semantic and
   debuggable from beginning to end. Minification, obfuscation, class renaming and asset hashing
   exist only in the build, writing into `dist/`. **The build never rewrites `src/`.**
