@@ -30,6 +30,7 @@ project-root/
 │       └── og/<slug>.jpg         # capa por página (landing-seo-og.md)
 ├── tools/
 │   ├── frontend-build.mjs        # BUILD — único lugar que minifica e ofusca
+│   ├── preview.py                # espelha o nginx.conf (frontend-preview.md)
 │   └── tailwindcss[.exe]
 ├── frontend.build.json           # níveis development / production / protected
 ├── dist/                         # DIST — o que o nginx serve (no .gitignore)
@@ -120,6 +121,11 @@ server {
 
 `try_files $uri $uri.html` is what gives this track the same extensionless URLs the backend track has,
 so links and canonicals match between the two.
+
+**`tools/preview.py` mirrors this file, and the two change in the same commit** — the headers, the
+CSP, the `try_files` behaviour, the `/health` response and the 404 page. Preview that does not send
+what nginx sends proves nothing, and the drift is silent (`frontend-preview.md`). A project without
+Turnstile drops the `challenges.cloudflare.com` entries from both at once.
 
 `404.html` is a rendered surface and carries the project's palette, typography and footer (R13) — not
 nginx's default page.

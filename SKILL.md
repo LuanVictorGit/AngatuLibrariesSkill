@@ -37,6 +37,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Cache policy, service worker, asset hashing | `references/cache.md` |
 | Architecture, DRY, Javadoc, naming, `CLAUDE.md`, commits | `references/conventions.md` |
 | Running, testing, project checklist, known traps | `references/testing.md` |
+| Automated tests for routes and services, without packaging | `references/route-testing.md` |
 | Dockerfile, Coolify, volumes, environment variables | `references/deploy-coolify.md` |
 | **Any frontend at all — start here** | `references/paint.md` (5-phase pipeline) |
 | Visual identity, typography, layout principles | `references/frontend-design.md` |
@@ -199,12 +200,20 @@ rule says which one wins.
 
 ### Testing
 
-- **R29 — Test by running the project's own JAR.** `mvn package -DskipTests && java -jar
-  target/<app>.jar`. Never `python -m http.server`, `npx serve`, a Live Server extension or
-  `file://` — outside the real server there is no session, no API, no page assembly and no security
-  headers, so a screen that *looks* right hides exactly the defects that matter. **One narrow
-  exception**, defined in `references/frontend-preview.md`: a static-only project has no JAR, so a
-  temporary static server may serve `dist/` for preview, and is shut down afterwards.
+- **R29 — Test against the real server, never a fake one, and automate it.** Never
+  `python -m http.server`, `npx serve`, a Live Server extension or `file://` — outside the real server
+  there is no session, no API, no page assembly and no security headers, so a screen that *looks*
+  right hides exactly the defects that matter. Testing is three layers, not one
+  (→ `references/route-testing.md`): **services** as plain JUnit with no HTTP, where every R22
+  decision is proven in milliseconds; **routes** against the real `AngatuLib` booted in-process on an
+  ephemeral port, no packaging involved; and **the JAR and the container** —
+  `mvn package && java -jar target/<app>.jar`, then `docker build` — which stay **mandatory before
+  delivering and before deploying**, because they are the only things that prove bundled resources,
+  the classpath, the `dist` and the image. The JAR is the gate, not the inner loop. **One narrow
+  exception for static-only projects**, defined in `references/frontend-preview.md`: no JAR exists, so
+  a temporary server may serve `dist/` — but only one that mirrors the project's `nginx.conf`
+  (headers, CSP, `try_files`, the project's 404), never a generic file server, and it is shut down
+  afterwards.
   → `references/testing.md`
 
 ---
@@ -259,7 +268,7 @@ visto rodando antes de ser entregue · R22 o cliente é hostil: presuma um proxy
 R23 cookie HttpOnly, token fora da URL, autorização em toda rota · R24 rota WS confere a sessão
 dentro dela · R25 nunca usar cache sem pedido · R26 pagamento e IA pela API do AngatuCRM ·
 R27 Turnstile: chaves no `.env` e aviso na política de privacidade · R28 perguntar a estratégia de
-compressão antes de salvar imagem · R29 testar pelo JAR do próprio projeto · R30 mídia e texto de
+compressão antes de salvar imagem · R29 testar sempre no servidor real e automatizado — serviço em JUnit, rota no AngatuLib em processo, e JAR mais contêiner antes de entregar · R30 mídia e texto de
 apresentação protegidos de cópia casual, por elemento e nunca na página inteira — telefone, endereço,
 PIX, código de pedido e campo de formulário continuam copiáveis.
 

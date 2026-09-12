@@ -253,6 +253,55 @@ ST=references/static-site.md
 exige "$ST" 'nginx:alpine' 'static-site.md usa nginx:alpine' 'static-site.md sem nginx:alpine'
 exige "$ST" 'no-store' 'static-site.md mantem R25 no nginx' 'static-site.md sem no-store'
 
+# preview.py so vale enquanto espelha o nginx.conf. A divergencia entre os dois
+# e silenciosa: a tela passa no preview e morre em producao, que e exatamente o
+# incidente que R29 documenta. Entao a paridade e cobrada item a item.
+PV_PY=references/frontend-preview.md
+NGINX=references/static-site.md
+
+exige "$PV_PY" 'preview\.py' 'frontend-preview.md traz o servidor de preview' \
+                             'frontend-preview.md sem tools/preview.py'
+exige "$NGINX" 'preview\.py' 'static-site.md aponta para o preview' \
+                             'static-site.md nao cita tools/preview.py'
+
+DIVERGENCIA=0
+for ITEM in 'no-store' 'X-Content-Type-Options' 'X-Frame-Options' 'Referrer-Policy' \
+            "default-src 'self'" 'challenges\.cloudflare\.com' "img-src 'self' data:" \
+            'try_files' '404\.html'; do
+  EM_NGINX=$(grep -cE "$ITEM" "$NGINX" 2>/dev/null || echo 0)
+  EM_PREVIEW=$(grep -cE "$ITEM" "$PV_PY" 2>/dev/null || echo 0)
+  if [ "$EM_NGINX" -gt 0 ] && [ "$EM_PREVIEW" -eq 0 ]; then
+    falha "preview.py nao espelha o nginx.conf em: $ITEM"
+    DIVERGENCIA=$((DIVERGENCIA + 1))
+  fi
+done
+if [ "$DIVERGENCIA" -eq 0 ]; then
+  ok 'preview.py espelha os cabecalhos, o try_files e o 404 do nginx.conf'
+fi
+
+exige "$PV_PY" 'same commit|mesmo commit' \
+               'frontend-preview.md exige os dois mudando juntos' \
+               'frontend-preview.md nao exige nginx.conf e preview.py no mesmo commit'
+exige "$PV_PY" 'exec:java' 'frontend-preview.md traz o laco rapido do backend' \
+                           'frontend-preview.md sem a alternativa rapida — vao usar servidor externo'
+
+# R29 so e seguida se o laco rapido existir. Sem ele o custo de testar empurra
+# para o servidor falso, que e exatamente o que a regra proibe.
+RT=references/route-testing.md
+exige "$RT" 'R22' 'route-testing.md prova as decisoes de R22 na camada barata' \
+                  'route-testing.md nao liga a camada de servico a R22'
+exige "$RT" '404' 'route-testing.md testa 404 em recurso de outra conta' \
+                  'route-testing.md sem o teste de 404 contra 403'
+exige "$RT" 'ANGATU_DB_PATH' 'route-testing.md isola o banco de teste' \
+                             'route-testing.md sem isolamento do banco — vai corromper o de desenvolvimento'
+exige "$RT" 'nunca instanciad|never instantiated|uma unica vez|garantirNoAr' \
+            'route-testing.md respeita o AngatuLib unico por processo' \
+            'route-testing.md nao trata o limite de uma instancia de AngatuLib por processo'
+exige "$RT" 'docker build' 'route-testing.md mantem o JAR e o conteiner antes de entregar' \
+                           'route-testing.md largou a camada 3 — R29 perde o portao'
+exige "$RT" 'skipTests' 'route-testing.md avisa que -DskipTests pula a suite' \
+                        'route-testing.md nao avisa sobre -DskipTests'
+
 CV=references/conventions.md
 exige "$CV" 'R31' 'conventions.md cita R31' 'conventions.md nao cita R31'
 exige "$CV" 'Co-Authored-By' 'conventions.md nomeia o trailer proibido' \

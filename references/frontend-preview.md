@@ -31,7 +31,140 @@ Stop the process when you are done, instead of leaving it holding the port and t
 A static project (G1, `static-site.md`) has no JAR, so the rule above has nothing to point at. **Only
 in that case** may a temporary static server serve the build output, and it is shut down afterwards.
 
-Create `.claude/launch.json`:
+**The preview server must mirror `nginx.conf`, not merely serve files.** This is the whole condition
+on the exception. A generic static server (`python -m http.server`, `npx serve`, Live Server) sends no
+CSP, no security headers, no `try_files`, and its own 404 page — so an inline script that production
+blocks passes here, extensionless URLs 404 here but work there, and the project's 404 never gets
+looked at. That is the same failure R29 exists to prevent, just moved into the static track.
+
+So the project ships `tools/preview.py`, which replicates the `nginx.conf` of `static-site.md`:
+
+```python
+#!/usr/bin/env python3
+"""
+Servidor de pre-visualizacao do site estatico (R21, trilha B de G1).
+
+Espelha o nginx.conf de producao descrito em static-site.md: as mesmas URLs
+sem extensao, os mesmos cabecalhos de seguranca, a mesma politica de cache e
+o mesmo /health.
+
+Espelhar os cabecalhos e o ponto inteiro. Preview sem CSP deixa passar o
+script inline que a producao bloqueia, e a tela sobe morta com a API
+respondendo perfeitamente. Servidor de preview que nao reproduz a producao
+nao e preview, e ilusao.
+
+Uso: python tools/preview.py [diretorio] [porta]
+     python tools/preview.py dist 8080
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+# Mantenha em sincronia com nginx.conf. Divergiu aqui, divergiu em producao.
+CABECALHOS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' https://challenges.cloudflare.com; "
+        "frame-src https://challenges.cloudflare.com; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:"
+    ),
+}
+
+
+class PreviewHandler(SimpleHTTPRequestHandler):
+    """Aplica try_files, os cabecalhos do nginx e a pagina 404 do projeto."""
+
+    def end_headers(self) -> None:
+        for nome, valor in CABECALHOS.items():
+            self.send_header(nome, valor)
+        super().end_headers()
+
+    def do_GET(self) -> None:
+        if self.path.split("?")[0] == "/health":
+            self._responder_health()
+            return
+        super().do_GET()
+
+    def do_HEAD(self) -> None:
+        if self.path.split("?")[0] == "/health":
+            self._responder_health(corpo=False)
+            return
+        super().do_HEAD()
+
+    def _responder_health(self, corpo: bool = True) -> None:
+        dados = b'{"status":"ok"}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(dados)))
+        self.end_headers()
+        if corpo:
+            self.wfile.write(dados)
+
+    def translate_path(self, path: str) -> str:
+        """try_files $uri $uri.html $uri/ — URL sem extensao serve o .html."""
+        destino = super().translate_path(path)
+        if os.path.isdir(destino):
+            indice = os.path.join(destino, "index.html")
+            if os.path.exists(indice):
+                return indice
+        if not os.path.exists(destino) and os.path.exists(destino + ".html"):
+            return destino + ".html"
+        return destino
+
+    def send_error(self, code, message=None, explain=None) -> None:
+        """error_page 404 /404.html — o 404 do projeto, nunca o do servidor."""
+        if code == 404:
+            pagina = os.path.join(self.directory, "404.html")
+            if os.path.exists(pagina):
+                with open(pagina, "rb") as arquivo:
+                    dados = arquivo.read()
+                self.send_response(404)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(dados)))
+                self.end_headers()
+                self.wfile.write(dados)
+                return
+        super().send_error(code, message, explain)
+
+    def log_message(self, formato: str, *args) -> None:
+        sys.stderr.write("  %s\n" % (formato % args))
+
+
+def main() -> None:
+    diretorio = sys.argv[1] if len(sys.argv) > 1 else "dist"
+    porta = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
+
+    if not os.path.isdir(diretorio):
+        sys.exit(f"diretorio inexistente: {diretorio} — rode o build antes")
+
+    servidor = ThreadingHTTPServer(
+        ("127.0.0.1", porta), partial(PreviewHandler, directory=diretorio)
+    )
+    print(f"preview de {diretorio}/ em http://localhost:{porta}")
+    print("espelhando nginx.conf: try_files, no-store, CSP e /health")
+    try:
+        servidor.serve_forever()
+    except KeyboardInterrupt:
+        servidor.shutdown()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+Python is already on the machine — no Node, no network fetch, and nothing to install. Wire it into
+`.claude/launch.json` and start the preview by name:
 
 ```json
 {
@@ -39,18 +172,44 @@ Create `.claude/launch.json`:
   "configurations": [
     {
       "name": "landing-preview",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", "dist", "-l", "4173"],
-      "port": 4173
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["tools/preview.py", "dist", "8080"],
+      "port": 8080
     }
   ]
 }
 ```
 
-Then start the preview by name and stop it when the work is done.
+Port `8080` on purpose: the same port the container uses, so nothing about the URL changes between
+preview, `docker run` and Coolify.
+
+**Whenever `nginx.conf` changes, `preview.py` changes in the same commit.** The moment the two drift,
+the preview stops proving anything — and the drift is silent, which is the dangerous kind. When the
+project does not use Turnstile, both lose the `challenges.cloudflare.com` entries together.
+
+Shut the server down when the work is finished, instead of leaving it holding the port.
 
 The exception is about **not having a JAR**. It never applies to a project that has one, and it is not
-a shortcut for "the Maven build is slow".
+a shortcut for "the Maven build is slow" — for that, see 1.3.
+
+### 1.3 The backend project's fast loop — no repackage per CSS tweak
+
+The reason people reach for an external static server on a backend project is almost always that
+`mvn package` feels too slow to run after every visual tweak. It does not have to be run:
+
+```bash
+mvn exec:java                                   # deixe rodando
+cp -r src/main/resources/public/* target/classes/public/   # e recarregue a página
+```
+
+Under `mvn exec:java` the classpath is `target/classes`, so copying HTML, CSS and JS there and
+refreshing is enough — the real server, the real session, the real API, the real headers, with none of
+the wait. **This only works under `mvn exec:java`.** Running through `java -jar`, the classpath is the
+JAR itself and copying into `target/classes/public/` changes nothing, which is exactly the trap in
+`testing.md`. Java changes still need a recompile either way.
+
+Before delivering, go back to the real thing — `mvn package` and `java -jar` — and, when the project
+has a build, repeat against the `dist` (R19), where obfuscation defects live.
 
 ## 2. The loop
 

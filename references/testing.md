@@ -2,6 +2,11 @@
 
 > Covers R29. Never deliver code that has not been compiled and run. For the visual half of this —
 > rendering a frontend and actually looking at it (R21) — see `frontend-preview.md`.
+>
+> **Read `route-testing.md` first.** This file is the gate before delivery: the JAR, the container and
+> the manual sweep. The loop you work in all day is the automated one — services in JUnit, routes
+> against the real `AngatuLib` in-process, no packaging. Running `mvn package` after every edit is not
+> what the rule asks for, and it is the slowest way to find the least.
 
 ---
 
@@ -40,7 +45,7 @@ mvn -Pfrontend-dist package -DskipTests && java -jar target/<app>.jar    # é is
 7. Only call it done once the server starts with no exception and the routes answer with the expected
    status and body.
 
-## 2. Never start an external server to test (R29)
+## 2. Never start a *fake* server to test (R29)
 
 The project is tested **through its own JAR**, served by `AngatuLib`. To "see the screen working", the
 following are forbidden:
@@ -64,8 +69,15 @@ mvn package -DskipTests && java -jar target/<app>.jar
 Stop the process when you are finished, instead of leaving it holding the port and the database.
 
 **The one exception** is a static-only project (G1, `static-site.md`), which has no JAR at all. There,
-a temporary static server may serve `dist/` for preview and is shut down afterwards. The exception is
-about not having a JAR — it never applies to a project that has one.
+a temporary server may serve `dist/` for preview and is shut down afterwards — but it has to be
+`tools/preview.py`, which mirrors the project's `nginx.conf`, and not a generic file server. A server
+that sends no CSP and no `try_files` recreates this very failure inside the static track
+(`frontend-preview.md`). The exception is about not having a JAR — it never applies to a project that
+has one.
+
+**And it is not the answer to a slow build.** On a backend project, `mvn exec:java` plus copying into
+`target/classes/public/` gives the fast visual loop with the real server underneath
+(`frontend-preview.md` 1.3).
 
 ## 3. New-project checklist
 
@@ -102,6 +114,8 @@ about not having a JAR — it never applies to a project that has one.
 - [ ] AI? Through the AngatuCRM API (R26), never `DeepSeek`, never a provider key
 - [ ] A landing page? G1 answered, and the landing pipeline applied (`landing-intake.md`)
 - [ ] Rendered on a running server and looked at, desktop and mobile (R21)
+- [ ] `mvn test` green: every R22 decision covered by a service test, every route with a success and
+      a refusal case (R29, `route-testing.md`)
 - [ ] Detailed commit pushed to `development` (R3)
 - [ ] History free of any AI trace — no `Co-Authored-By`, no `Generated with`, no 🤖, in commits,
       branch names and the pull request (R31). Checked with the grep in `conventions.md` **before**
@@ -138,3 +152,10 @@ about not having a JAR — it never applies to a project that has one.
   with `-Pfrontend-dist`.
 - **Old dist in production:** the build predates the last source change; check `sourceHash` in
   `dist/.build-info.json`.
+- **`mvn package -DskipTests` skips the test suite** — that flag appears all over this skill for speed,
+  and it is right when you want the artifact. It is wrong as the last command before delivering: run
+  `mvn test` too, or the suite you wrote is decoration (`route-testing.md`).
+- **The suite trips the rate limiter:** it is the real one, so a login test looping 20 times starts
+  getting 429. Correct behaviour, bad failure — decide it once in the harness (`route-testing.md` 3.2).
+- **Tests writing into the development database:** `ANGATU_DB_PATH` must point under `target/` for the
+  test JVM, through Surefire. Getting this wrong corrupts the data you were about to demo.
