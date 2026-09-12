@@ -322,6 +322,22 @@ exige "$DC" 'first use|primeiro uso' 'dead-code.md define a varredura de primeir
 exige "$FB" 'forbidden to "clean up" a function that looks unused'             'frontend-build.md mantem a proibicao de limpar funcao que parece nao usada'             'frontend-build.md perdeu a protecao de 6.3 — R32 foi escrita por cima dela'
 exige "$FB" 'R32' 'frontend-build.md diz que R32 nao o afrouxa'                   'frontend-build.md nao reconcilia com R32'
 
+# R33 e a regra com maior risco de virar integracao inventada: o endpoint de
+# login nao estava publicado no contrato do CRM quando a regra foi escrita.
+# Entao o que se cobra e a parada dura e os invariantes que valem sempre.
+AO=references/auth-oauth.md
+exige "$AO" 'crm\.angatusistemas\.com\.br' 'auth-oauth.md aponta para a documentacao do CRM'                                             'auth-oauth.md sem a fonte de verdade do CRM'
+exige "$AO" 'openapi\.json' 'auth-oauth.md manda conferir o contrato'                             'auth-oauth.md nao manda conferir o openapi.json'
+exige "$AO" 'Stop and tell the project owner|stop and tell the owner|Stop'             'auth-oauth.md para quando o endpoint nao existe'             'auth-oauth.md sem a parada dura — vai inventar integracao'
+exige "$AO" 'never invent|Do not invent|nao inventar' 'auth-oauth.md proibe inventar endpoint'                                                       'auth-oauth.md nao proibe inventar endpoint'
+exige "$AO" 'state' 'auth-oauth.md exige o parametro state' 'auth-oauth.md sem o parametro state'
+exige "$AO" 'sub' 'auth-oauth.md usa o sub como identificador'                   'auth-oauth.md nao define o identificador estavel'
+exige "$AO" 'email_verified|unverified e-mail' 'auth-oauth.md recusa e-mail nao verificado'                                                'auth-oauth.md aceita e-mail nao verificado'
+exige "$AO" 'R23' 'auth-oauth.md emite sessao propria conforme R23'                   'auth-oauth.md nao liga a sessao a R23'
+exige "$AO" 'R22' 'auth-oauth.md tira a identidade do servidor, nao do cliente'                   'auth-oauth.md nao cita R22 no ponto da identidade'
+exige "$AO" 'privacy policy|politica de privacidade' 'auth-oauth.md atualiza a politica de privacidade'                                                      'auth-oauth.md esquece a politica de privacidade'
+exige "$AO" 'R18|already has a working' 'auth-oauth.md preserva login existente'                                         'auth-oauth.md nao protege o login que ja funciona'
+
 CV=references/conventions.md
 exige "$CV" 'R31' 'conventions.md cita R31' 'conventions.md nao cita R31'
 exige "$CV" 'Co-Authored-By' 'conventions.md nomeia o trailer proibido' \

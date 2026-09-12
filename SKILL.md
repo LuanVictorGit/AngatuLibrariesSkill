@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project; once a repo's CLAUDE.md names it, it governs every session there. Rules that override default behaviour - payments and AI go through the AngatuCRM API, never MercadoPagoAPI, DeepSeek or a provider SDK; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable and only the build obfuscates into dist, mandatory even on projects that never asked for it; every project ships a Dockerfile for Coolify; WebSocket routes check the session inside the route; the client is hostile, so never trust what the browser sends. Always ask first - backend or static landing page, image compression strategy, Cloudflare Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, hero, Remotion, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, minify, obfuscate, WebSocket, live channel, session, cookie, security, rate limit, Turnstile, captcha, cache, image, compression, block download, copy protection, watermark, gallery, payment, PIX, Mercado Pago, checkout, webhook, AI, LLM, ai:chat.
+description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project; once a repo's CLAUDE.md names it, it governs every session there. Rules that override default behaviour - payments and AI go through the AngatuCRM API, never MercadoPagoAPI, DeepSeek or a provider SDK; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable and only the build obfuscates into dist, mandatory even on projects that never asked for it; every project ships a Dockerfile for Coolify; WebSocket routes check the session inside the route; the client is hostile, so never trust what the browser sends. Always ask first - backend or static landing page, image compression strategy, Cloudflare Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, hero, Remotion, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, minify, obfuscate, WebSocket, live channel, session, cookie, login, OAuth, Google sign-in, security, rate limit, Turnstile, captcha, cache, image, compression, block download, copy protection, watermark, gallery, payment, PIX, Mercado Pago, checkout, webhook, AI, LLM, ai:chat.
 ---
 
 # AngatuLibraries — Angatu Sistemas engineering standard
@@ -33,6 +33,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Live channels, `RouteType.WS`, reconnection, event shape | `references/websocket.md` |
 | Charging money, AI text generation, webhooks from the CRM | `references/crm-payments-ai.md` |
 | Cloudflare Turnstile: keys, verification, privacy policy, CSP | `references/turnstile.md` |
+| A login screen: Google OAuth through AngatuCRM | `references/auth-oauth.md` |
 | Saving, resizing or compressing images | `references/images.md` |
 | Cache policy, service worker, asset hashing | `references/cache.md` |
 | Architecture, DRY, Javadoc, naming, `CLAUDE.md`, commits | `references/conventions.md` |
@@ -189,6 +190,16 @@ rule says which one wins.
 - **R23 — Session and API security.** `HttpOnly` + `SameSite` cookie, `Secure` decided by
   environment, token never in a URL, authorization validated in the backend on every route, tenant
   filtered on every query. → `references/security.md`
+- **R33 — A login screen built from scratch uses Google OAuth through AngatuCRM.** No password
+  field, no local password hash. **Read the CRM documentation first, every time** —
+  <https://crm.angatusistemas.com.br/docs> and `openapi.json` are the contract, and endpoint shapes
+  are never recalled from memory or from another project. **If no login endpoint is published there,
+  stop and tell the owner**: never invent the integration, never go straight to Google, never fall
+  back to a password login silently. Invariants that hold regardless: the code is exchanged
+  server-side, `state` is verified, identity comes only from the server's verification (`sub`, not
+  the e-mail, and an unverified e-mail refuses), and the project issues its own cookie session (R23).
+  A project that already has a working login keeps it — propose Google sign-in alongside, never
+  remove a login path on your own (R18). → `references/auth-oauth.md`
 - **R24 — A WebSocket route checks the session inside itself.** The upgrade request bypasses every
   filter the library installs — no input filter, no rate limit, no security headers. A `WS` route
   without a gate **raises no error**: it serves whoever arrives. One gate per project, check before
@@ -284,7 +295,9 @@ apresentação protegidos de cópia casual, por elemento e nunca na página inte
 PIX, código de pedido e campo de formulário continuam copiáveis · R32 código morto e arquivo órfão são
 removidos, com prova antes: banco e `/data` nunca; rota, entidade, página e qualquer coisa por reflexão
 só depois de listar e perguntar; utilitário órfão, import não usado e código comentado saem no mesmo
-commit.
+commit · R33 tela de login criada do zero usa OAuth do Google pelo AngatuCRM, sem senha local — ler a
+documentação do CRM antes de cada integração, e parar e avisar se o endpoint não estiver publicado, em
+vez de inventar.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -298,6 +311,7 @@ atribuição**, inclusive a que o próprio ambiente injeta sozinho. Conferir ant
 - Turnstile (G4): _(a definir)_
 - Proteção de conteúdo (R30): _(a definir)_
 - Limpeza inicial (R32): _(a definir)_
+- Login (R33): _(a definir)_
 - Cache (G3): não usar
 <!-- AngatuLibrariesSkill:end -->
 ```

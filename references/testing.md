@@ -90,6 +90,9 @@ has one.
 - [ ] `Saveable` indexes created at startup for every queried field (R9)
 - [ ] Saving images? Compression strategy **asked and recorded** in `CLAUDE.md` (G2)
 - [ ] Turnstile decided (G4); if yes, keys in `.env`, backend verification, privacy policy updated
+- [ ] A login screen? Google OAuth through AngatuCRM, CRM docs read this session, no password stored;
+      `state` verified, identity from the server, own cookie session, privacy policy updated (R33,
+      `auth-oauth.md`)
 - [ ] Entities + CRUD routes + list/form/print screens
 - [ ] `index.html` shell + `styles/tailwind.css` (local, R14) + `styles/ds.css` + helpers
 - [ ] `tailwind.config.js` + `tailwind.input.css` + `tools/tailwindcss[.exe]`, and

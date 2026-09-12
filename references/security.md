@@ -146,6 +146,11 @@ no exception to make — check the cookie as you would anywhere else (`websocket
 - `Password.criptography` to store, `Password.checkCriptography` to verify. Never store a reversible
   password, never log one.
 - Initial passwords are random, with a **forced change** on first access.
+
+> **A new login screen has no password at all (R33).** Everything in this subsection applies to a
+> project that already has password authentication — which is kept, not ripped out. Built from
+> scratch, the screen uses Google OAuth through AngatuCRM and the project stores no password hash:
+> `references/auth-oauth.md`.
 - A password that will be dictated over the phone or WhatsApp uses an alphabet without ambiguous
   characters (no `0`/`O`, no `1`/`I`).
 - **Identical response** for an unknown e-mail and a wrong password. Different messages reveal which

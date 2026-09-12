@@ -10,6 +10,11 @@
 > This page summarises what matters when deciding. Before writing the first line of an integration,
 > **read the page** — it is generated from `openapi.json`, which a CRM test checks against the routes
 > that actually exist, in both directions. This file can age; that page cannot.
+>
+> **Login goes through the CRM too (R33)**, and by the same reasoning — one credential, in one place.
+> That path has its own file: `references/auth-oauth.md`. The discipline is identical: read the CRM
+> documentation before integrating, and if the endpoint is not published there, stop and say so
+> instead of inventing it.
 
 ---
 
