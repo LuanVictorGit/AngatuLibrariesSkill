@@ -196,8 +196,9 @@ rule says which one wins.
   filtered on every query. → `references/security.md`
 - **R33 — A login screen built from scratch uses Google OAuth through AngatuCRM.** No password
   field, no local password hash. **Read <https://crm.angatusistemas.com.br/docs-google> first, every time** — that exact
-  address, because `/docs` does not link to it and `openapi.json` does not describe this flow; endpoint
-  shapes are never recalled from memory or from another project. **If no login endpoint is published there,
+  address, because `/docs` does not link to it and `openapi.json` does not describe this flow. Two
+  prerequisites only Angatu can provide, so ask before starting: a CRM token with `google:login`, and
+  your `redirect_uri` registered for the application (exact-match comparison). **If no login endpoint is published there,
   stop and tell the owner**: never invent the integration, never go straight to Google, never fall
   back to a password login silently. Invariants that hold regardless: the code is exchanged
   server-side, `state` is verified, identity comes only from the server's verification (`sub`, not

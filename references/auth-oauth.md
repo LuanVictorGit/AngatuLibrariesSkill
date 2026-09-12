@@ -38,39 +38,66 @@ one that put payments and AI behind the CRM (R26):
 
 ---
 
-## 2. Step zero, and it is not optional
+## 2. The flow, and the two things that block it
 
-**Open <https://crm.angatusistemas.com.br/docs-google> before writing anything**, and take the
-routes, parameters, callback shape and token format from there.
+**Open <https://crm.angatusistemas.com.br/docs-google> before writing anything.** Parameters, error
+codes and the full account field list live there and are not restated here. What follows is the shape,
+so you can plan — and the prerequisites, so you do not discover them halfway.
 
-Two things this file will not do for you, because they age and the page does not:
+The CRM holds Angatu's Google Client Secret, talks to Google, and hands your system back the person
+who signed in. **The project registers nothing in Google Cloud, implements no token exchange and
+stores no Google secret.**
 
-- **It does not restate the endpoints.** They live on that page.
-- **It does not describe the flow from memory.** `openapi.json` covers AI, payments, customers and
-  reports and does not describe this one, and the `Authorization: Bearer agtu_<prefixo>_<segredo>`
-  documented under `/docs` is how *your application* authenticates *to the CRM* — a different thing
-  from a person signing in.
+### Two prerequisites Angatu registers for you, once — ask before starting
 
-The result of reading decides what happens next:
+1. **A CRM token with the `google:login` permission.** Add `google:offline` only if the system will
+   call Google APIs on the person's behalf.
+2. **Your `redirect_uri`, registered in the CRM** for your application (Painel → Integrações → Login
+   com Google), one per environment.
 
-| What the docs show | What you do |
-|---|---|
-| A login/OAuth endpoint is published | Use exactly what it documents — routes, parameters, callback shape, token format |
-| The page is unreachable, or the endpoint is not there | **Stop and tell the project owner.** Do not invent endpoints, do not integrate Google directly, and do not silently fall back to a password login |
+**The `redirect_uri` is compared by exact equality** — trailing slash, capitalisation, port and query
+all count. That is not fussiness: without the registered list, any valid token would make the CRM
+deliver a freshly authenticated person, code in hand, to an address of the caller's choosing.
 
-**Inventing the integration is the failure mode to avoid.** A login built against a guessed endpoint
-compiles, renders a convincing screen and fails at the one moment that matters — and the guess is not
-visible in the diff. If the capability is not documented, the honest deliverable is the screen plus a
-clear statement of what is blocking, not a plausible-looking integration.
+Neither of these is something the agent can do. If they are not in place, that is the blocking item to
+report — not something to work around.
 
-```bash
-# antes de escrever a primeira linha
-curl -s https://crm.angatusistemas.com.br/docs-google
-```
+### Five steps, of which two are yours
 
-> O CRM tem limite por IP nas próprias páginas de documentação: uma sequência de tentativas responde
-> **429** e bloqueia por alguns minutos. Leia a página uma vez e trabalhe a partir dela, em vez de
-> repetir a chamada — a mesma cortesia que a skill exige ao consumir a lista da Spamhaus (R34).
+| # | Who | What |
+|---|---|---|
+| 1 | your **server** | `POST /api/v1/auth/google/sessions` → returns `authorize_url` |
+| 2 | the browser | you redirect the person to `authorize_url` |
+| 3 | the CRM | Google returns to the CRM; the CRM returns the person to your address with `?code=…&state=…` |
+| 4 | your **server** | `POST /api/v1/auth/google/token` → returns the profile |
+| 5 | optional | `POST /api/v1/auth/google/accounts/{id}/access-token` → a Google token to call Google's APIs |
+
+Steps 1 and 4 carry your CRM token, so they are **server-side only**. A CRM token in page JavaScript is
+a published token (R18). The only step in the browser is the trip to Google, and it carries no
+credential of yours.
+
+The rest of the surface: `GET /api/v1/auth/google/accounts/{id}` reads a connected account, and
+`DELETE` on the same address revokes it (`google:offline`). Both answer **404 for an account belonging
+to another application** — the CRM applies R22's own rule, since confirming that someone else's record
+exists is already a leak.
+
+### What the exchange gives you
+
+The profile carries `id`, `sub`, `email`, `email_verified`, `name`, `picture`, `hosted_domain`,
+`offline_access`, `status` (`ACTIVE` / `REVOKED`) and the timestamps. `id` is the CRM's identifier —
+it is what goes in the `access-token` and revoke addresses. `hosted_domain` is how you restrict a login
+to one Google Workspace domain, when the project needs that.
+
+### If the page is unreachable or the contract has changed
+
+**Stop and tell the project owner.** Do not invent endpoints, do not integrate Google directly, and do
+not silently fall back to a password login. A login built against a guessed endpoint compiles, renders
+a convincing screen and fails at the one moment that matters — and the guess is not visible in the
+diff.
+
+> The CRM rate-limits its own documentation pages by IP: a run of attempts answers **429** and blocks
+> for a few minutes. Read the page once and work from it, instead of repeating the call — the same
+> courtesy the skill demands when consuming the Spamhaus list (R34).
 
 ---
 
@@ -86,12 +113,22 @@ does is a redirect and a callback. A client secret — Google's or the CRM's —
 never reaches a JS file, never reaches `dist/`. R18 already forbids a secret in the frontend source;
 obfuscation does not change that (R20).
 
-### `state` is mandatory, and it is verified
+### `state` is yours, and nobody else will check it
 
-The `state` parameter is generated server-side, stored against the session, and **compared on the
-callback**. Without it the callback accepts a code obtained in someone else's browser — login CSRF.
-A `state` that is generated but not checked is the same as no `state` at all, and it looks correct in
-every screenshot.
+`state` is **opaque text you send and the CRM returns intact**. It does not validate it, and neither
+does Google. Generating it server-side, storing it against the session and **comparing it on the
+callback** is entirely the project's job, and skipping the comparison is how the callback ends up
+accepting a code obtained in someone else's browser — login CSRF.
+
+A `state` that is sent but never checked is the same as no `state` at all, and it looks correct in
+every screenshot. Assuming "the CRM handles it" is the specific wrong assumption to avoid here.
+
+### The code is single-use and lives two minutes
+
+The `code` that arrives at your redirect address is spent by the first `token` call and expires in two
+minutes. So the callback route exchanges it **immediately**, server-side — it is never parked in a
+queue, never handed to the page, and never retried after a failure, because a second attempt with the
+same code fails by design rather than by accident.
 
 ### The identity comes from the server's verification, never from the client
 
@@ -117,13 +154,26 @@ existing shape (`backend-server.md`) — because it is a login endpoint by anoth
 exchange answers the same way regardless of cause: an error that distinguishes "unknown account" from
 "invalid code" is an account-enumeration oracle.
 
-### The CSP has to allow the redirect
+### The CSP is *not* the trap here — unlike Turnstile
 
-The skill requires tightening the CSP before production, and OAuth breaks silently when it is not
-accounted for: the redirect simply does not happen and **there is no visible error** — the same trap
-documented for Turnstile (`turnstile.md`). Whatever origin the flow redirects to must be allowed in
-`form-action` and, if anything is framed, in `frame-src`. Confirm the exact origins against the CRM
-docs rather than guessing them.
+Worth stating plainly, because the reflex from `turnstile.md` is to go tighten the policy. Step 2 is a
+**server-issued redirect**, and a `302` is not subject to the page's content security policy. Nothing
+about this flow embeds a third-party script or frame, so no `script-src` or `frame-src` entry is
+needed for it.
+
+The CSP matters only if the project chooses to start the flow from the page instead of from a route.
+Prefer the route: a link or a form is one more surface, and the redirect it saves is nothing.
+
+### `offline` is decided at the start, and its absence surfaces an hour later
+
+If the system will call Google APIs on the person's behalf, the login session starts with
+`offline: true`. Without it the CRM receives a valid access token and **no refresh token** — Google
+answers `200` and simply omits the field. Nothing fails at that moment. The gap appears about an hour
+later, when the token expires and `access-token` starts answering `422`.
+
+Two consequences: decide this when the flow is designed, not when it breaks; and the refresh token
+**never leaves the CRM** — what your project gets is a short-lived access token, renewed centrally.
+Do not store it.
 
 ### Turnstile still applies (G4)
 
@@ -185,11 +235,15 @@ Like every other gate answer, in `CLAUDE.md` (R2):
 ## 7. Checklist
 
 - [ ] CRM documentation read **in this session**, before the first line of integration
+- [ ] CRM token carries `google:login` (plus `google:offline` only if calling Google APIs)
+- [ ] `redirect_uri` registered with Angatu for this application, per environment — exact match
+- [ ] `offline` decided at design time, not after `access-token` starts returning 422
 - [ ] Endpoints taken from the docs — nothing invented, nothing recalled from another project
 - [ ] If no endpoint is published: stopped, and the owner told — no direct-to-Google fallback, no
       silent password login
 - [ ] No client secret anywhere outside the server
-- [ ] `state` generated server-side and **verified** on the callback
+- [ ] `state` generated server-side and **verified** on the callback — the CRM only echoes it
+- [ ] `code` exchanged immediately: single-use, two-minute life, never queued or retried
 - [ ] Identity from the server's verification only; `sub` as the identifier, not the e-mail
 - [ ] Unverified e-mail refuses the login
 - [ ] Project's own session cookie: `HttpOnly`, `SameSite`, conditional `Secure`, never in a URL (R23)
