@@ -36,6 +36,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Saving, resizing or compressing images | `references/images.md` |
 | Cache policy, service worker, asset hashing | `references/cache.md` |
 | Architecture, DRY, Javadoc, naming, `CLAUDE.md`, commits | `references/conventions.md` |
+| Removing dead code and orphan files, the first-use sweep | `references/dead-code.md` |
 | Running, testing, project checklist, known traps | `references/testing.md` |
 | Automated tests for routes and services, without packaging | `references/route-testing.md` |
 | Dockerfile, Coolify, volumes, environment variables | `references/deploy-coolify.md` |
@@ -116,6 +117,16 @@ rule says which one wins.
 - **R11 — Clean architecture, always.** Extract utilities, no repetition, layers kept apart
   (`entities` → `services` → `routes` → `utils`), Javadoc on every public API, short methods.
   → `references/conventions.md`
+- **R32 — Dead code and orphan files are removed, and the proof comes first.** A project carries no
+  junk. But in this stack a live endpoint has **zero static references** — `Route` and `Saveable` are
+  found by `org.reflections`, and every HTML file under `/public` is a live URL — so deleting by grep
+  takes down working features. Three bands: **never** the database or `/data` (no `DROP`, no row
+  deleted for tidiness, no user upload); **never silently** a route, entity, public page, migration or
+  anything reached by reflection — prove it, list it, and wait for a yes; **same commit, no question**
+  for what is provably dead and outside reflection: orphan `utils/`/`services/` classes, unused
+  imports, commented-out code, and the agent's own `.bak` leftovers. One full sweep on first use,
+  recorded in `CLAUDE.md`; after that, only what the task touches. JS and CSS stay under
+  `frontend-build.md` — R32 does not loosen it. → `references/dead-code.md`
 - **R12 — Code in English, documentation in Portuguese.** Packages, classes, methods and variables
   always in English; Javadoc and comments always PT-BR; every class carries
   `@author Angatu Sistemas`. → `references/conventions.md`
@@ -270,7 +281,10 @@ dentro dela · R25 nunca usar cache sem pedido · R26 pagamento e IA pela API do
 R27 Turnstile: chaves no `.env` e aviso na política de privacidade · R28 perguntar a estratégia de
 compressão antes de salvar imagem · R29 testar sempre no servidor real e automatizado — serviço em JUnit, rota no AngatuLib em processo, e JAR mais contêiner antes de entregar · R30 mídia e texto de
 apresentação protegidos de cópia casual, por elemento e nunca na página inteira — telefone, endereço,
-PIX, código de pedido e campo de formulário continuam copiáveis.
+PIX, código de pedido e campo de formulário continuam copiáveis · R32 código morto e arquivo órfão são
+removidos, com prova antes: banco e `/data` nunca; rota, entidade, página e qualquer coisa por reflexão
+só depois de listar e perguntar; utilitário órfão, import não usado e código comentado saem no mesmo
+commit.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -283,6 +297,7 @@ atribuição**, inclusive a que o próprio ambiente injeta sozinho. Conferir ant
 - Compressão de imagem (G2): _(a definir)_
 - Turnstile (G4): _(a definir)_
 - Proteção de conteúdo (R30): _(a definir)_
+- Limpeza inicial (R32): _(a definir)_
 - Cache (G3): não usar
 <!-- AngatuLibrariesSkill:end -->
 ```

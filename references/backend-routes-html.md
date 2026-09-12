@@ -2,6 +2,12 @@
 
 > Covers `Route` / `RouteType`, `HtmlRouteAPI`, `AssetsAPI` and `IP`. R10 applies: `Route` is used
 > only through `extends`.
+>
+> **A `Route` subclass is never instantiated by your code.** `org.reflections` finds it by scanning for
+> `extends Route`, so `grep -r CreateUserRoute` returns only the file itself — that is what a healthy,
+> live route looks like, not a sign of dead code. The same holds for every HTML file under `/public`,
+> which `HtmlRouteAPI` publishes as a URL whether or not anything links to it. Before proposing to
+> delete either, read R32 (`dead-code.md`).
 
 ---
 

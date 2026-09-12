@@ -19,6 +19,10 @@ Everything generated has to be well architected. It is not optional.
   constructors in utility classes.
 - Name with intent (`CreateOrderService`, `OrderCalculator`, `TokenAuth`) and keep methods short
   (under 30 lines). If one grew, split it.
+- **Remove what the extraction orphaned**, in the same commit (R32, `dead-code.md`). Extracting a
+  utility and leaving the old copy behind is not cleaning up — it is duplicating, which is the thing
+  this section exists to prevent. The `utils/` and `services/` layers are pure by construction, and
+  that is exactly what makes an orphan there safe to delete once the three greps come back empty.
 
 ### 1.1 Optimisation
 

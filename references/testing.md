@@ -116,6 +116,9 @@ has one.
 - [ ] Rendered on a running server and looked at, desktop and mobile (R21)
 - [ ] `mvn test` green: every R22 decision covered by a service test, every route with a success and
       a refusal case (R29, `route-testing.md`)
+- [ ] No band-2 orphan left behind: the utilities, files and commented blocks this change orphaned are
+      gone in the same commit, and band-1 candidates are listed rather than deleted (R32,
+      `dead-code.md`)
 - [ ] Detailed commit pushed to `development` (R3)
 - [ ] History free of any AI trace — no `Co-Authored-By`, no `Generated with`, no 🤖, in commits,
       branch names and the pull request (R31). Checked with the grep in `conventions.md` **before**

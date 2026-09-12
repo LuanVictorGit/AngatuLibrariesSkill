@@ -302,6 +302,26 @@ exige "$RT" 'docker build' 'route-testing.md mantem o JAR e o conteiner antes de
 exige "$RT" 'skipTests' 'route-testing.md avisa que -DskipTests pula a suite' \
                         'route-testing.md nao avisa sobre -DskipTests'
 
+# R32 e a regra mais facil de escrever errado: "apague o que nao e usado" derruba
+# rota viva, porque neste stack rota viva tem zero referencia estatica. Entao a
+# prova, as faixas e a excecao do banco sao cobradas uma a uma.
+DC=references/dead-code.md
+exige "$DC" 'org\.reflections' 'dead-code.md fundamenta a prova na descoberta por reflexao'                                'dead-code.md nao cita org.reflections — a prova de rota fica sem base'
+exige "$DC" 'database|banco' 'dead-code.md protege o banco' 'dead-code.md sem a protecao do banco'
+exige "$DC" 'DROP TABLE' 'dead-code.md proibe DROP a titulo de limpeza'                          'dead-code.md nao proibe DROP TABLE'
+exige "$DC" '/data' 'dead-code.md protege uploads e /data' 'dead-code.md sem a protecao de /data'
+exige "$DC" 'Band 0|Faixa 0' 'dead-code.md separa a faixa intocavel' 'dead-code.md sem a faixa 0'
+exige "$DC" 'Band 1|Faixa 1' 'dead-code.md separa a faixa que exige aprovacao' 'dead-code.md sem a faixa 1'
+exige "$DC" 'Band 2|Faixa 2' 'dead-code.md separa a faixa automatica' 'dead-code.md sem a faixa 2'
+exige "$DC" '301' 'dead-code.md aposenta pagina publica com 301'                   'dead-code.md nao manda usar 301 ao aposentar pagina'
+exige "$DC" 'string literal|literal de string' 'dead-code.md varre literais de string'                                                'dead-code.md nao varre literais de string — reflexao por nome escapa'
+exige "$DC" 'git status' 'dead-code.md confere arquivo nao rastreado antes de apagar'                          'dead-code.md nao avisa que arquivo nao rastreado nao volta'
+exige "$DC" 'first use|primeiro uso' 'dead-code.md define a varredura de primeiro uso'                                      'dead-code.md sem a varredura de primeiro uso'
+
+# E o mais importante: R32 nao pode ter sido escrita por cima de 6.3.
+exige "$FB" 'forbidden to "clean up" a function that looks unused'             'frontend-build.md mantem a proibicao de limpar funcao que parece nao usada'             'frontend-build.md perdeu a protecao de 6.3 — R32 foi escrita por cima dela'
+exige "$FB" 'R32' 'frontend-build.md diz que R32 nao o afrouxa'                   'frontend-build.md nao reconcilia com R32'
+
 CV=references/conventions.md
 exige "$CV" 'R31' 'conventions.md cita R31' 'conventions.md nao cita R31'
 exige "$CV" 'Co-Authored-By' 'conventions.md nomeia o trailer proibido' \

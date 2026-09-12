@@ -295,6 +295,11 @@ and used in another: outside the list, the name is renamed in each file separate
 not look like an error — the page loads and the feature simply does not exist, with no line in the build
 console. The list is the only guard.
 
+> **R32 does not loosen this.** The rule that orphan code is removed applies to Java classes and files,
+> and it explicitly defers JavaScript and CSS to this section (`dead-code.md`). A function that looks
+> unused here stays, and a CSS rule that looks unused stays — the reasons above did not stop being
+> true because cleanup became mandatory elsewhere.
+
 ---
 
 ## 7. HTML
