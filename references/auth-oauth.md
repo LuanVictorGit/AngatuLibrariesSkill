@@ -3,11 +3,16 @@
 > Covers R33. A login screen built from scratch authenticates with **Google OAuth brokered by
 > AngatuCRM**. No password field, no local password hash, no session invented by the project.
 >
-> **Source of truth, and it is not this file:** <https://crm.angatusistemas.com.br/docs> and
-> <https://crm.angatusistemas.com.br/openapi.json>. Read them **before writing the first line**, every
-> time — the same discipline R26 imposes for payments and AI (`crm-payments-ai.md`). This page carries
+> **Source of truth, and it is not this file:**
+> <https://crm.angatusistemas.com.br/docs-google> — read it **before writing the first line**, every
+> time, the same discipline R26 imposes for payments and AI (`crm-payments-ai.md`). This page carries
 > the rule and the invariants; the endpoint shapes come from the CRM, never from memory and never from
 > this file.
+>
+> **Go to that address directly.** The documentation index at `/docs` links only to `/docs-ia` and
+> `/docs-pagamentos`, and `openapi.json` does not describe this flow — so an agent told merely to
+> "read the CRM documentation" follows those two links and never finds the login contract. That is
+> why the URL is written out here instead of an instruction to go looking.
 
 ---
 
@@ -35,18 +40,23 @@ one that put payments and AI behind the CRM (R26):
 
 ## 2. Step zero, and it is not optional
 
-**Read the CRM documentation before writing anything.** At the time this file was written, the
-published contract (`openapi.json`, 23 routes) covered AI, payments, customers and reports, and
-carried **no authentication endpoint for end users** — the documented `Authorization: Bearer
-agtu_<prefixo>_<segredo>` is how *your application* authenticates *to the CRM*, which is a different
-thing entirely.
+**Open <https://crm.angatusistemas.com.br/docs-google> before writing anything**, and take the
+routes, parameters, callback shape and token format from there.
 
-So the first action is always to look, and the result decides what happens next:
+Two things this file will not do for you, because they age and the page does not:
+
+- **It does not restate the endpoints.** They live on that page.
+- **It does not describe the flow from memory.** `openapi.json` covers AI, payments, customers and
+  reports and does not describe this one, and the `Authorization: Bearer agtu_<prefixo>_<segredo>`
+  documented under `/docs` is how *your application* authenticates *to the CRM* — a different thing
+  from a person signing in.
+
+The result of reading decides what happens next:
 
 | What the docs show | What you do |
 |---|---|
 | A login/OAuth endpoint is published | Use exactly what it documents — routes, parameters, callback shape, token format |
-| Nothing is published | **Stop and tell the project owner.** Do not invent endpoints, do not integrate Google directly, and do not silently fall back to a password login |
+| The page is unreachable, or the endpoint is not there | **Stop and tell the project owner.** Do not invent endpoints, do not integrate Google directly, and do not silently fall back to a password login |
 
 **Inventing the integration is the failure mode to avoid.** A login built against a guessed endpoint
 compiles, renders a convincing screen and fails at the one moment that matters — and the guess is not
@@ -55,8 +65,12 @@ clear statement of what is blocking, not a plausible-looking integration.
 
 ```bash
 # antes de escrever a primeira linha
-curl -s https://crm.angatusistemas.com.br/openapi.json | python -c "import sys,json;[print(p) for p in sorted(json.load(sys.stdin)['paths'])]"
+curl -s https://crm.angatusistemas.com.br/docs-google
 ```
+
+> O CRM tem limite por IP nas próprias páginas de documentação: uma sequência de tentativas responde
+> **429** e bloqueia por alguns minutos. Leia a página uma vez e trabalhe a partir dela, em vez de
+> repetir a chamada — a mesma cortesia que a skill exige ao consumir a lista da Spamhaus (R34).
 
 ---
 

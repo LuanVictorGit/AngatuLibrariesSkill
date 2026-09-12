@@ -34,6 +34,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Charging money, AI text generation, webhooks from the CRM | `references/crm-payments-ai.md` |
 | Cloudflare Turnstile: keys, verification, privacy policy, CSP | `references/turnstile.md` |
 | A login screen: Google OAuth through AngatuCRM | `references/auth-oauth.md` |
+| Filtering hostile networks: Spamhaus DROP | `references/ip-blocklist.md` |
 | Saving, resizing or compressing images | `references/images.md` |
 | Cache policy, service worker, asset hashing | `references/cache.md` |
 | Architecture, DRY, Javadoc, naming, `CLAUDE.md`, commits | `references/conventions.md` |
@@ -191,15 +192,25 @@ rule says which one wins.
   environment, token never in a URL, authorization validated in the backend on every route, tenant
   filtered on every query. → `references/security.md`
 - **R33 — A login screen built from scratch uses Google OAuth through AngatuCRM.** No password
-  field, no local password hash. **Read the CRM documentation first, every time** —
-  <https://crm.angatusistemas.com.br/docs> and `openapi.json` are the contract, and endpoint shapes
-  are never recalled from memory or from another project. **If no login endpoint is published there,
+  field, no local password hash. **Read <https://crm.angatusistemas.com.br/docs-google> first, every time** — that exact
+  address, because `/docs` does not link to it and `openapi.json` does not describe this flow; endpoint
+  shapes are never recalled from memory or from another project. **If no login endpoint is published there,
   stop and tell the owner**: never invent the integration, never go straight to Google, never fall
   back to a password login silently. Invariants that hold regardless: the code is exchanged
   server-side, `state` is verified, identity comes only from the server's verification (`sub`, not
   the e-mail, and an unverified e-mail refuses), and the project issues its own cookie session (R23).
   A project that already has a working login keeps it — propose Google sign-in alongside, never
   remove a login path on your own (R18). → `references/auth-oauth.md`
+- **R34 — Every project filters incoming traffic against the Spamhaus DROP list.** Mandatory,
+  including on projects that never asked. Both families — `drop_v4.json` and `drop_v6.json`, ~1,900
+  CIDRs of hijacked and criminal-controlled netblocks; IPv4-only is bypassed by any mobile client.
+  **It fails open**: a list that cannot be fetched or parsed serves every request, the opposite of
+  Turnstile and deliberately so — unknown is not hostile. Held in memory and refreshed hourly through
+  `Task`, which R25 permits because a blocklist is configuration, not content. The client address
+  comes from the library's `IP` helper with the proxy hops configured; reading the socket address
+  blocks nobody, and reading `X-Forwarded-For` directly lets the client choose. `/health`, loopback
+  and private ranges are never blocked; a blocked address gets a bare `403`, never a rendered page.
+  → `references/ip-blocklist.md`
 - **R24 — A WebSocket route checks the session inside itself.** The upgrade request bypasses every
   filter the library installs — no input filter, no rate limit, no security headers. A `WS` route
   without a gate **raises no error**: it serves whoever arrives. One gate per project, check before
@@ -297,7 +308,8 @@ removidos, com prova antes: banco e `/data` nunca; rota, entidade, página e qua
 só depois de listar e perguntar; utilitário órfão, import não usado e código comentado saem no mesmo
 commit · R33 tela de login criada do zero usa OAuth do Google pelo AngatuCRM, sem senha local — ler a
 documentação do CRM antes de cada integração, e parar e avisar se o endpoint não estiver publicado, em
-vez de inventar.
+vez de inventar · R34 todo projeto filtra o tráfego de entrada pela lista DROP da Spamhaus, v4 e v6,
+falhando aberto, em memória, atualizada de hora em hora — `/health` e faixas privadas fora do filtro.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -312,6 +324,7 @@ atribuição**, inclusive a que o próprio ambiente injeta sozinho. Conferir ant
 - Proteção de conteúdo (R30): _(a definir)_
 - Limpeza inicial (R32): _(a definir)_
 - Login (R33): _(a definir)_
+- Filtro de IP (R34): _(a definir)_
 - Cache (G3): não usar
 <!-- AngatuLibrariesSkill:end -->
 ```
