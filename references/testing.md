@@ -102,7 +102,10 @@ about not having a JAR — it never applies to a project that has one.
 - [ ] AI? Through the AngatuCRM API (R26), never `DeepSeek`, never a provider key
 - [ ] A landing page? G1 answered, and the landing pipeline applied (`landing-intake.md`)
 - [ ] Rendered on a running server and looked at, desktop and mobile (R21)
-- [ ] Detailed commit with no mention of AI, pushed to `development` (R3)
+- [ ] Detailed commit pushed to `development` (R3)
+- [ ] History free of any AI trace — no `Co-Authored-By`, no `Generated with`, no 🤖, in commits,
+      branch names and the pull request (R31). Checked with the grep in `conventions.md` **before**
+      the push, never after
 
 ## 4. Traps that cost hours
 
