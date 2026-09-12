@@ -76,10 +76,10 @@ else
   ok "SKILL.md com $LINHAS linhas (teto 400)"
 fi
 
-if grep -q 'angatu-skill:begin' SKILL.md && grep -q 'angatu-skill:end' SKILL.md; then
+if grep -q 'AngatuLibrariesSkill:begin' SKILL.md && grep -q 'AngatuLibrariesSkill:end' SKILL.md; then
   ok 'bloco de persistencia do CLAUDE.md presente e delimitado'
 else
-  falha 'bloco angatu-skill:begin/end ausente do SKILL.md — R1 perde a ancora'
+  falha 'bloco AngatuLibrariesSkill:begin/end ausente do SKILL.md — R1 perde a ancora'
 fi
 
 for GATE in G1 G2 G3 G4; do

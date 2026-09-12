@@ -75,7 +75,7 @@ Keep `CLAUDE.md` at the project root always current. Any feature or fix that cha
 startup (`AngatuLib`), routes, entities or environment variables is reflected in `CLAUDE.md` **in the
 same commit**.
 
-It carries two things: the `angatu-skill` block from section 3 of `SKILL.md` (R1), and the project's
+It carries two things: the `AngatuLibrariesSkill` block from section 3 of `SKILL.md` (R1), and the project's
 own documentation. Template for the project part:
 
 ```markdown

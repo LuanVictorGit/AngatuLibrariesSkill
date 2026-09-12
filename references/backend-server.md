@@ -187,7 +187,7 @@ project-root/
 │   └── emails/                   // templates (EmailAPI.loadHtmlTemplate) — see email-design.md
 ├── Dockerfile                    // Coolify deploy (R8) — mandatory
 ├── .dockerignore                 // lean build context, no .env and no database
-├── CLAUDE.md                     // carries the angatu-skill block (R1)
+├── CLAUDE.md                     // carries the AngatuLibrariesSkill block (R1)
 ├── .env                          // local only; in production these are Coolify variables
 └── pom.xml
 ```

@@ -37,7 +37,7 @@ project-root/
 ├── Dockerfile
 ├── .dockerignore
 ├── .claude/launch.json           # preview temporário (frontend-preview.md)
-└── CLAUDE.md                     # com o bloco angatu-skill (R1)
+└── CLAUDE.md                     # com o bloco AngatuLibrariesSkill (R1)
 ```
 
 `tailwind.config.js` points `content` at `./src/**/*.{html,js}`.
