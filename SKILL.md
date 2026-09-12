@@ -55,6 +55,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | **Landing page requested — read before anything else** | `references/landing-intake.md` |
 | Themed background, hero motion graphics, real material | `references/landing-motion.md` |
 | Copy that does not read as machine-written | `references/landing-copy.md` |
+| Design that does not look machine-generated | `references/anti-ai-design.md` |
 | Per-URL SEO and Open Graph cover art | `references/landing-seo-og.md` |
 | Static site with no Java: nginx, Coolify Static | `references/static-site.md` |
 | Transactional e-mail HTML | `references/email-design.md` |
@@ -147,6 +148,14 @@ rule says which one wins.
   takes the palette and the footer; it does not take a hero video. Internal development surfaces
   follow the tokens but are exempt from SEO, Open Graph and the landing audit.
   → `references/paint.md`, `references/design-audit.md`
+- **R35 — Nothing the skill renders may look machine-generated.** `landing-copy.md` already keeps the
+  text from sounding it; this is the same duty for the layout. Out by default: the decorative rule or
+  dash pinned to a label, gradient text, the violet→pink palette, blurred gradient blobs, emoji as
+  icons, `backdrop-blur` as house style, the three-column feature default. The eyebrow label stays —
+  what goes is the ornament bolted to it. The test is by eye, in the preview (R21): *could this be a
+  screenshot of any other product?* What makes it specific is the client's material. A device the
+  project's identity actually defines is not a tell — the question is never "is this decorative" but
+  "did anyone decide this". → `references/anti-ai-design.md`
 - **R14 — Tailwind is always local, never CDN.** Download the standalone binary, generate
   `public/styles/tailwind.css`, and commit the generated file — Coolify builds from the repository,
   not from your machine. → `references/frontend-build.md`
@@ -197,16 +206,13 @@ rule says which one wins.
   environment, token never in a URL, authorization validated in the backend on every route, tenant
   filtered on every query. → `references/security.md`
 - **R33 — A login screen built from scratch uses Google OAuth through AngatuCRM.** No password
-  field, no local password hash. **Read <https://crm.angatusistemas.com.br/docs-google> first, every time** — that exact
-  address, because `/docs` does not link to it and `openapi.json` does not describe this flow. Two
-  prerequisites only Angatu can provide, so ask before starting: a CRM token with `google:login`, and
-  your `redirect_uri` registered for the application (exact-match comparison). **If no login endpoint is published there,
-  stop and tell the owner**: never invent the integration, never go straight to Google, never fall
-  back to a password login silently. Invariants that hold regardless: the code is exchanged
-  server-side, `state` is verified, identity comes only from the server's verification (`sub`, not
-  the e-mail, and an unverified e-mail refuses), and the project issues its own cookie session (R23).
-  A project that already has a working login keeps it — propose Google sign-in alongside, never
-  remove a login path on your own (R18). → `references/auth-oauth.md`
+  field, no local password hash. **Read <https://crm.angatusistemas.com.br/docs-google> first, every
+  time** — that exact address: `/docs` does not link to it and `openapi.json` does not describe this
+  flow. Ask Angatu first for the two things only they provide: a token with `google:login` and your
+  registered `redirect_uri`. **Unreachable or changed contract → stop and tell the owner**; never
+  invent it, never go straight to Google, never fall back to a password login. `state` is yours to
+  verify, identity is `sub`, the session is the project's own (R23). An existing login stays (R18).
+  → `references/auth-oauth.md`
 - **R34 — Every project filters incoming traffic against the Spamhaus DROP list.** Mandatory,
   including on projects that never asked. Both families — `drop_v4.json` and `drop_v6.json`, ~1,900
   CIDRs of hijacked and criminal-controlled netblocks; IPv4-only is bypassed by any mobile client.
@@ -240,20 +246,13 @@ rule says which one wins.
 ### Testing
 
 - **R29 — Test against the real server, never a fake one, and automate it.** Never
-  `python -m http.server`, `npx serve`, a Live Server extension or `file://` — outside the real server
-  there is no session, no API, no page assembly and no security headers, so a screen that *looks*
-  right hides exactly the defects that matter. Testing is three layers, not one
-  (→ `references/route-testing.md`): **services** as plain JUnit with no HTTP, where every R22
-  decision is proven in milliseconds; **routes** against the real `AngatuLib` booted in-process on an
-  ephemeral port, no packaging involved; and **the JAR and the container** —
-  `mvn package && java -jar target/<app>.jar`, then `docker build` — which stay **mandatory before
-  delivering and before deploying**, because they are the only things that prove bundled resources,
-  the classpath, the `dist` and the image. The JAR is the gate, not the inner loop. **One narrow
-  exception for static-only projects**, defined in `references/frontend-preview.md`: no JAR exists, so
-  a temporary server may serve `dist/` — but only one that mirrors the project's `nginx.conf`
-  (headers, CSP, `try_files`, the project's 404), never a generic file server, and it is shut down
-  afterwards.
-  → `references/testing.md`
+  `python -m http.server`, `npx serve`, Live Server or `file://` — outside the real server there is no
+  session, no API, no page assembly and no security headers, so a screen that *looks* right hides the
+  defects that matter. Three layers, not one: **services** in plain JUnit, **routes** against the real
+  `AngatuLib` in-process, and **the JAR and container** as the gate before delivering and deploying —
+  never the inner loop. **Narrow exception for static-only projects**: a temporary server may serve
+  `dist/`, but only one mirroring the project's `nginx.conf`, never a generic file server.
+  → `references/route-testing.md`, `references/testing.md`
 
 ---
 
@@ -300,7 +299,7 @@ R6 Jetty vem do Javalin · R7 HTTP por padrão, o TLS é do Coolify · R8 Docker
 só por `extends` · R11 arquitetura limpa e DRY · R12 código em inglês, Javadoc em PT-BR,
 `@author Angatu Sistemas` · R13 o sistema de design vale para toda superfície renderizada,
 inclusive erro, e-mail e impressão · R14 Tailwind local, nunca CDN · R15 responsividade só em
-Tailwind · R16 português impecável no texto visível · R17 rodapé da Angatu em página e e-mail ·
+Tailwind · R16 português impecável no texto visível · R35 nada que a skill renderiza pode ter cara de gerado por IA — traço decorativo em rótulo, texto em gradiente, paleta roxo-rosa, blobs borrados e emoji como ícone ficam de fora · R17 rodapé da Angatu em página e e-mail ·
 R18 source legível, build protege, dist publica · R19 ofuscação obrigatória, mesmo sem pedido ·
 R20 ofuscação nunca vence funcionamento, segurança, acessibilidade ou SEO · R21 todo frontend é
 visto rodando antes de ser entregue · R22 o cliente é hostil: presuma um proxy interceptando ·

@@ -272,6 +272,10 @@ worker, and any class that Java injects into the markup (`{%nome_active}`).
 Every rendered surface (R13), not only the main screens:
 
 - application screens and landing pages;
+> While the page is in front of you, run the R35 question once: **could this be a screenshot of any
+> other product?** It is an eye check and this is the only moment it can happen
+> (`anti-ai-design.md`).
+
 - **error and blocked pages** — 404, 500, and the inline 429/403 pages the rate limiter serves. Trigger
   them deliberately: request a missing route, and hammer a rate-limited route until it blocks. These
   are the pages nobody looks at, shown at the worst possible moment;

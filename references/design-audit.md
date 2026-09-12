@@ -211,6 +211,10 @@ Same rule: 3–5 named easings, centralised in `--ease-*`.
       `grep -rn "@media.*min-width" --include="*.css" src/main/resources/public`
 - [ ] Angatu watermark present on every page, **block pages included** (R17) — open a 429 on purpose
       and look at it, instead of assuming
+- [ ] R35 pass done by eye: cover the logo and the copy — if nothing left on screen belongs to this
+      client, the decoration was doing no work (`anti-ai-design.md`)
+- [ ] `grep -rnE '✨|🚀|🔥' --include='*.html' src/main/resources/public` empty, and no
+      `from-purple-*.*to-pink-*` gradient
 - [ ] Generative canvas uses the DPR-aware `setupCanvas` (`canvas-generative.md`)
 - [ ] `og:image` generated, `json-ld` present, `meta description` reviewed — and on a landing or any
       public URL, the per-page cover of `landing-seo-og.md`
@@ -237,6 +241,8 @@ Same rule: 3–5 named easings, centralised in `--ease-*`.
 - Anything scrolling horizontally at 375px
 - A page-wide `contextmenu` block, an intercepted keyboard shortcut, or a devtools-detection loop (R30,
   `frontend-build.md`) — these punish honest visitors and stop nobody
+- A machine-generated look (R35, `anti-ai-design.md`) — a decorative dash pinned to a label, gradient
+  text, the violet→pink default palette, blurred gradient blobs, emoji standing in for icons
 - Content protection blocking a phone number, address, PIX key, order code or form field (R30)
 
 ### Important — current sprint

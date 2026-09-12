@@ -1,5 +1,9 @@
 # Landing page copy — natural language, and none of the machine-written tells
 
+> The visual half of this is `anti-ai-design.md` (R35). Copy and layout give a page away
+> independently — flawless text under a violet gradient with a dash before every label still reads as
+> generated at a glance.
+
 > Audit: Angatu Sistemas · applies to every visible string on a landing, including the text that appears
 > inside the Remotion motion graphics (`landing-motion.md`).
 >

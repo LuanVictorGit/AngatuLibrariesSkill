@@ -384,6 +384,18 @@ else
   ok 'docker build fora do laco de desenvolvimento'
 fi
 
+# R35 e regra de olho, nao de grep — o risco e ela virar lista de proibicoes
+# sem limite, e ai o agente ignora na primeira vez que a pagina precisa de um
+# divisor. O limite tem de estar escrito junto.
+AA=references/anti-ai-design.md
+exige "$AA" 'eyebrow' 'anti-ai-design.md separa o rotulo do enfeite'                       'anti-ai-design.md proibe o rotulo junto com o traco'
+exige "$AA" 'screenshot of any other product' 'anti-ai-design.md traz o teste de olho'                                               'anti-ai-design.md sem o teste de generico'
+exige "$AA" 'did anyone decide this|decidiu' 'anti-ai-design.md poe o limite na decisao'                                              'anti-ai-design.md vira lista de proibicao sem limite'
+exige "$AA" 'R20' 'anti-ai-design.md preserva a ordem de R20'                   'anti-ai-design.md nao protege acessibilidade e clareza'
+exige "$AA" 'R13' 'anti-ai-design.md cobre e-mail, erro e impressao'                   'anti-ai-design.md so cobre a landing'
+exige references/landing-copy.md 'anti-ai-design' 'landing-copy.md aponta para a metade visual'                                  'landing-copy.md nao liga texto e layout'
+exige references/frontend-preview.md 'anti-ai-design|screenshot of any other product'      'frontend-preview.md roda a pergunta de R35 no preview'      'frontend-preview.md nao roda a checagem visual onde ela e possivel'
+
 CV=references/conventions.md
 exige "$CV" 'R31' 'conventions.md cita R31' 'conventions.md nao cita R31'
 exige "$CV" 'Co-Authored-By' 'conventions.md nomeia o trailer proibido' \

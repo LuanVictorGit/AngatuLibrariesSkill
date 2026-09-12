@@ -286,3 +286,11 @@ installed whether or not its visuals are being rebuilt (`frontend-build.md`).
 ---
 *Original source: `paint/SKILL.md` (genjutsu) · translation, compression, vanilla adaptation and audit by
 Angatu Sistemas*
+
+---
+
+## Before you call it done (R35)
+
+Render it and ask: **could this be a screenshot of any other product?** If yes, it is generic, and
+generic is what "AI look" means in practice. The fix is the client's own material — their photography,
+their palette, their words. The catalogue of defaults to avoid is in `anti-ai-design.md`.
