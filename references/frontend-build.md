@@ -1,27 +1,34 @@
-# Build de Frontend — source legível, dist protegido
+# Frontend build — readable source, protected dist
 
-> **Auditoria:** Angatu Sistemas · Referência completa do **§9.9 a §9.13** do `SKILL.md` · Stack Angatu (Java 21 + Javalin + vanilla HTML/CSS/JS + Tailwind local) · Código em inglês, documentação em português
-
-> **Lei que governa este arquivo inteiro:**
+> Audit: Angatu Sistemas · Angatu stack (Java 21 + Javalin + vanilla HTML/CSS/JS + local Tailwind).
 >
-> **SOURCE** = legível e fácil de desenvolver · **BUILD** = minificar, otimizar, ofuscar, renomear e proteger · **DIST** = versão final para produção.
+> **The law governing this whole file:**
 >
-> Nenhuma transformação de proteção existe no source. Nenhuma decisão de proteção sobrevive a um conflito com funcionamento, segurança real, acessibilidade ou SEO (§9.9 do `SKILL.md`).
+> **SOURCE** = readable and easy to develop · **BUILD** = minify, optimise, obfuscate, rename, protect ·
+> **DIST** = the final version for production.
+>
+> No protective transformation exists in the source. No protection decision survives a conflict with
+> correct behaviour, real security, accessibility or SEO (R20).
 
 ---
 
-## 1. As três leis
+## 1. The three laws
 
-1. **O source é sempre legível.** Nomes semânticos, arquivos separados por responsabilidade, fácil de ler, depurar, alterar, testar e revisar. É proibido escrever no source: JavaScript ofuscado, nomes aleatórios de variáveis, classes ou IDs aleatórios, strings codificadas para dificultar leitura, estruturas artificiais criadas só para atrapalhar engenharia reversa.
-2. **O build nunca escreve no source.** O processo lê `src/main/resources/public/` e grava em `dist/public/`. Recompilar do zero, a qualquer momento, tem de dar o mesmo resultado.
-3. **Só o dist é publicado.** O que o Coolify sobe é o JAR empacotado a partir do dist, nunca do source.
+1. **The source is always readable.** Semantic names, files separated by responsibility, easy to read,
+   debug, change, test and review. It is forbidden to write into the source: obfuscated JavaScript,
+   random variable names, random classes or IDs, strings encoded to hinder reading, or artificial
+   structures created only to frustrate reverse engineering.
+2. **The build never writes into the source.** The process reads `src/main/resources/public/` and writes
+   `dist/public/`. Rebuilding from scratch, at any time, must produce the same result.
+3. **Only the dist is published.** What Coolify runs is the JAR packaged from the dist, never from the
+   source.
 
 ```
 src/main/resources/public/   →   build (tools/frontend-build.mjs)   →   dist/public/
    legível, versionado             lê o source, não altera nada          minificado/ofuscado
 ```
 
-Exemplo do que o source deve continuar sendo:
+What the source must continue to look like:
 
 ```js
 /** Calcula o total do pedido somando subtotal e frete. */
@@ -32,59 +39,98 @@ function calculateOrderTotal(items) {
 }
 ```
 
-Escrever isso à mão no source é violação da skill, mesmo que "funcione":
+Writing this by hand into the source is a violation, even if it "works":
 
 ```js
 function _0x81ab(a,b){return _0x19c(a)+_0x71f(b)}   // PROIBIDO no source
 ```
 
-Essa forma é **saída de build**, e só o build tem o direito de produzi-la.
+That form is **build output**, and only the build has the right to produce it.
+
+### 1.1 Obfuscation is mandatory (R19), and bounded (R18, R20)
+
+Obfuscation is not an optional level chosen when someone asks for hardening. **Every published frontend
+ships obfuscated**, and applying this skill to an existing project means installing the pipeline even
+though nobody asked for it.
+
+Three boundaries make that workable rather than destructive, and they are not negotiable either:
+
+- **What is mandatory is the build, never a source rewrite.** Law 2 stands. Installing the pipeline is
+  not rewriting the project, and it does not license a rewrite of anything that already works
+  (section 17).
+- **Always on does not mean always maximum.** R20's priority order still decides every conflict:
+  **1** correct behaviour · **2** real security · **3** accessibility · **4** SEO · **5** compatibility ·
+  **6** performance · **7** maintainability · **8** obfuscation. A transformation that cannot be proven
+  safe is not applied — which is why `renameClasses` needs the proof in section 9 and `renameIds` stays
+  off (section 10).
+- **The exclusions hold.** `emails/**` is never transformed at all; `sw.js` and `vendor/**` are never
+  obfuscated; already-obfuscated legacy stays frozen in `vendor/` (section 17.1).
+
+And the principle that keeps this honest:
+
+> «Obfuscation is not encryption.»
+> «Code sent to the browser must be considered accessible to the client.»
+> «Dynamic classes and IDs are not authentication and are not security.»
+> «Real protection of data, authorization and critical rules lives in the backend.» (`security.md`)
+
+Obfuscation raises the cost of trivial automation. It does nothing against an attacker with an
+intercepting proxy, which is R22's subject and a backend problem.
 
 ---
 
-## 2. Mapa de diretórios no stack Angatu
+## 2. Directory map
 
 ```
 src/main/resources/public/       SOURCE — legível, versionado, nunca transformado no lugar
   index.html                       shell ({content} {page} {%nome_active})
   <pagina>.html                    fragmentos servidos por HtmlRouteAPI
-  styles/tailwind.css              GERADO pelo Tailwind CLI (exceção documentada — §3.4)
+  styles/tailwind.css              GERADO pelo Tailwind CLI (exceção documentada — 3.4)
   styles/ds.css                    tokens + componentes do Design System (escrito à mão)
   scripts/*.js                     ui.js net.js auth.js app-state.js messages.js
-  assets/ images/ fonts/           arte generativa (§9.5 do SKILL.md), logotipos, tipografia
-  emails/*.html                    NUNCA transformados (clientes de e-mail — §7)
-  sw.js manifest.webmanifest       PWA (§12)
+  assets/ images/ fonts/           arte generativa, logotipos, tipografia
+  emails/*.html                    NUNCA transformados (clientes de e-mail)
+  sw.js manifest.webmanifest       PWA
 
 tools/frontend-build.mjs         O BUILD — único lugar autorizado a ofuscar
-frontend.build.json              configuração dos níveis (§3)
+frontend.build.json              configuração dos níveis
 build/                           área temporária do build            → .gitignore
-dist/public/                     DIST — entra no JAR                 → .gitignore (ver §15.3)
+dist/public/                     DIST — entra no JAR                 → .gitignore (ver 15.3)
 dist/.build-info.json            nível, salt, mapa de classes e de hashes (não é servido)
 ```
 
-O `dist/public/` vira `target/classes/public/` no empacotamento (§15.1) — é ele que o `AssetsAPI` serve em produção.
+`dist/public/` becomes `target/classes/public/` at packaging time (section 15.1) — that is what
+`AssetsAPI` serves in production.
+
+For a static project there is no Maven and no JAR; the layout and the nginx image are in
+`static-site.md`, and everything else on this page applies unchanged.
 
 ---
 
-## 3. Níveis e configuração
+## 3. Levels and configuration
 
-### 3.1 Os três níveis
+### 3.1 The three levels
 
-| Nível | Quando | Minifica | Ofusca | Renomeia classes | Hash | Source maps |
+| Level | When | Minify | Obfuscate | Rename classes | Hash | Source maps |
 |---|---|---|---|---|---|---|
-| `development` | dia a dia, `mvn exec:java`, depuração | não | não | não | não | sim |
-| `production` | publicação normal | sim | não | não | opcional (§11) | não |
-| `protected` | publicação com hardening pedido | sim | sim | sim, se provado seguro | opcional (§11) | nunca |
+| `development` | day to day, debugging | no | no | no | no | yes |
+| `production` | a publish where Node is unavailable (section 3.3) | yes | no | no | optional | no |
+| `protected` | **the publishing default (R19)** | yes | yes | only where proven safe | optional | never |
 
-`development` é o padrão local e **não exige nenhuma ferramenta além do Tailwind CLI** que já é obrigatório (§9.1 do `SKILL.md`): ele apenas copia o source. Um projeto sem Node continua sendo desenvolvido e rodando normalmente.
+`development` is the local default and **needs no tooling beyond the Tailwind CLI** that is mandatory
+anyway (R14): it only copies the source. A project without Node is still developed and run normally.
 
-**A agressividade é configurável e reduzível.** Se uma transformação de `protected` inchar o JS, aumentar o tempo de parsing, engasgar a execução ou estourar memória, baixe o nível daquela técnica — nunca mantenha uma técnica pesada só porque ela existe.
+`production` is no longer the normal publishing level. It exists for the case in section 3.3, where Node
+cannot be in the pipeline at all — and that limitation is recorded in `CLAUDE.md` rather than chosen.
 
-### 3.2 `frontend.build.json` (raiz do projeto)
+**Aggressiveness is configurable and reducible.** If a `protected` transformation inflates the JS,
+increases parse time, stalls execution or blows up memory, turn that technique down — never keep a heavy
+technique just because it exists. That is R20 in practice, not an exception to R19.
+
+### 3.2 `frontend.build.json`
 
 ```json
 {
-  "level": "production",
+  "level": "protected",
   "source": "src/main/resources/public",
   "out": "dist/public",
   "levels": {
@@ -101,85 +147,102 @@ O `dist/public/` vira `target/classes/public/` no empacotamento (§15.1) — é 
 }
 ```
 
-> **Não invente formato de configuração se o projeto já tiver um.** Se o projeto usa `package.json`, `vite.config.js`, `webpack.config.js` ou uma esteira própria, **adapte-se a ela** e mantenha só os nomes de chave (`minify`, `obfuscate`, `renameClasses`, `renameIds`, `hashAssets`, `removeDeadCode`, `transformStrings`, `controlFlowProtection`). O arquivo acima é o padrão apenas para projeto que ainda não tem nenhum.
+> **Do not invent a configuration format if the project already has one.** If it uses `package.json`,
+> `vite.config.js`, `webpack.config.js` or its own pipeline, **adapt to it** and keep only the key names
+> (`minify`, `obfuscate`, `renameClasses`, `renameIds`, `hashAssets`, `removeDeadCode`,
+> `transformStrings`, `controlFlowProtection`). The file above is the default only for a project that
+> has nothing.
 
-### 3.3 Ferramentas (apenas em tempo de build)
+### 3.3 Tooling — build time only
 
-| Ferramenta | Papel | Nível |
+| Tool | Role | Level |
 |---|---|---|
-| Tailwind CLI standalone | gera `styles/tailwind.css` (§9.1 do `SKILL.md`) | todos |
-| `esbuild` | minifica JS e CSS | `production`, `protected` |
-| `html-minifier-terser` | minifica HTML preservando SEO/a11y | `production`, `protected` |
-| `javascript-obfuscator` | ofusca JS | `protected` |
+| Tailwind standalone CLI | generates `styles/tailwind.css` (R14) | all |
+| `esbuild` | minifies JS and CSS | `production`, `protected` |
+| `html-minifier-terser` | minifies HTML preserving SEO and accessibility | `production`, `protected` |
+| `javascript-obfuscator` | obfuscates JS | `protected` |
 
 ```bash
 npm init -y && npm i -D esbuild html-minifier-terser javascript-obfuscator
 ```
 
-**Node é ferramenta de build, não dependência da aplicação.** O que é publicado continua sendo HTML/CSS/JS vanilla servido pelo Javalin. **Nunca** introduza React, Vue, Angular, Svelte ou qualquer framework porque "o empacotador de proteção funciona melhor com ele". Se o projeto resolve com HTML + CSS + JavaScript, ele continua assim.
+**Node is a build tool, not an application dependency.** What ships is still vanilla HTML/CSS/JS served
+by Javalin. **Never** introduce React, Vue, Angular or Svelte because "the protection bundler works
+better with it". If the project solves its problem with HTML, CSS and JavaScript, it stays that way.
 
-Se o projeto não puder ter Node, ele fica em `production` **sem** minificação de JS/HTML (o Tailwind CLI já entrega o CSS minificado) — a perda é de bytes, não de funcionamento. Registre a limitação no `CLAUDE.md`.
+If the project genuinely cannot have Node, it falls back to `production` **without** JS and HTML
+minification (the Tailwind CLI already emits minified CSS). The loss is bytes, not behaviour. Record the
+limitation in `CLAUDE.md` — it is the one documented way a project ships without R19's obfuscation, and
+it is a constraint, not a preference.
 
-### 3.4 A exceção do `tailwind.css`
+### 3.4 The `tailwind.css` exception
 
-`styles/tailwind.css` mora dentro do source mas **é gerado**, não escrito à mão: ninguém o edita, ninguém o depura linha a linha, e ele é versionado porque o Coolify constrói a partir do repositório (§17.3 do `SKILL.md`). Ele é o **único** artefato gerado que pode ficar no source, e mesmo ele:
+`styles/tailwind.css` lives inside the source but is **generated**, not hand-written: nobody edits it,
+nobody debugs it line by line, and it is committed because Coolify builds from the repository (R14). It
+is the **only** generated artefact allowed to sit in the source, and even so:
 
-- nunca tem classes renomeadas;
-- é a fonte da lista de exclusão de renomeação — toda classe que aparece nele é intocável (§9.1);
-- é minificado pelo próprio Tailwind CLI (`--minify`), o que já é a forma final.
-
-Durante o desenvolvimento, rode o CLI em `--watch` sem `--minify` se precisar lê-lo; o build minifica de qualquer jeito.
+- its classes are never renamed;
+- it is the source of the rename exclusion list — every class appearing in it is untouchable
+  (section 9.1);
+- it is minified by the Tailwind CLI itself (`--minify`), which is already its final form.
 
 ---
 
-## 4. Ordem canônica do pipeline
+## 4. Canonical pipeline order
 
-O build roda **exatamente** nesta ordem. Trocar a ordem quebra a sincronia entre HTML, CSS e JS.
+The build runs in **exactly** this order. Changing it breaks synchronisation between HTML, CSS and JS.
 
 ```
-0. Tailwind CLI                     → styles/tailwind.css (no source, §3.4)
+0. Tailwind CLI                     → styles/tailwind.css (no source, 3.4)
 1. Análise                          → inventário de arquivos, classes, IDs, referências
 2. Validação de entrada             → segredos, CDN proibida, referência já quebrada no source
 3. Limpeza + cópia integral         → source → dist (byte a byte, sem tocar no source)
-4. Renomeação de classes/IDs        → só o que foi PROVADO seguro (§9, §10)
-5. Minificação CSS                  (§5)
-6. Minificação + ofuscação JS       (§6) — nunca em emails/**, nunca ofusca sw.js
-7. Minificação HTML                 (§7) — preservando SEO, a11y e placeholders
-8. Hash de assets                   (§11) — folhas primeiro, depois CSS/JS; nunca HTML/sw/manifest
+4. Renomeação de classes/IDs        → só o que foi PROVADO seguro (9, 10)
+5. Minificação CSS                  (5)
+6. Minificação + ofuscação JS       (6) — nunca em emails/**, nunca ofusca sw.js
+7. Minificação HTML                 (7) — preservando SEO, a11y e placeholders
+8. Hash de assets                   (11) — folhas primeiro, depois CSS/JS; nunca HTML/sw/manifest
 9. Atualização das referências      → HTML, CSS, JS, manifest, sw
 10. Gravação do dist/.build-info.json
-11. Validação pós-build             → falha com exit 1 se qualquer referência quebrou (§14)
+11. Validação pós-build             → falha com exit 1 se qualquer referência quebrou (14)
 ```
 
-Renomear **antes** de minificar (arquivo legível dá substituição provável). Hashear **depois** de minificar (o hash tem de ser do conteúdo final).
+Rename **before** minifying (a readable file makes substitution provable). Hash **after** minifying (the
+hash has to be of the final content).
 
 ---
 
 ## 5. CSS
 
-Aplicar: minificação, otimização e remoção de código morto **quando for seguro**.
+Apply minification, optimisation and dead-code removal **only when it is safe**.
 
-- **O Tailwind já faz a própria remoção de código morto** via `content` no `tailwind.config.js`. Não rode nenhum removedor de CSS não utilizado por cima do `tailwind.css`.
-- Em `ds.css` e no CSS de página, **não remova regra "não usada" automaticamente**: classe aplicada por `classList.add()`, por atributo do servidor (`{%nome_active}`) ou por biblioteca de terceiros não aparece em nenhum HTML e seria apagada por engano. Remoção de CSS morto só com análise manual e teste.
-- Minificação com `esbuild` (`loader: 'css'`): comprime, mantém a cascata e não reordena seletores.
-- A ordem dos `<link>` continua `tailwind.css` antes de `ds.css` (§9.1 do `SKILL.md`).
+- **Tailwind already does its own dead-code removal** through `content` in `tailwind.config.js`. Do not
+  run an unused-CSS remover over `tailwind.css`.
+- In `ds.css` and page CSS, **do not remove an "unused" rule automatically**: a class applied by
+  `classList.add()`, by a server attribute (`{%nome_active}`) or by a third-party library appears in no
+  HTML and would be deleted by mistake. Dead CSS removal only with manual analysis and a test.
+- Minify with `esbuild` (`loader: 'css'`): it compresses, keeps the cascade and does not reorder
+  selectors.
+- The `<link>` order stays `tailwind.css` before `ds.css` (R14).
 
 ---
 
 ## 6. JavaScript
 
-### 6.1 Minificação segura para scripts clássicos
+### 6.1 Safe minification for classic scripts
 
-Os scripts do shell Angatu são clássicos e **compartilham globais** (`UI`, `net`, `Auth`, `AppBus`, `showToast`). Um minificador que renomeia identificadores de topo quebra tudo em silêncio.
+The Angatu shell scripts are classic and **share globals** (`UI`, `net`, `Auth`, `AppBus`, `showToast`).
+A minifier that renames top-level identifiers breaks everything silently.
 
 ```js
 // seguro para script clássico: encolhe sem renomear o que é global
 await transform(code, { loader: 'js', minifyWhitespace: true, minifySyntax: true, minifyIdentifiers: false });
 ```
 
-Só ligue `minifyIdentifiers: true` para arquivo cujo conteúdo inteiro está dentro de IIFE ou de módulo ES — aí não há símbolo de topo para quebrar.
+Only enable `minifyIdentifiers: true` for a file whose entire content is inside an IIFE or an ES module —
+there is no top-level symbol to break there.
 
-### 6.2 Ofuscação (`protected`)
+### 6.2 Obfuscation
 
 ```js
 JavaScriptObfuscator.obfuscate(code, {
@@ -209,25 +272,32 @@ JavaScriptObfuscator.obfuscate(code, {
 }).getObfuscatedCode();
 ```
 
-**Proibições permanentes**, porque atingem quem não é o alvo: `debugProtection`, `disableConsoleOutput`, laço de detecção de devtools, e `selfDefending` combinado com qualquer pós-processamento.
+**Permanent prohibitions**, because they hit people who are not the target: `debugProtection`,
+`disableConsoleOutput`, devtools-detection loops, and `selfDefending` combined with any post-processing.
+Blocking a developer's tools punishes the honest reader and stops no attacker.
 
-**Nunca ofusque:**
+**Never obfuscate:**
 
-- `sw.js` — service worker quebrado fica preso no aparelho do usuário, e ele não tem como se ajudar sozinho. Minifique, só.
-- `vendor/**` e bibliotecas de terceiros já minificadas — ganho nulo, risco alto, arquivo maior.
-- `emails/**` — cliente de e-mail não executa JS e o arquivo sai do domínio.
+- `sw.js` — a broken service worker stays stuck on the user's device, and they have no way to help
+  themselves. Minify it, nothing more.
+- `vendor/**` and already-minified third-party libraries — zero gain, high risk, larger file.
+- `emails/**` — a mail client does not execute JS and the file leaves the domain entirely
+  (`email-design.md`).
 
-### 6.3 Remoção de código morto
+### 6.3 Dead-code removal
 
-Só o que a ferramenta prova ser inalcançável (`removeDeadCode` do nível). É proibido "limpar" função que parece não usada: ela pode ser chamada por atributo `onclick=`, por outro script ou por markup gerado no servidor. Toda função referenciada a partir do HTML entra em `reservedGlobals`.
+Only what the tool proves unreachable. It is forbidden to "clean up" a function that looks unused: it
+may be called from an `onclick=` attribute, from another script, or from markup generated on the server.
+Every function referenced from HTML goes into `reservedGlobals`.
 
-**E todo nome lido entre arquivos também.** `window.UI`, `window.Live`, qualquer coisa escrita num arquivo e usada em outro: fora da lista, o nome é renomeado em cada arquivo separadamente, e o resultado não se parece com um erro — a página carrega e o recurso simplesmente não existe, sem uma linha no console do build. A lista é a única guarda; escreva um teste que a confira quando o global for de um recurso que não aparece em toda tela.
+**And so does every name read across files.** `window.UI`, `window.Live`, anything written in one file
+and used in another: outside the list, the name is renamed in each file separately, and the result does
+not look like an error — the page loads and the feature simply does not exist, with no line in the build
+console. The list is the only guard.
 
 ---
 
 ## 7. HTML
-
-Minificar com `html-minifier-terser`:
 
 ```js
 await minifyHtml(html, {
@@ -237,31 +307,45 @@ await minifyHtml(html, {
   removeRedundantAttributes: false,    // preserva semântica declarada de propósito
   useShortDoctype: false, keepClosingSlash: true,
   sortAttributes: false, sortClassName: false,
-  minifyCSS: true, minifyJS: false     // JS de página é arquivo externo (§9.7 do SKILL.md)
+  minifyCSS: true, minifyJS: false     // JS de página é arquivo externo
 });
 ```
 
-**Nunca remover, em nenhum nível:** `<title>`, `meta description`, `meta robots`, `canonical`, Open Graph, Twitter Card, Schema.org (`application/ld+json`), `hreflang`, `lang`, `alt`, `aria-*`, `role`, `label for`, `name` de campo de formulário, o par `for`/`id`, `tabindex` e `<noscript>` com conteúdo real.
+**Never remove, at any level:** `<title>`, `meta description`, `meta robots`, `canonical`, Open Graph,
+Twitter Card, Schema.org (`application/ld+json`), `hreflang`, `lang`, `alt`, `aria-*`, `role`,
+`label for`, form field `name`, the `for`/`id` pair, `tabindex`, and `<noscript>` with real content.
+Those are priorities 3 and 4 in R20, and obfuscation is priority 8.
 
-**Placeholders do `HtmlRouteAPI`:** `{content}`, `{page}` e `{%nome_active}` atravessam o build intactos. `{%nome_active}` costuma aparecer **dentro de `class="..."`** — o passo de renomeação ignora qualquer token que contenha `{` ou `}`, e a classe que o servidor injeta é intocável (§9.2).
+**`HtmlRouteAPI` placeholders:** `{content}`, `{page}` and `{%nome_active}` pass through the build
+intact. `{%nome_active}` usually appears **inside `class="..."`** — the renaming step ignores any token
+containing `{` or `}`, and the class the server injects is untouchable (section 9.2).
 
-O `<script>` de página continua sendo arquivo externo (§9.7 do `SKILL.md`) — script embutido é bloqueado pela política de segurança, e o build não conserta isso.
+A page's `<script>` stays an external file — an inline script is blocked by the content security policy,
+and the build does not fix that.
 
 ---
 
 ## 8. Assets
 
-- Arte generativa (§9.5 do `SKILL.md`) já nasce otimizada; o build só copia e, se ligado, hasheia.
-- Imagem enviada por usuário não passa por aqui — vai para `/data/uploads` com a estratégia de compressão perguntada ao programador (§18 do `SKILL.md`).
-- `favicon.ico`, `apple-touch-icon` e as capas de Open Graph (`assets/og/**`, §9.16 do `SKILL.md`) **não** são hasheados: são referenciados por convenção, por buscadores e por redes sociais, que guardam a URL por conta própria.
+- Generated art (`canvas-generative.md`) is already optimised; the build only copies and, when enabled,
+  hashes it.
+- A user-uploaded image never passes through here — it goes to `/data/uploads` with the compression
+  strategy asked of the developer (G2, `images.md`).
+- `favicon.ico`, `apple-touch-icon` and the Open Graph covers (`assets/og/**`, `landing-seo-og.md`) are
+  **not** hashed: they are referenced by convention, by search engines and by social networks, which
+  cache the URL themselves.
 
 ---
 
-## 9. Renomeação de classes — só com prova de segurança
+## 9. Class renaming — only with proof of safety
 
-> **Objetivo real e limitado:** dificultar automação trivial que dependa de seletor previsível. **Não é segurança.** Um bot que executa JavaScript lê o DOM e descobre o nome atual em segundos.
+> **The real and limited objective:** to raise the cost of trivial automation that depends on a
+> predictable selector. **It is not security.** A bot that executes JavaScript reads the DOM and finds
+> the current name in seconds.
 
-**A transformação acontece no build/deploy, nunca a cada recarregamento da página.** É proibido randomizar classe em tempo de execução para atrapalhar bot: quebra acessibilidade, cache, teste e depuração — e não engana ninguém. Um build novo pode gerar identificadores novos; isso é esperado:
+**The transformation happens at build and deploy time, never on every page load.** Randomising a class
+at runtime to frustrate a bot is forbidden: it breaks accessibility, testing and debugging, and fools
+nobody. A new build may produce new identifiers; that is expected:
 
 ```
 build 1:  product-card → a81Kx      checkout-button → Q72Lm
@@ -269,42 +353,54 @@ build 2:  product-card → z91Pw      checkout-button → m42Rt
 source :  product-card              checkout-button          (sempre igual)
 ```
 
-### 9.1 Quem pode ser candidato
+### 9.1 What can be a candidate
 
-Uma classe só entra na lista de candidatas se **todas** forem verdadeiras:
+A class enters the candidate list only if **all** of these are true:
 
-1. Está declarada em CSS do projeto (`ds.css` ou CSS de página) — nunca em `styles/tailwind.css`, nunca em `vendor/**`.
-2. É kebab-case com **pelo menos um hífen** (`product-card`, `nav-tile`, `ds-credito`). Nome de palavra única (`active`, `card`, `open`) fica de fora por construção: é curto demais, colide fácil e costuma ser adicionado dinamicamente. Um nome com hífen também não pode ser identificador JavaScript, o que elimina de saída o risco de renomear uma variável por engano.
-3. Não aparece em `styles/tailwind.css` — utilitário do Tailwind é intocável: a responsividade inteira do projeto depende dele (§9.6 do `SKILL.md`).
-4. Não aparece em `src/main/java/**` — markup gerado no servidor não passa pelo build.
-5. Não aparece em `emails/**` nem em nada listado em `neverTransform`.
-6. Não casa com `keepClasses`.
+1. It is declared in project CSS (`ds.css` or page CSS) — never in `styles/tailwind.css`, never in
+   `vendor/**`.
+2. It is kebab-case with **at least one hyphen** (`product-card`, `nav-tile`, `ds-credito`). A
+   single-word name (`active`, `card`, `open`) is out by construction: too short, collides easily, and
+   usually added dynamically. A hyphenated name also cannot be a JavaScript identifier, which removes
+   the risk of renaming a variable by mistake.
+3. It does not appear in `styles/tailwind.css` — a Tailwind utility is untouchable: the project's entire
+   responsiveness depends on it (R15).
+4. It does not appear in `src/main/java/**` — server-generated markup does not pass through the build.
+5. It does not appear in `emails/**` or anything listed in `neverTransform`.
+6. It does not match `keepClasses`.
 
-### 9.2 Lista de exclusão obrigatória
+### 9.2 Mandatory exclusion list
 
-Nunca renomeie automaticamente:
+Never rename automatically:
 
-- utilitário do Tailwind e classe de biblioteca de terceiros (`swiper-*`, `leaflet-*`, `choices__*`);
-- classe usada por atributo ARIA, por `label`, por âncora (`href="#..."`) ou por formulário;
-- classe injetada pelo servidor Java, inclusive a de `{%nome_active}`;
-- classe usada por teste automatizado (`js-*` e o `data-testid` correspondente), integração externa, Web Component, API do navegador ou gancho declarado público;
-- qualquer classe em `/emails/*.html`;
-- classe cuja regra CSS tem o comentário `/* build:keep */` na linha anterior.
+- Tailwind utilities and third-party library classes (`swiper-*`, `leaflet-*`, `choices__*`);
+- a class used by an ARIA attribute, by a `label`, by an anchor (`href="#..."`) or by a form;
+- a class injected by the Java server, including the one behind `{%nome_active}`;
+- a class used by an automated test (`js-*` and the matching `data-testid`), an external integration, a
+  Web Component, a browser API, or a hook declared public;
+- any class in `/emails/*.html`;
+- a class whose CSS rule carries the comment `/* build:keep */` on the previous line.
 
-**Quando não for possível provar que a transformação é segura, não a aplique.** Sem exceção.
+**When safety cannot be proven, the transformation is not applied.** No exception — and R19 does not
+override this, because R20 sits above both.
 
-### 9.3 A prova
+### 9.3 The proof
 
-Para cada candidata, o build varre todo o JS e o HTML do source:
+For each candidate, the build scans all source JS and HTML:
 
-- **Ocorrência estática** — token completo dentro de `class="..."`, de seletor CSS ou de literal de string (`'product-card'`, `'.product-card .title'`, `'card product-card'`). Isso é renomeável.
-- **Fragmento dinâmico** — qualquer literal colado a concatenação (`'product-' + kind`) ou a interpolação (`` `product-${kind}` ``). Se um fragmento desses for prefixo ou pedaço do nome da candidata, ela é marcada **INSEGURA** e não é renomeada.
+- **Static occurrence** — the complete token inside `class="..."`, inside a CSS selector, or inside a
+  string literal (`'product-card'`, `'.product-card .title'`, `'card product-card'`). That is
+  renameable.
+- **Dynamic fragment** — any literal glued to a concatenation (`'product-' + kind`) or an interpolation
+  (`` `product-${kind}` ``). If such a fragment is a prefix or a piece of the candidate's name, it is
+  marked **UNSAFE** and not renamed.
 
-O relatório do build lista, por classe: `renomeada`, `mantida (motivo)` ou `insegura (arquivo)`. Classe insegura **não** derruba o build — ela apenas fica com o nome original, e o relatório diz por quê.
+The build report lists, per class: `renamed`, `kept (reason)` or `unsafe (file)`. An unsafe class does
+**not** fail the build — it simply keeps its original name, and the report says why.
 
-### 9.4 Aplicação e sincronia
+### 9.4 Application and synchronisation
 
-O mapa é único e vale para os três lugares ao mesmo tempo:
+One map, applied to all three places at once:
 
 ```html
 <div class="product-card">        →   <div class="a81Kx">
@@ -316,77 +412,101 @@ O mapa é único e vale para os três lugares ao mesmo tempo:
 document.querySelector('.product-card')  →  document.querySelector('.a81Kx')
 ```
 
-**Sair com HTML `a81Kx`, CSS `a81Kx` e JS `product-card` é erro de build**, não detalhe: a validação (§14) procura o nome antigo no dist e reprova se encontrar qualquer resquício de classe mapeada.
+**Shipping HTML with `a81Kx`, CSS with `a81Kx` and JS with `product-card` is a build error**, not a
+detail: the validation in section 14 looks for the old name in the dist and fails if it finds any
+remnant of a mapped class.
 
-Nome novo: letra inicial + base36 do `sha256(classe + salt do build)`, conferido contra todos os nomes de classe já existentes no projeto (inclusive os do `tailwind.css`) para não colidir. O salt fica em `dist/.build-info.json` junto do mapa — é assim que se descobre, meses depois, que `a81Kx` era `product-card`.
-
----
-
-## 10. Renomeação de IDs — desligada por padrão
-
-`renameIds: false` em todos os níveis, inclusive `protected`. Um ID tem contratos que o build não enxerga:
-
-`href="#secao"` · `<label for="email">` · `aria-labelledby` · `aria-describedby` · `aria-controls` · `form=` · `list=` (datalist) · `headers=` (tabela) · `url(#gradiente)` em SVG · `document.getElementById(variavel)` · link externo apontando para uma âncora da página · leitor de tela que depende do par `for`/`id`.
-
-Ligue apenas quando: o projeto não tem âncora pública, os IDs são todos internos, a prova do §9.3 passa e um teste manual de teclado e de leitor de tela foi feito depois. Registre a decisão no `CLAUDE.md`.
+The new name is an initial letter plus base36 of `sha256(class + build salt)`, checked against every
+existing class name in the project (including those in `tailwind.css`) so it cannot collide. The salt
+lives in `dist/.build-info.json` alongside the map — that is how you discover, months later, that
+`a81Kx` was `product-card`.
 
 ---
 
-## 11. Hash de assets e a regra de cache
+## 10. ID renaming — off by default
 
-Hash é **cache busting**: `app.js` → `app.8f91c2ad.js`, `style.css` → `style.71a82e04.css`, com todas as referências atualizadas automaticamente.
+`renameIds: false` at every level, `protected` included. An ID carries contracts the build cannot see:
 
-**Interação com o §15 do `SKILL.md` (não usar cache):**
+`href="#secao"` · `<label for="email">` · `aria-labelledby` · `aria-describedby` · `aria-controls` ·
+`form=` · `list=` (datalist) · `headers=` (table) · `url(#gradiente)` in SVG ·
+`document.getElementById(variavel)` · an external link pointing at a page anchor · a screen reader that
+depends on the `for`/`id` pair.
 
-- **Projeto no padrão §15 (sem cache):** `hashAssets: false`. Com `no-store` em toda resposta, o hash não compra nada e ainda dificulta rastrear o arquivo. Não ligue por hábito.
-- **Projeto onde o cliente pediu cache:** `hashAssets: true` passa a ser **obrigatório**. `Cache-Control: public, max-age=31536000, immutable` só é seguro em arquivo cujo nome muda quando o conteúdo muda. O HTML continua `no-store` sempre — é ele que aponta para os nomes novos.
-
-Atenção especial ao atualizar referências: `<link rel="preload">`, `<link rel="modulepreload">`, `import()` dinâmico, `manifest.webmanifest`, `sw.js` e qualquer caminho montado em JS.
-
-**Regra que torna o hash provável:** no source, toda referência a asset é **absoluta a partir da raiz do site** (`/styles/ds.css`, `/scripts/ui.js`, `/assets/og-financeiro.png`). Caminho montado em tempo de execução (`'/assets/' + nome + '.png'`) não é reescrevível — nesses casos, deixe o arquivo fora do hash (`neverHash`) ou publique o mapa gerado em `/assets/manifest.json` e leia o nome final de lá.
+Enable it only when: the project has no public anchors, every ID is internal, the proof in section 9.3
+passes, and a manual keyboard and screen-reader test was done afterwards. Record the decision in
+`CLAUDE.md`.
 
 ---
 
-## 12. PWA e service worker
+## 11. Asset hashing and the cache rule
 
-- `sw.js` e `manifest.webmanifest` **nunca** são hasheados e **nunca** são ofuscados. São minificados e têm as referências atualizadas por último, depois que todo o resto já tem nome final.
-- Se o service worker lista arquivos, a lista é reescrita a partir do mapa de hashes do build. Service worker apontando para arquivo que não existe mais é falha de build.
-- No padrão §15 o service worker não guarda nada: `install` com `skipWaiting()`, `activate` apagando todos os caches, `fetch` sem `respondWith`. O build não pode introduzir estratégia de cache que o projeto não pediu.
-- Se o funcionamento offline foi pedido, o cache é versionado com o identificador do build, e o `activate` apaga as versões anteriores.
-- Testar instalação, primeira abertura e atualização **depois** do build, com o JAR rodando (§14 do `SKILL.md`).
+Hashing is **cache busting**: `app.js` → `app.8f91c2ad.js`, with every reference updated automatically.
+
+**Interaction with R25 (no cache):**
+
+- **Project on the default (no cache):** `hashAssets: false`. With `no-store` on every response the hash
+  buys nothing and makes files harder to trace. Do not enable it out of habit.
+- **Project where the client asked for cache:** `hashAssets: true` becomes **mandatory**.
+  `Cache-Control: public, max-age=31536000, immutable` is only safe on a file whose name changes when
+  its content changes. The HTML stays `no-store` forever — it is what points at the new names.
+
+Pay attention when updating references: `<link rel="preload">`, `<link rel="modulepreload">`, dynamic
+`import()`, `manifest.webmanifest`, `sw.js`, and any path assembled in JS.
+
+**What makes hashing provable:** in the source, every asset reference is **absolute from the site root**
+(`/styles/ds.css`, `/scripts/ui.js`). A path assembled at runtime (`'/assets/' + nome + '.png'`) cannot
+be rewritten — leave those files out of hashing (`neverHash`), or publish the generated map at
+`/assets/manifest.json` and read the final name from there.
+
+---
+
+## 12. PWA and service worker
+
+- `sw.js` and `manifest.webmanifest` are **never** hashed and **never** obfuscated. They are minified and
+  have their references updated last, once everything else has its final name.
+- If the service worker lists files, that list is rewritten from the build's hash map. A service worker
+  pointing at a file that no longer exists is a build failure.
+- Under R25 the service worker stores nothing: `install` with `skipWaiting()`, `activate` deleting every
+  cache, `fetch` with no `respondWith` (`cache.md`). The build must not introduce a caching strategy the
+  project did not ask for.
+- If offline operation was requested, the cache is versioned with the build identifier and `activate`
+  deletes previous versions.
+- Test installation, first open and update **after** the build, with the server running (R21, R29).
 
 ---
 
 ## 13. Source maps
 
-| Nível | Source map |
+| Level | Source map |
 |---|---|
-| `development` | sim, ao lado do arquivo |
-| `production` | só se explicitamente configurado — e gravado em `dist/maps/`, **fora** de `dist/public/` |
-| `protected` | nunca |
+| `development` | yes, beside the file |
+| `production` | only if explicitly configured, and written to `dist/maps/`, **outside** `dist/public/` |
+| `protected` | never |
 
-Publicar mapa dentro de `dist/public/` anula a ofuscação: o navegador reconstrói o source original. Se o objetivo do projeto é dificultar a análise do código publicado, o mapa não vai junto — guarde-o com o artefato de release, para depuração interna.
+Publishing a map inside `dist/public/` cancels the obfuscation: the browser reconstructs the original
+source. Keep it with the release artefact, for internal debugging.
 
 ---
 
-## 14. Validação pós-build (o build falha aqui)
+## 14. Post-build validation — the build fails here
 
-Toda checagem abaixo roda sobre o `dist/` e **derruba o build com `exit 1`** quando falha:
+Every check below runs over `dist/` and **fails the build with `exit 1`**:
 
-| # | Checagem | Falha quando |
+| # | Check | Fails when |
 |---|---|---|
-| 1 | Integridade referencial | `src=`/`href=`/`url()` começando com `/` que não existe no dist |
-| 2 | Sincronia de classes | nome antigo de classe mapeada ainda aparece em algum arquivo do dist |
-| 3 | Sintaxe JS | `new Function(codigo)` falha em algum `.js` gerado |
-| 4 | Segredos | padrão de chave/token/senha encontrado no dist |
-| 5 | CDN proibida | `cdn.tailwindcss` ou `unpkg.com/tailwindcss` presente (§9.1 do `SKILL.md`) |
-| 6 | SEO preservado | `<title>`, `canonical`, `og:`, `twitter:`, `ld+json` ou `meta` em quantidade menor que no source |
-| 7 | Acessibilidade preservada | contagem de `aria-`, `alt=`, `role=`, `for=` menor que no source |
-| 8 | Source map indevido | `.map` dentro de `dist/public/` sem `sourceMaps: true` |
-| 9 | Script embutido | `<script>` sem `src` em página, exceto `application/ld+json` (bloqueado pela política de segurança) |
-| 10 | Cache não pedido | `caches.put`/`caches.match` no dist com `cacheAutorizado: false` (§15 do `SKILL.md`) |
+| 1 | Referential integrity | a `src=` / `href=` / `url()` starting with `/` that does not exist in the dist |
+| 2 | Class synchronisation | the old name of a mapped class still appears in any dist file |
+| 3 | JS syntax | `new Function(code)` fails on any generated `.js` |
+| 4 | Secrets | a key, token or password pattern found in the dist |
+| 5 | Forbidden CDN | `cdn.tailwindcss` or `unpkg.com/tailwindcss` present (R14) |
+| 6 | SEO preserved | `<title>`, `canonical`, `og:`, `twitter:`, `ld+json` or `meta` in smaller quantity than the source |
+| 7 | Accessibility preserved | the count of `aria-`, `alt=`, `role=`, `for=` lower than in the source |
+| 8 | Stray source map | a `.map` inside `dist/public/` without `sourceMaps: true` |
+| 9 | Inline script | a `<script>` without `src` in a page, except `application/ld+json` |
+| 10 | Unrequested cache | `caches.put` / `caches.match` in the dist with `cacheAutorizado: false` (R25) |
 
-Conferência rápida por linha de comando, depois do build:
+Checks 6 and 7 are R20 enforced mechanically: they make it impossible for obfuscation to quietly cost
+SEO or accessibility.
 
 ```bash
 grep -rn "cdn.tailwindcss\|unpkg.com/tailwindcss" dist/public && echo "FALHA: CDN"
@@ -396,13 +516,15 @@ grep -rniE "api[_-]?key|secret|password|bearer [a-z0-9]{20,}|AKIA[0-9A-Z]{16}|sk
 find dist/public -name "*.map" | grep . && echo "FALHA: source map publicado"
 ```
 
-E a validação que nenhum script substitui: **subir o JAR e abrir as telas** (§14 do `SKILL.md`).
+And the validation no script replaces: **start the server and open the screens** (R21, R29,
+`frontend-preview.md`). A minification defect exists only in the dist, so the dist is what gets looked
+at.
 
 ---
 
-## 15. Empacotamento, Maven, Docker e Coolify
+## 15. Packaging — Maven, Docker and Coolify
 
-### 15.1 Perfil Maven que troca o source pelo dist
+### 15.1 The Maven profile that swaps source for dist
 
 ```xml
 <profiles>
@@ -424,7 +546,7 @@ E a validação que nenhum script substitui: **subir o JAR e abrir as telas** (�
 </profiles>
 ```
 
-Sem o perfil, o Maven copia o source legível — que é exatamente o que se quer em desenvolvimento.
+Without the profile, Maven copies the readable source — which is exactly what you want in development.
 
 ```bash
 # desenvolvimento (source legível dentro do JAR)
@@ -435,9 +557,9 @@ node tools/frontend-build.mjs --level=protected
 mvn -Pfrontend-dist package -DskipTests && java -jar target/<app>.jar
 ```
 
-### 15.2 Dockerfile em três etapas
+### 15.2 Three-stage Dockerfile
 
-O Coolify constrói a imagem a partir do repositório, então o build de frontend roda **dentro** da imagem:
+Coolify builds the image from the repository, so the frontend build runs **inside** the image:
 
 ```dockerfile
 # 1) frontend: source legível -> dist protegido
@@ -459,26 +581,34 @@ COPY src/ src/
 COPY --from=frontend /app/dist/ dist/
 RUN mvn -B -Pfrontend-dist package -DskipTests
 
-# 3) runtime: idêntico ao §17.2 do SKILL.md
+# 3) runtime: idêntico ao de deploy-coolify.md
 FROM eclipse-temurin:21-jre
 # ... ENV TZ/ANGATU_ENV/ANGATU_DB_PATH/PORT/JAVA_OPTS, WORKDIR /data, EXPOSE, HEALTHCHECK, ENTRYPOINT
 ```
 
-A etapa 1 não entra na imagem final — o runtime continua só JRE + JAR. `src/main/java/` é copiado para a etapa do frontend porque a prova de segurança da renomeação precisa ler o código do servidor (§9.1, item 4).
+Stage 1 does not enter the final image — the runtime stays JRE plus JAR. `src/main/java/` is copied into
+the frontend stage because the rename safety proof has to read the server code (section 9.1, item 4).
 
-### 15.3 Alternativa sem Node na imagem
+Without this stage, Coolify packages the readable source: it works, but it is not what R19 requires.
 
-Se a esteira não puder ter Node, o `dist/` é gerado na máquina e **versionado** (como já acontece com o `tailwind.css`, §17.3 do `SKILL.md`). Nesse caso o `dist/.build-info.json` guarda o hash do source, e o build valida no começo:
+### 15.3 Alternative without Node in the image
 
-> dist desatualizado em relação ao source → **erro**, com a instrução de rodar o build de novo.
+If the pipeline cannot have Node, `dist/` is generated on the machine and **committed** (as already
+happens with `tailwind.css`). In that case `dist/.build-info.json` stores the source hash, and the build
+validates it at the start:
 
-Sem essa checagem, publica-se dist velho com source novo, e o defeito só aparece em produção.
+> dist out of date relative to the source → **error**, with the instruction to run the build again.
+
+Without that check, a stale dist is published against new source, and the defect only appears in
+production.
 
 ---
 
-## 16. Implementação de referência — `tools/frontend-build.mjs`
+## 16. Reference implementation — `tools/frontend-build.mjs`
 
-Esqueleto funcional para adaptar ao projeto. Rode primeiro em `--level=production`, valide, e só então ligue `protected`.
+A working skeleton to adapt. Run it first at `--level=production`, validate, then switch to `protected`.
+
+The code below keeps its comments in Portuguese, because it is code that lands in a project (R12).
 
 ```js
 #!/usr/bin/env node
@@ -690,7 +820,7 @@ for (const f of gerados.filter(ehTexto)) {
         falhas.push(`script embutido em ${f} (use arquivo externo)`);
   }
   if (!cfg.cacheAutorizado && /caches\.(put|match)\s*\(/.test(txt))
-    falhas.push(`cache não autorizado em ${f} (§15 do SKILL.md)`);
+    falhas.push(`cache não autorizado em ${f} (R25)`);
   if (f.endsWith('.html') && existsSync(path.join(SRC, f))) {
     const src = await readFile(path.join(SRC, f), 'utf8');
     const conta = (s, re) => (s.match(re) ?? []).length;
@@ -712,58 +842,77 @@ console.log(`\nBuild ${level} concluído: ${gerados.length} arquivos em ${OUT}`)
 
 ---
 
-## 17. Projeto existente — auditoria antes de mexer
+## 17. Existing project — audit before touching anything
 
-**Nunca presuma que o projeto já segue a skill.** Antes de qualquer alteração, levante os 20 pontos e compare com este documento:
+**Never assume the project already follows this skill.** Before any change, survey the 20 points and
+compare against this document:
 
-| # | Ponto | O que verificar |
+| # | Point | What to check |
 |---|---|---|
-| 1 | Estrutura | onde mora o frontend; existe separação source/dist? |
-| 2 | Tecnologia | vanilla, framework, empacotador |
-| 3 | Sistema de build | existe? roda? é reprodutível? |
-| 4 | Dependências | tempo de build vs. tempo de execução |
-| 5 | HTML | shell, fragmentos, placeholders, script embutido |
-| 6 | CSS | Tailwind local ou CDN, `ds.css`, `@media` manual (§9.6 do `SKILL.md`) |
-| 7 | JavaScript | globais compartilhadas, módulos, código morto |
-| 8 | Assets | origem, peso, hotlink externo |
+| 1 | Structure | where the frontend lives; is there a source/dist separation? |
+| 2 | Technology | vanilla, framework, bundler |
+| 3 | Build system | does it exist? does it run? is it reproducible? |
+| 4 | Dependencies | build time versus runtime |
+| 5 | HTML | shell, fragments, placeholders, inline scripts |
+| 6 | CSS | local Tailwind or CDN, `ds.css`, hand-written `@media` (R15) |
+| 7 | JavaScript | shared globals, modules, dead code |
+| 8 | Assets | origin, weight, external hotlinks |
 | 9 | SEO | title, description, canonical, OG, `ld+json` |
-| 10 | Acessibilidade | foco, ARIA, contraste, `prefers-reduced-motion` |
-| 11 | Performance | peso inicial, número de requisições, Core Web Vitals |
-| 12 | PWA | manifest, instalabilidade |
-| 13 | Service worker | o que ele guarda |
-| 14 | Cache | `Cache-Control`, `AssetsAPI`, storage (§15 do `SKILL.md`) |
-| 15 | Segurança | autorização no backend, CSP, cabeçalhos |
-| 16 | Minificação | existe? no source ou no build? |
-| 17 | Ofuscação | existe? **está no source?** (violação a corrigir) |
-| 18 | Classes e IDs | semânticos ou já aleatórios no source? |
-| 19 | Exposição de API | endpoints e dados expostos sem necessidade |
-| 20 | Segredos | chave, token ou credencial no frontend |
+| 10 | Accessibility | focus, ARIA, contrast, `prefers-reduced-motion` |
+| 11 | Performance | initial weight, request count, Core Web Vitals |
+| 12 | PWA | manifest, installability |
+| 13 | Service worker | what it stores |
+| 14 | Cache | `Cache-Control`, `AssetsAPI`, storage (R25) |
+| 15 | Security | backend authorization, CSP, headers (R22, R23) |
+| 16 | Minification | does it exist? in the source or in the build? |
+| 17 | Obfuscation | does it exist? **is it in the source?** (a violation to fix) |
+| 18 | Classes and IDs | semantic, or already random in the source? |
+| 19 | API exposure | endpoints and data exposed without need |
+| 20 | Secrets | a key, token or credential in the frontend |
 
-**Depois da auditoria:** liste os desvios, corrija a arquitetura quando ela for incompatível, **preserve as funcionalidades** e evite reescrita desnecessária. Não empilhe build novo sobre arquitetura incompatível — e não troque a tecnologia do projeto (§3.3).
+**After the audit:** list the deviations, fix the architecture where it is incompatible, **preserve the
+features**, and avoid an unnecessary rewrite. Do not stack a new build on an incompatible architecture,
+and do not swap the project's technology (section 3.3).
 
-### 17.1 Quando o source já está ofuscado
+R19 applies here: the pipeline with obfuscation gets installed even though this project never asked for
+it. R18 bounds that: installing a pipeline is not rewriting the source.
 
-Situação real e delicada: o projeto chegou com o source já ofuscado, ou com classes aleatórias escritas à mão.
+### 17.1 When the source is already obfuscated
 
-1. **Não "desofusque" por adivinhação.** Recuperar nome semântico a partir de `_0x81ab` é chute e quebra o que funciona.
-2. **Congele o que está funcionando:** trate o arquivo ofuscado como legado, mova para `vendor/` (em `neverTransform`) e siga usando.
-3. **Toda alteração nova nasce em arquivo novo, legível**, no padrão da skill.
-4. Reescreva o legado por módulo, com teste a cada pedaço, **só quando houver motivo** (defeito, mudança de regra, evolução). Reescrever por estética não paga o risco.
-5. Registre o plano e o que já foi migrado no `CLAUDE.md`.
+A real and delicate situation: the project arrived with its source already obfuscated, or with random
+classes written by hand.
 
----
-
-## 18. Erros conhecidos
-
-- **Tela morta em produção com a API respondendo 100%:** o minificador renomeou identificador de topo e `UI`/`net`/`Auth` sumiram. `minifyIdentifiers: false` (§6.1) e `renameGlobals: false`.
-- **Estilo some depois de ligar `renameClasses`:** classe injetada pelo Java (`{%nome_active}`) foi renomeada só no CSS. A prova do §9.3 tem de ler `src/main/java/**`.
-- **Responsividade quebrada:** utilitário do Tailwind entrou na lista de candidatas. Nenhuma classe presente em `styles/tailwind.css` é renomeável (§9.1).
-- **Botão para de funcionar depois de ofuscar:** função chamada por `onclick=` no HTML não estava em `reservedGlobals`.
-- **Recurso inteiro some sem erro nenhum:** global compartilhado entre arquivos (`Live`, `UI`, `AppBus`) fora de `reservedGlobals` — cada arquivo passou a ver um nome diferente.
-- **Service worker preso em versão antiga:** `sw.js` foi hasheado ou ofuscado. Nunca (§12).
-- **`og:image` some do compartilhamento:** arquivo hasheado sem atualizar a meta tag, ou hasheado quando não devia (§8).
-- **Dist velho publicado:** build gerado antes da última alteração no source. O `sourceHash` do `.build-info.json` resolve (§15.3).
-- **Ofuscação "de graça" que custou caro:** `controlFlowFlattening` em 1.0 e `deadCodeInjection` ligados — página três vezes maior e visivelmente mais lenta. Reduza a agressividade (§3.1).
+1. **Do not "de-obfuscate" by guessing.** Recovering a semantic name from `_0x81ab` is guesswork and
+   breaks what works.
+2. **Freeze what works:** treat the obfuscated file as legacy, move it to `vendor/` (listed in
+   `neverTransform`) and keep using it.
+3. **Every new change is born in a new, readable file**, to this skill's standard.
+4. Rewrite the legacy module by module, with a test at each step, **only when there is a reason** (a
+   defect, a rule change, an evolution). Rewriting for aesthetics does not pay for the risk.
+5. Record the plan and what has been migrated in `CLAUDE.md`.
 
 ---
-*Auditoria e otimização: Angatu Sistemas · Referência do §9.9–§9.13 do `SKILL.md`*
+
+## 18. Known errors
+
+- **Dead screen in production with the API answering perfectly:** the minifier renamed a top-level
+  identifier and `UI` / `net` / `Auth` vanished. `minifyIdentifiers: false` (6.1) and
+  `renameGlobals: false`.
+- **Styling disappears after enabling `renameClasses`:** a class injected by Java (`{%nome_active}`) was
+  renamed only in the CSS. The proof in 9.3 has to read `src/main/java/**`.
+- **Responsiveness broken:** a Tailwind utility entered the candidate list. Nothing present in
+  `styles/tailwind.css` is renameable (9.1).
+- **A button stops working after obfuscation:** a function called from `onclick=` in the HTML was not in
+  `reservedGlobals`.
+- **A whole feature disappears with no error at all:** a global shared across files (`Live`, `UI`,
+  `AppBus`) outside `reservedGlobals` — each file started seeing a different name.
+- **Service worker stuck on an old version:** `sw.js` was hashed or obfuscated. Never (12).
+- **`og:image` vanishes from shares:** the file was hashed without updating the meta tag, or hashed when
+  it should not have been (8).
+- **Stale dist published:** the build predates the last source change. The `sourceHash` in
+  `.build-info.json` solves it (15.3).
+- **"Free" obfuscation that cost a lot:** `controlFlowFlattening` at 1.0 with `deadCodeInjection` on —
+  the page three times larger and visibly slower. Turn the aggressiveness down (3.1).
+
+---
+*Audit and optimisation: Angatu Sistemas*
