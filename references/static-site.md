@@ -130,6 +130,11 @@ Turnstile drops the `challenges.cloudflare.com` entries from both at once.
 `404.html` is a rendered surface and carries the project's palette, typography and footer (R13) — not
 nginx's default page.
 
+**The DROP filter applies to this track too (R34).** With no Java to filter in, the CIDRs are turned
+into a `deny` include generated at build time and pulled in from this server block — which means the
+list is only as fresh as the last deploy. Write that tradeoff down, and prefer network-level filtering
+where the hosting offers it (`ip-blocklist.md`).
+
 ## 6. `Dockerfile`
 
 Two stages: Node builds, nginx serves. Nothing from the build stage reaches the final image.

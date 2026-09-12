@@ -338,6 +338,23 @@ exige "$AO" 'R22' 'auth-oauth.md tira a identidade do servidor, nao do cliente' 
 exige "$AO" 'privacy policy|politica de privacidade' 'auth-oauth.md atualiza a politica de privacidade'                                                      'auth-oauth.md esquece a politica de privacidade'
 exige "$AO" 'R18|already has a working' 'auth-oauth.md preserva login existente'                                         'auth-oauth.md nao protege o login que ja funciona'
 
+# R34 tem dois modos de falhar em silencio: ler o IP errado atras do proxy
+# (nao bloqueia ninguem, ou bloqueia todo mundo) e falhar fechado quando a
+# Spamhaus cai, virando indisponibilidade autoinfligida.
+IB=references/ip-blocklist.md
+exige "$IB" 'drop_v4\.json' 'ip-blocklist.md traz a lista IPv4' 'ip-blocklist.md sem a lista IPv4'
+exige "$IB" 'drop_v6\.json' 'ip-blocklist.md cobre IPv6'                             'ip-blocklist.md so cobre IPv4 — cliente movel passa direto'
+exige "$IB" 'fails open|falha aberta' 'ip-blocklist.md falha aberto'                                       'ip-blocklist.md nao declara falha aberta — vira indisponibilidade'
+exige "$IB" 'JSON Lines' 'ip-blocklist.md avisa que o formato e JSON Lines'                          'ip-blocklist.md nao avisa do formato — fromJson no arquivo inteiro quebra'
+exige "$IB" 'records' 'ip-blocklist.md confere o total contra os metadados'                       'ip-blocklist.md nao detecta download truncado'
+exige "$IB" 'X-Forwarded-For' 'ip-blocklist.md proibe ler o cabecalho direto'                               'ip-blocklist.md nao trata a armadilha do proxy'
+exige "$IB" 'setTrustedProxyHops|proxy hops' 'ip-blocklist.md liga o IP ao proxy configurado'                                              'ip-blocklist.md nao diz de onde vem o IP do cliente'
+exige "$IB" '/health' 'ip-blocklist.md preserva o healthcheck'                       'ip-blocklist.md pode bloquear /health — o conteiner entra em loop de restart'
+exige "$IB" 'R25' 'ip-blocklist.md reconcilia com R25'                   'ip-blocklist.md nao reconcilia com R25 — duas instrucoes opostas sobre cache'
+exige "$IB" 'Task' 'ip-blocklist.md atualiza a lista pelo Task da lib'                    'ip-blocklist.md nao usa Task na atualizacao'
+exige "$IB" 'edrop|eDROP' 'ip-blocklist.md avisa que o eDROP foi fundido'                           'ip-blocklist.md nao avisa da fusao do eDROP'
+exige references/cache.md 'R34' 'cache.md diz que a blocklist nao e conteudo'                                 'cache.md nao reconcilia R25 com R34'
+
 CV=references/conventions.md
 exige "$CV" 'R31' 'conventions.md cita R31' 'conventions.md nao cita R31'
 exige "$CV" 'Co-Authored-By' 'conventions.md nomeia o trailer proibido' \

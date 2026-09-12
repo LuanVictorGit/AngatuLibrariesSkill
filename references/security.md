@@ -6,6 +6,10 @@
 
 ---
 
+> Traffic filtering happens before any of this: every project drops requests from the Spamhaus DROP
+> netblocks (R34, `ip-blocklist.md`). It is a layer, not a boundary — everything below still applies
+> in full to a request from an unlisted address.
+
 ## 1. The client is hostile (R22)
 
 **Assume an intercepting proxy.** Burp Suite, mitmproxy, a browser devtools "edit and resend", or a

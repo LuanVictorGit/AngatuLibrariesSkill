@@ -111,6 +111,8 @@ has one.
 - [ ] Session cookie `HttpOnly` + `SameSite` + conditional `Secure`; token never in a URL (R23)
 - [ ] Totals, stock and identifiers validated server-side; no mass assignment (R22)
 - [ ] Pages outside the rate limit; API and login with their own
+- [ ] Spamhaus DROP filter installed, v4 **and** v6, failing open, refreshed hourly; client address
+      verified through the proxy, `/health` and private ranges excluded (R34, `ip-blocklist.md`)
 - [ ] Charging money? Through the AngatuCRM API (R26), never `MercadoPagoAPI`
 - [ ] A `WS` route? Session checked **inside** it before registering; 4401 agreed with the page; pings
       on; the channel pushes nothing the screen would not ask for (R24)

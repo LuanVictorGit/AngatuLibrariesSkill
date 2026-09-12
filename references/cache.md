@@ -98,3 +98,15 @@ at the new names (`frontend-build.md`).
 
 A hero video and heavy images (`landing-motion.md`) are the case worth raising with the client: they
 are the files that suffer most under `no-store`, since they are re-downloaded on every visit.
+
+---
+
+## The blocklist is not content (R34)
+
+R25 bans **content** caching. It does not ban holding configuration in memory: the Spamhaus DROP list
+(`ip-blocklist.md`) is ~111 KB of CIDR ranges, loaded once and refreshed hourly through `Task`.
+Fetching it per request would be absurd and would get the project rate-limited by Spamhaus in minutes.
+
+The line is what the stored thing *is*: a screen, a query result or an API response belongs to a
+visitor and goes stale — that is what R25 protects. A blocklist belongs to the server and has an
+explicit refresh schedule.
