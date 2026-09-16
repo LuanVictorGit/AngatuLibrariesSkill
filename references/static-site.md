@@ -71,8 +71,15 @@ front of a WhatsApp link protects nothing; do not add one.
 ## 4. The build still runs (R19)
 
 `frontend-build.mjs` reads `src/` and writes `dist/`, with the same levels and the same rules as a
-backend project (`frontend-build.md`). Obfuscation is on; the source is never rewritten; `emails/**`,
-`sw.js` and `vendor/**` stay excluded; class renaming only where proven safe.
+backend project (`frontend-build.md`). Obfuscation is on and reaches the **name** as well as the
+content — file, folder, class, CSS custom property, shared global and `data-*` — and the dist ships
+with no comments. The source is never rewritten; `emails/**`, `sw.js` and `vendor/**` stay excluded and
+keep their names and comments; every rename happens only where proven safe.
+
+Two names on this track are load-bearing and never move: `**.html`, because `try_files $uri $uri.html`
+turns the file name into the URL, and `404.html`, which `error_page` points at by name. Renaming folders
+is safe here precisely because the `location /` below is generic and the CSP is origin-based — a project
+that adds a per-path `location` or a path-scoped CSP has to add that name to `neverRename`.
 
 ```bash
 node tools/frontend-build.mjs --level=protected

@@ -99,6 +99,12 @@ at the new names (`frontend-build.md`).
 A hero video and heavy images (`landing-motion.md`) are the case worth raising with the client: they
 are the files that suffer most under `no-store`, since they are re-downloaded on every visit.
 
+**`renameFiles` is a different mechanism and this rule does not reach it.** Hashing renames a file so a
+long `max-age` is safe; `renameFiles` renames it so the dist stops publishing the map of the frontend
+(R19). One answers to R25 and stays off by default, the other answers to R19 and is on at `protected`.
+A project with no cache still ships with obfuscated file names, and that is not a contradiction — it is
+two unrelated reasons that happen to change the same string.
+
 ---
 
 ## The blocklist is not content (R34)

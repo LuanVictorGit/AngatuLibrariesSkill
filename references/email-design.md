@@ -121,9 +121,15 @@ EmailAPI.sendHtml(user.getEmail(), "Bem-vindo à Loja", html);
 Build the absolute URL from `getOriginHost()` rather than writing the domain into the template, so
 development and production do not diverge.
 
-**`emails/**` is never transformed by the build** — not minified, not obfuscated, no class renaming, no
-asset hashing (R19's exclusion list, `frontend-build.md`). A mail client does not execute JavaScript,
-and the file leaves the domain entirely.
+**`emails/**` is never transformed by the build** — not minified, not obfuscated, no renaming of any
+kind (class, custom property, `data-*`, file or folder), no asset hashing, and **no comment removal**
+(R19's exclusion list, `frontend-build.md`). A mail client does not execute JavaScript, and the file
+leaves the domain entirely.
+
+The comments are the part worth being explicit about, because the rule everywhere else is that the dist
+carries none. `<!--[if mso]>` is a **functional** conditional comment: it is how Outlook — the most
+common corporate client there is — receives the table layout written for it. Stripping it hardens
+nothing and breaks the e-mail exactly where it matters most.
 
 ## 7. The Angatu footer (R17)
 

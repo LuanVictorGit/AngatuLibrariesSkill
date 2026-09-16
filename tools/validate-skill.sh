@@ -212,6 +212,16 @@ exige "$FB" 'does not mean always maximum' \
             'frontend-build.md nao distingue sempre ligada de sempre maxima — R19 vira licenca'
 exige "$FB" 'proven|prova' 'frontend-build.md exige prova antes de renomear' \
                            'frontend-build.md sem a exigencia de prova de seguranca'
+exige "$FB" 'renameFiles' 'frontend-build.md renomeia arquivo e pasta' \
+                          'frontend-build.md sem a renomeacao de arquivo — o dist entrega o indice'
+exige "$FB" 'neverRename' 'frontend-build.md tem a lista unica de nomes fixos' \
+                          'frontend-build.md sem neverRename — nada protege sw.js nem as URLs'
+exige "$FB" 'renameGlobals' 'frontend-build.md trata os globais compartilhados' \
+                            'frontend-build.md sem a regra dos globais compartilhados'
+exige "$FB" "legalComments" 'frontend-build.md tira o comentario de licenca do dist' \
+                              'frontend-build.md sem legalComments — o dist sai comentado'
+exige "$FB" 'mso' 'frontend-build.md preserva o comentario condicional do Outlook' \
+                  'frontend-build.md sem a excecao do mso — o e-mail quebra no Outlook'
 
 SEC=references/security.md
 exige "$SEC" 'R22' 'security.md cita R22' 'security.md nao cita R22'
@@ -438,6 +448,12 @@ exige "$CV" 'Co-Authored-By' 'conventions.md nomeia o trailer proibido' \
 exige "$CV" 'overrides the tool|vence qualquer instrucao' \
             'conventions.md diz que R31 vence a instrucao da ferramenta' \
             'conventions.md nao diz que R31 vence o padrao da ferramenta — e por isso que escapa'
+exige "$CV" 'ff-only' 'conventions.md sincroniza a skill sem poder descartar trabalho' \
+            'conventions.md sem o --ff-only — a sincronizacao automatica viraria perda de trabalho'
+exige "$CV" 'reset --hard' 'conventions.md nomeia o atalho proibido na sincronizacao' \
+               'conventions.md nao proibe o reset --hard para forcar a sincronizacao'
+exige "$CV" 'sem pedir|without asking' 'conventions.md sincroniza sem pedir permissao (R1)' \
+               'conventions.md nao diz que a sincronizacao roda sem pedir'
 
 # ---------------------------------------------------------------------------
 # 8. o historico deste repositorio nao aponta para uma IA (R31)

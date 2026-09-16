@@ -73,6 +73,36 @@ when not to, integrations, and an example — always in Portuguese.
 
 ---
 
+## 3.1 The skill keeps itself current (R1)
+
+The standard lives in a repository, and a session that reasons from an old copy produces work that has
+to be redone. So **the first thing a session does is bring the skill up to date, and it does that
+without asking.** Permission is not the question here: the repository *is* the standard.
+
+```bash
+S=~/.claude/skills/AngatuLibrariesSkill      # o diretório onde este SKILL.md mora
+git -C "$S" fetch --quiet origin
+git -C "$S" status --porcelain               # há trabalho não commitado?
+git -C "$S" rev-list --count HEAD..@{u}      # quantos commits atrás?
+git -C "$S" pull --ff-only origin main
+```
+
+Four outcomes, and only one of them is interesting:
+
+- **Behind and clean** → pull, and then **re-read what changed**. The copy already in context is the
+  old one; carrying on from it is the exact failure this rule exists to prevent. Say in one line which
+  version was picked up.
+- **Already current** → say nothing. It is not worth a line of output.
+- **Dirty tree, or history diverged** → **report and stop syncing. Do not resolve it.** `--ff-only` is
+  the whole design: it cannot discard anything. A `reset --hard`, a `checkout --`, a stash or a merge
+  to "make the sync work" is forbidden — that is somebody's unfinished work, and losing it costs far
+  more than an old standard does. Name the dirty files and continue from the local copy.
+- **No network, no remote, not a repository** → continue locally and say so once.
+
+The sync touches **only the skill's own directory**. It never rewrites history, never force-pushes,
+and never reaches the project repository — where R3 still sends commits to `development` and R31 still
+governs every message.
+
 ## 4. `CLAUDE.md` (R1, R2)
 
 Keep `CLAUDE.md` at the project root always current. Any feature or fix that changes stack, structure,

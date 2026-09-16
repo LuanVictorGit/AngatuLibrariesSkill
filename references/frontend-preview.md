@@ -267,6 +267,11 @@ dead screen with the API answering 100%, because the minifier renamed a top-leve
 In the `dist` pass, exercise the things that break silently: forms, API calls, WebSocket, PWA, service
 worker, and any class that Java injects into the markup (`{%nome_active}`).
 
+**Nothing in the `dist` is called what you wrote.** Files, folders, classes, CSS custom properties, the
+shared globals and `data-*` all carry generated names, so the network tab and the elements panel will
+not match the source. `dist/.build-info.json` holds the map from generated name back to the real one,
+and it is how a production stack trace becomes readable — keep it with the release, and never serve it.
+
 ## 5. Which surfaces get this treatment
 
 Every rendered surface (R13), not only the main screens:

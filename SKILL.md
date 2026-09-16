@@ -25,6 +25,7 @@ written in Brazilian Portuguese. See R12 and R16.
 
 | Task at hand | Read |
 |---|---|
+| **Session start: sync this skill with its repository (R1, mandatory, no asking)** | `references/conventions.md` (section 3.1) |
 | Starting a project, dependencies, `AngatuLib`, Javalin, rate limiting | `references/backend-server.md` |
 | Entities, SQLite, queries, indexes, concurrency, porting an old project | `references/backend-persistence.md` |
 | HTTP routes, path params, page serving, assets, client IP | `references/backend-routes-html.md` |
@@ -52,7 +53,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Touch, thumb zones, safe areas, mobile budgets | `references/mobile-principles.md` |
 | Hover, pointer precision, keyboard, multi-window | `references/desktop-principles.md` |
 | Final design audit before delivery | `references/design-audit.md` |
-| Build pipeline: minify, obfuscate, rename, hash, validate | `references/frontend-build.md` |
+| Build pipeline: minify, strip comments, obfuscate, rename file/folder/class/var/global, hash, validate | `references/frontend-build.md` |
 | **Landing page requested — read before anything else** | `references/landing-intake.md` |
 | Themed background, hero motion graphics, real material | `references/landing-motion.md` |
 | Copy that does not read as machine-written | `references/landing-copy.md` |
@@ -80,6 +81,9 @@ rule says which one wins.
   not merely before writing code: reading a file, planning a step, answering a question,
   reviewing a diff. Not loaded → load it **before replying**. And never work from the rule
   summary alone: it is an index of titles, and the edge cases are decided by the full text.
+  **And the copy in use is the current one:** every session begins by syncing this skill with its own
+  repository (`git pull --ff-only` on `origin/main`), run **without asking** — a stale standard is
+  worse than none, and a fast-forward can never discard work. → `references/conventions.md` (section 3.1)
 - **R2 — `CLAUDE.md` stays current.** Any change to stack, structure, startup, routes, entities or
   environment variables updates `CLAUDE.md` in the same commit. → `references/conventions.md`
 - **R3 — Commits go to `development`.** `main` is production and receives only what the project
@@ -181,14 +185,16 @@ rule says which one wins.
   bare `403` served to a DROP-listed netblock (R34), which renders nothing at all. The logo is an
   official file and is never redrawn. → `references/email-design.md`, `references/backend-server.md`
 - **R18 — SOURCE readable, BUILD protects, DIST publishes.** The source stays semantic and
-  debuggable from beginning to end. Minification, obfuscation, class renaming and asset hashing
-  exist only in the build, writing into `dist/`. **The build never rewrites `src/`.**
-  → `references/frontend-build.md`
-- **R19 — Obfuscation is mandatory on every published frontend**, including a project that never
-  asked for it: applying this skill to an existing project means installing the pipeline. Bounded
-  by R18 (what is mandatory is the build, never a source rewrite) and by R20 (always on does not
-  mean always maximum). `emails/**` is never transformed, `sw.js` and `vendor/**` are never
-  obfuscated, and already-obfuscated legacy stays frozen in `vendor/`. → `references/frontend-build.md`
+  debuggable from beginning to end, comments included. Minification, comment removal, obfuscation,
+  every rename (class, custom property, global, `data-*`, file, folder) and asset hashing exist only
+  in the build, writing into `dist/`. **The build never rewrites `src/`.** → `references/frontend-build.md`
+- **R19 — Obfuscation is mandatory on every published frontend**, including one that never asked
+  for it, and it covers the **name** as much as the content: file, folder, class, CSS custom
+  property, shared global and `data-*` are renamed **under proof** — what cannot be proven safe keeps
+  its spelling — and the dist ships with no comments. Bounded by R18 (the build, never a source
+  rewrite) and R20 (always on is not always maximum). `emails/**` is never transformed; `sw.js` and
+  `vendor/**` are never obfuscated, renamed or stripped of comments; already-obfuscated legacy stays
+  frozen in `vendor/`. → `references/frontend-build.md`
 - **R20 — Obfuscation is not security, and never outranks anything.** Priority order, lower number
   wins every conflict: **1** correct behaviour · **2** real security · **3** accessibility ·
   **4** SEO · **5** compatibility · **6** performance · **7** maintainability · **8** obfuscation.
@@ -313,7 +319,7 @@ exige, e qual delas vence quando duas colidem, só está no texto completo da sk
 
 ### Resumo das regras (texto completo na skill; os IDs são estáveis)
 
-R1 skill obrigatória neste repositório · R2 CLAUDE.md sempre atualizado · R3 commits na
+R1 skill obrigatória neste repositório e sincronizada com o próprio repo a cada sessão, sem pedir · R2 CLAUDE.md sempre atualizado · R3 commits na
 `development`, nunca citar IA · R4 sempre a última versão de toda lib da Angatu, conferida
 mesmo sem pedido · R5 só as dependências usadas ·
 R6 Jetty vem do Javalin · R7 HTTP por padrão, o TLS é do Coolify · R8 Dockerfile obrigatório, sem
@@ -322,7 +328,9 @@ só por `extends` · R11 arquitetura limpa e DRY · R12 código em inglês, Java
 `@author Angatu Sistemas` · R13 o sistema de design vale para toda superfície renderizada,
 inclusive erro, e-mail e impressão · R14 Tailwind local, nunca CDN · R15 responsividade só em
 Tailwind · R16 português impecável no texto visível · R35 nada que a skill renderiza pode ter cara de gerado por IA — traço decorativo em rótulo, texto em gradiente, paleta roxo-rosa, blobs borrados e emoji como ícone ficam de fora · R17 rodapé da Angatu em página e e-mail ·
-R18 source legível, build protege, dist publica · R19 ofuscação obrigatória, mesmo sem pedido ·
+R18 source legível, build protege, dist publica · R19 ofuscação obrigatória mesmo sem pedido, e
+alcança o nome — arquivo, pasta, variável CSS, global e `data-*` renomeados com prova, dist sem
+comentário, e `sw.js`, `*.html`, `emails/**` e `vendor/**` mantêm nome e comentário ·
 R20 ofuscação nunca vence funcionamento, segurança, acessibilidade ou SEO · R21 todo frontend é
 visto rodando antes de ser entregue · R22 o cliente é hostil: presuma um proxy interceptando ·
 R23 cookie HttpOnly, token fora da URL, autorização em toda rota · R24 rota WS confere a sessão

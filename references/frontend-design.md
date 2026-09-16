@@ -72,7 +72,10 @@ you already tried.
 ## Implementation on Angatu application pages
 
 - Use the existing framework and conventions: `public/index.html` (the shell), `styles/tailwind.css`
-  (local, R14) plus `styles/ds.css`, and `scripts/ui.js`, `net.js`, `auth.js`.
+  (local, R14) plus `styles/ds.css`, and `scripts/ui.js`, `net.js`, `auth.js`. Those are **source**
+  names; in the published `dist` the files, folders, classes and design-system custom properties all
+  carry generated names (R19, `frontend-build.md`). Write against the source names and never against
+  what the browser shows in production.
 - Follow `routes/` / `entities/` / `services/` / `utils/` in English with Javadoc in Portuguese and
   `@author Angatu Sistemas` (R12).
 - Design **every** state: empty, loading, error and populated — not just the happy path.

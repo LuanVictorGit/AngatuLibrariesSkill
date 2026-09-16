@@ -64,7 +64,10 @@ Three boundaries make that workable rather than destructive, and they are not ne
   safe is not applied — which is why `renameClasses` needs the proof in section 9 and `renameIds` stays
   off (section 10).
 - **The exclusions hold.** `emails/**` is never transformed at all; `sw.js` and `vendor/**` are never
-  obfuscated; already-obfuscated legacy stays frozen in `vendor/` (section 17.1).
+  obfuscated and never renamed; already-obfuscated legacy stays frozen in `vendor/` (section 17.1).
+  Those two also keep their comments, for reasons that are not about taste: `<!--[if mso]>` is a
+  **functional** conditional comment — it is how Outlook receives its table layout — and a third-party
+  licence header is a legal obligation that has to travel with the code.
 
 And the principle that keeps this honest:
 
@@ -95,7 +98,7 @@ tools/frontend-build.mjs         O BUILD — único lugar autorizado a ofuscar
 frontend.build.json              configuração dos níveis
 build/                           área temporária do build            → .gitignore
 dist/public/                     DIST — entra no JAR                 → .gitignore (ver 15.3)
-dist/.build-info.json            nível, salt, mapa de classes e de hashes (não é servido)
+dist/.build-info.json            nível, salt e os mapas de renomeação (não é servido)
 ```
 
 `dist/public/` becomes `target/classes/public/` at packaging time (section 15.1) — that is what
@@ -110,17 +113,32 @@ For a static project there is no Maven and no JAR; the layout and the nginx imag
 
 ### 3.1 The three levels
 
-| Level | When | Minify | Obfuscate | Rename classes | Hash | Source maps |
-|---|---|---|---|---|---|---|
-| `development` | day to day, debugging | no | no | no | no | yes |
-| `production` | a publish where Node is unavailable (section 3.3) | yes | no | no | optional | no |
-| `protected` | **the publishing default (R19)** | yes | yes | only where proven safe | optional | never |
+| Level | When | Minify | Obfuscate | Rename classes | Rename files | Rename names | Hash | Source maps |
+|---|---|---|---|---|---|---|---|---|
+| `development` | day to day, debugging | no | no | no | no | no | no | yes |
+| `production` | a publish where Node is unavailable (section 3.3) | yes | no | no | no | no | optional | no |
+| `protected` | **the publishing default (R19)** | yes | yes | proven only | proven only | proven only | optional | never |
+
+**Minify implies no comments.** At `production` and `protected` the dist ships without a single comment,
+including the licence comments a minifier preserves by default (sections 5, 6.1, 7 and 8). The two
+exceptions are the ones in 1.1, and they are exceptions because a comment there is load-bearing. At
+`development` comments stay — that is the entire point of the level.
+
+**Rename files** covers file and folder names (11.1). **Rename names** covers CSS custom properties,
+`@keyframes` and friends, the shared JavaScript globals and `data-*` (9.5 to 9.7). Every renaming column
+runs the same proof (9.3), and a name that cannot be proven safe keeps its original spelling.
 
 `development` is the local default and **needs no tooling beyond the Tailwind CLI** that is mandatory
 anyway (R14): it only copies the source. A project without Node is still developed and run normally.
 
 `production` is no longer the normal publishing level. It exists for the case in section 3.3, where Node
 cannot be in the pipeline at all — and that limitation is recorded in `CLAUDE.md` rather than chosen.
+
+**A reproducible build needs two things, not one.** `ANGATU_BUILD_SALT` pins every generated name, and
+the obfuscator's `seed` pins the rest — left at its default of `0` it draws its own randomness, so the
+same source at the same salt still produces different bytes. Derive the seed from the salt and law 2
+holds end to end. Without the env var the salt is random per build, and every name in the dist changes
+on every deploy.
 
 **Aggressiveness is configurable and reducible.** If a `protected` transformation inflates the JS,
 increases parse time, stalls execution or blows up memory, turn that technique down — never keep a heavy
@@ -134,14 +152,17 @@ technique just because it exists. That is R20 in practice, not an exception to R
   "source": "src/main/resources/public",
   "out": "dist/public",
   "levels": {
-    "development": { "minify": false, "obfuscate": false, "renameClasses": false, "renameIds": false, "hashAssets": false, "removeDeadCode": false, "transformStrings": false, "controlFlowProtection": false, "sourceMaps": true },
-    "production":  { "minify": true,  "obfuscate": false, "renameClasses": false, "renameIds": false, "hashAssets": false, "removeDeadCode": false, "transformStrings": false, "controlFlowProtection": false, "sourceMaps": false },
-    "protected":   { "minify": true,  "obfuscate": true,  "renameClasses": true,  "renameIds": false, "hashAssets": false, "removeDeadCode": true,  "transformStrings": true,  "controlFlowProtection": true,  "sourceMaps": false }
+    "development": { "minify": false, "obfuscate": false, "renameClasses": false, "renameIds": false, "renameFiles": false, "renameVars": false, "renameGlobals": false, "renameData": false, "hashAssets": false, "removeDeadCode": false, "transformStrings": false, "controlFlowProtection": false, "sourceMaps": true },
+    "production":  { "minify": true,  "obfuscate": false, "renameClasses": false, "renameIds": false, "renameFiles": false, "renameVars": false, "renameGlobals": false, "renameData": false, "hashAssets": false, "removeDeadCode": false, "transformStrings": false, "controlFlowProtection": false, "sourceMaps": false },
+    "protected":   { "minify": true,  "obfuscate": true,  "renameClasses": true,  "renameIds": false, "renameFiles": true,  "renameVars": true,  "renameGlobals": true,  "renameData": true,  "hashAssets": false, "removeDeadCode": true,  "transformStrings": true,  "controlFlowProtection": true,  "sourceMaps": false }
   },
   "keepClasses": [],
   "keepIds": [],
+  "keepVars": [],
+  "keepGlobals": [],
+  "keepData": ["data-sitekey", "data-theme", "data-testid"],
   "neverTransform": ["emails/**", "vendor/**"],
-  "neverHash": ["*.html", "sw.js", "manifest.webmanifest", "robots.txt", "sitemap.xml", "favicon.ico", ".well-known/**", "emails/**", "assets/og/**"],
+  "neverRename": ["**.html", "sw.js", "**/sw.js", "manifest.webmanifest", "**/manifest.webmanifest", "robots.txt", "sitemap.xml", "favicon.ico", "apple-touch-icon*", ".well-known/**", "emails/**", "vendor/**", "assets/og/**"],
   "reservedGlobals": ["UI", "net", "Auth", "AppBus", "showToast"],
   "cacheAutorizado": false
 }
@@ -149,9 +170,24 @@ technique just because it exists. That is R20 in practice, not an exception to R
 
 > **Do not invent a configuration format if the project already has one.** If it uses `package.json`,
 > `vite.config.js`, `webpack.config.js` or its own pipeline, **adapt to it** and keep only the key names
-> (`minify`, `obfuscate`, `renameClasses`, `renameIds`, `hashAssets`, `removeDeadCode`,
-> `transformStrings`, `controlFlowProtection`). The file above is the default only for a project that
-> has nothing.
+> (`minify`, `obfuscate`, `renameClasses`, `renameIds`, `renameFiles`, `renameVars`, `renameGlobals`,
+> `renameData`, `hashAssets`, `removeDeadCode`, `transformStrings`, `controlFlowProtection`). The file
+> above is the default only for a project that has nothing.
+
+**`neverRename` is the single list of fixed names**, and it serves both renaming for protection (11.1)
+and hashing for cache (11.2), because every entry is there for the same reason: the name is a contract
+with something outside the build. It replaces the old `neverHash`, which meant the same thing under a
+narrower name.
+
+**The globs are anchored with `**` on purpose.** `casa()` compiles `*` into `[^/]*`, which does not
+cross a slash — so a bare `*.html` protects `index.html` and **misses `pages/contato.html`**. That was
+harmless while `hashAssets` was off by default; with `renameFiles` on it would rename a page and delete
+its public URL. Write `**.html`, and list both `sw.js` and `**/sw.js`.
+
+**`reservedGlobals` changes role with `renameGlobals`** — it is the list of names shared across classic
+scripts either way. With `renameGlobals: false` they are excluded from renaming; with `true` they are
+renamed **together, program-wide** (9.6). `keepGlobals` is the escape for a name that must survive even
+then.
 
 ### 3.3 Tooling — build time only
 
@@ -197,18 +233,20 @@ The build runs in **exactly** this order. Changing it breaks synchronisation bet
 1. Análise                          → inventário de arquivos, classes, IDs, referências
 2. Validação de entrada             → segredos, CDN proibida, referência já quebrada no source
 3. Limpeza + cópia integral         → source → dist (byte a byte, sem tocar no source)
-4. Renomeação de classes/IDs        → só o que foi PROVADO seguro (9, 10)
+4. Renomeação de nomes              → classe, variável CSS, global e data-* PROVADOS seguros (9, 10)
 5. Minificação CSS                  (5)
 6. Minificação + ofuscação JS       (6) — nunca em emails/**, nunca ofusca sw.js
 7. Minificação HTML                 (7) — preservando SEO, a11y e placeholders
-8. Hash de assets                   (11) — folhas primeiro, depois CSS/JS; nunca HTML/sw/manifest
+8. Renomeação e hash de arquivos    (11) — nome ofuscado + hash opcional, numa passada só
 9. Atualização das referências      → HTML, CSS, JS, manifest, sw
 10. Gravação do dist/.build-info.json
 11. Validação pós-build             → falha com exit 1 se qualquer referência quebrou (14)
 ```
 
-Rename **before** minifying (a readable file makes substitution provable). Hash **after** minifying (the
-hash has to be of the final content).
+Rename *names* **before** minifying — a readable file makes the substitution provable. Rename and hash
+*files* **after** minifying, and never before: steps 5 to 7 walk the **source** list and write to
+`path.join(OUT, f)`, so a file renamed earlier would pull those paths out from under them. The hash also
+has to be taken of the final content.
 
 ---
 
@@ -222,7 +260,8 @@ Apply minification, optimisation and dead-code removal **only when it is safe**.
   `classList.add()`, by a server attribute (`{%nome_active}`) or by a third-party library appears in no
   HTML and would be deleted by mistake. Dead CSS removal only with manual analysis and a test.
 - Minify with `esbuild` (`loader: 'css'`): it compresses, keeps the cascade and does not reorder
-  selectors.
+  selectors. Pass **`legalComments: 'none'`** with it — esbuild preserves `/*!` and `@license` comments
+  by default, so without it a banner in `ds.css` sails straight into the dist.
 - The `<link>` order stays `tailwind.css` before `ds.css` (R14).
 
 ---
@@ -236,19 +275,26 @@ A minifier that renames top-level identifiers breaks everything silently.
 
 ```js
 // seguro para script clássico: encolhe sem renomear o que é global
-await transform(code, { loader: 'js', minifyWhitespace: true, minifySyntax: true, minifyIdentifiers: false });
+await transform(code, { loader: 'js', minifyWhitespace: true, minifySyntax: true,
+                        minifyIdentifiers: false, legalComments: 'none' });
 ```
 
 Only enable `minifyIdentifiers: true` for a file whose entire content is inside an IIFE or an ES module —
 there is no top-level symbol to break there.
+
+**`legalComments: 'none'` is not decoration.** esbuild keeps `//!`, `/*!`, `@license` and `@preserve` by
+default, and this transform is the *only* thing that runs over `sw.js`, which is never obfuscated. Leave
+it out and the service worker ships commented.
 
 ### 6.2 Obfuscation
 
 ```js
 JavaScriptObfuscator.obfuscate(code, {
   compact: true, simplify: true, target: 'browser',
-  renameGlobals: false,                    // scripts clássicos compartilham globais
+  renameGlobals: false,                    // não confundir com a chave renameGlobals do build (9.6):
+                                           // aqui é por arquivo, e por arquivo quebra tudo
   identifierNamesGenerator: 'mangled',
+  seed: derivadoDoSalt,                    // 0 = sorteia: dois builds iguais sairiam diferentes
   reservedNames: ['^UI$','^net$','^Auth$','^AppBus$','^showToast$'],
 
   stringArray: true,                       // transformação de strings
@@ -276,10 +322,10 @@ JavaScriptObfuscator.obfuscate(code, {
 `disableConsoleOutput`, devtools-detection loops, and `selfDefending` combined with any post-processing.
 Blocking a developer's tools punishes the honest reader and stops no attacker.
 
-**Never obfuscate:**
+**Never obfuscate, and never rename:**
 
 - `sw.js` — a broken service worker stays stuck on the user's device, and they have no way to help
-  themselves. Minify it, nothing more.
+  themselves. Minify it, nothing more. Section 12 has the reason its *name* is untouchable too.
 - `vendor/**` and already-minified third-party libraries — zero gain, high risk, larger file.
 - `emails/**` — a mail client does not execute JS and the file leaves the domain entirely
   (`email-design.md`).
@@ -295,6 +341,13 @@ and used in another: outside the list, the name is renamed in each file separate
 not look like an error — the page loads and the feature simply does not exist, with no line in the build
 console. The list is the only guard.
 
+> **The list has two jobs, and `renameGlobals` picks which one.** It always names the surface shared
+> across classic scripts. With `renameGlobals: false` that surface is *excluded* from renaming — the
+> historical behaviour, and the one the obfuscator's own `renameGlobals: false` enforces file by file.
+> With `renameGlobals: true` the same list becomes the *input* to a program-wide rename, where one name
+> gets one replacement across every file at once, `onclick=` attributes included (9.6). What is never
+> allowed is the third possibility: renaming a shared global file by file.
+
 > **R32 does not loosen this.** The rule that orphan code is removed applies to Java classes and files,
 > and it explicitly defers JavaScript and CSS to this section (`dead-code.md`). A function that looks
 > unused here stays, and a CSS rule that looks unused stays — the reasons above did not stop being
@@ -307,7 +360,7 @@ console. The list is the only guard.
 ```js
 await minifyHtml(html, {
   collapseWhitespace: true, conservativeCollapse: false,
-  removeComments: true, ignoreCustomComments: [/^!/, /^\s*\{/],
+  removeComments: true, ignoreCustomComments: [/^\s*\{/],  // só o placeholder do shell sobrevive
   removeAttributeQuotes: false,        // atributo sem aspas quebra valor com placeholder
   removeRedundantAttributes: false,    // preserva semântica declarada de propósito
   useShortDoctype: false, keepClosingSlash: true,
@@ -321,6 +374,11 @@ Twitter Card, Schema.org (`application/ld+json`), `hreflang`, `lang`, `alt`, `ar
 `label for`, form field `name`, the `for`/`id` pair, `tabindex`, and `<noscript>` with real content.
 Those are priorities 3 and 4 in R20, and obfuscation is priority 8.
 
+**The comment list lost `/^!/`, and keeping `/^\s*\{/` is not optional.** `/^!/` existed to preserve
+`<!--! ... -->`, which is the opposite of what is wanted now. `/^\s*\{/` protects the `HtmlRouteAPI`
+placeholders, and deleting the whole line — the obvious move for someone told to "remove every comment"
+— breaks the rendering of every page in the project.
+
 **`HtmlRouteAPI` placeholders:** `{content}`, `{page}` and `{%nome_active}` pass through the build
 intact. `{%nome_active}` usually appears **inside `class="..."`** — the renaming step ignores any token
 containing `{` or `}`, and the class the server injects is untouchable (section 9.2).
@@ -333,20 +391,32 @@ and the build does not fix that.
 ## 8. Assets
 
 - Generated art (`canvas-generative.md`) is already optimised; the build only copies and, when enabled,
-  hashes it.
+  renames and hashes it.
+- **SVG passes through a comment strip and nothing else.** It is the one text format with no branch in
+  the minification loop, so an `<!-- Generator: ... -->` from the drawing tool survives the whole
+  pipeline. Remove `<!--...-->` and stop there: an SVG is markup that a designer reopens, and a
+  "minified" path is a path nobody can edit again.
 - A user-uploaded image never passes through here — it goes to `/data/uploads` with the compression
   strategy asked of the developer (G2, `images.md`).
 - `favicon.ico`, `apple-touch-icon` and the Open Graph covers (`assets/og/**`, `landing-seo-og.md`) are
-  **not** hashed: they are referenced by convention, by search engines and by social networks, which
-  cache the URL themselves.
+  **neither hashed nor renamed**: they are referenced by convention, by search engines and by social
+  networks, which cache the URL themselves. They are in `neverRename` for that reason.
+- A **font family name** is frozen even though it looks renameable: it is read back as a string by
+  `ctx.font = '16px Inter'` in canvas work (`canvas-generative.md`) and by `local()` inside
+  `@font-face`, and neither is a reference the build can rewrite.
 
 ---
 
-## 9. Class renaming — only with proof of safety
+## 9. Name renaming — only with proof of safety
+
+Four things are renamed under this section: **classes** (9.1 to 9.4), **CSS custom properties and the
+other named CSS constructs** (9.5), the **shared JavaScript globals** (9.6) and **`data-*` attributes**
+(9.7). They share one proof (9.3), one naming scheme, one salt and one report. File and folder names
+run the same proof from section 11.1.
 
 > **The real and limited objective:** to raise the cost of trivial automation that depends on a
-> predictable selector. **It is not security.** A bot that executes JavaScript reads the DOM and finds
-> the current name in seconds.
+> predictable name. **It is not security.** A bot that executes JavaScript reads the DOM and finds the
+> current name in seconds.
 
 **The transformation happens at build and deploy time, never on every page load.** Randomising a class
 at runtime to frustrate a bot is forbidden: it breaks accessibility, testing and debugging, and fools
@@ -391,17 +461,29 @@ override this, because R20 sits above both.
 
 ### 9.3 The proof
 
-For each candidate, the build scans all source JS and HTML:
+This is the gate for every rename in the build — class, custom property, global, `data-*`, file and
+folder. A name is only replaced when **all eight** hold:
 
-- **Static occurrence** — the complete token inside `class="..."`, inside a CSS selector, or inside a
-  string literal (`'product-card'`, `'.product-card .title'`, `'card product-card'`). That is
-  renameable.
-- **Dynamic fragment** — any literal glued to a concatenation (`'product-' + kind`) or an interpolation
-  (`` `product-${kind}` ``). If such a fragment is a prefix or a piece of the candidate's name, it is
-  marked **UNSAFE** and not renamed.
+1. it does not match `neverRename`, `neverTransform` or the relevant `keep*` list;
+2. **every reference to it is literal** — the whole token in `class="..."`, a CSS selector, an absolute
+   path from the site root (`/scripts/ui.js`), `var(--espaco-6)`, `UI.metodo`, a string literal
+   (`'product-card'`, `'.product-card .title'`);
+3. it does not appear in `src/main/java/**` — server-generated markup never passes through the build,
+   and the server may serve a file by name (`AssetsAPI.serveAsset(ctx, "scripts/ui.js")`);
+4. it does not appear in any `neverTransform` file — nobody rewrites those, so the reference would be
+   left dangling;
+5. it does not appear in `nginx.conf`, `tools/preview.py` or the `Dockerfile` — server configuration
+   that lives **outside** the tree the build reads;
+6. it is **not assembled at runtime**. Any literal glued to a concatenation (`'product-' + kind`,
+   `'/assets/' + nome`) or an interpolation (`` `product-${kind}` ``) freezes every name that has that
+   fragment as a prefix or a piece — and, for a path, the whole folder;
+7. it is not a platform name — `window`, `document`, `fetch`, `JSON`, `Math`, a `--webkit-*` property.
+   A builtin list is checked before anything is emitted;
+8. the generated name does not collide with any existing or already-emitted name.
 
-The build report lists, per class: `renamed`, `kept (reason)` or `unsafe (file)`. An unsafe class does
-**not** fail the build — it simply keeps its original name, and the report says why.
+The build report lists, per name: `renamed`, `kept (reason)` or `unsafe (file)`. **A failed proof never
+fails the build** — the name simply survives untouched and the report says why. That is the difference
+between this and section 14, where a *desynchronised* rename does stop everything.
 
 ### 9.4 Application and synchronisation
 
@@ -424,7 +506,55 @@ remnant of a mapped class.
 The new name is an initial letter plus base36 of `sha256(class + build salt)`, checked against every
 existing class name in the project (including those in `tailwind.css`) so it cannot collide. The salt
 lives in `dist/.build-info.json` alongside the map — that is how you discover, months later, that
-`a81Kx` was `product-card`.
+`a81Kx` was `product-card`. Every rename in this section and in 11.1 uses that same construction and
+that same salt.
+
+### 9.5 CSS custom properties and the other named constructs
+
+`renameVars`. The design system introduces itself in the dist otherwise: `--brand-600`, `--space-6`,
+`--text-lg`, `--radius-md`, `--ease-out-expo`, `--surface`, `--ring`, `--muted`. Along with them go
+`@keyframes`, `@layer`, `@property`, `container-name`, `view-transition-name`, CSS counters and the
+names inside `grid-template-areas`.
+
+The rewrite has to reach three places beyond the `.css` file, and missing any one of them is a silent
+break:
+
+- **`style="--i: 3"` inline in the HTML.** The skill's own stagger pattern sets it there and reads it
+  from CSS (`animation-delay: calc(var(--i) * 80ms)`) — which means the *candidate scan* has to read the
+  HTML too, not only the `.css`. A property that is declared nowhere but the markup is invisible to a
+  CSS-only scan, survives untouched, and quietly makes this section a half-measure.
+- **`getPropertyValue('--cor')` and `style.setProperty('--x', v)` in JavaScript.**
+- **A property assembled in a loop** (`'--space-' + n`) — proof 6, and the whole `--space-` prefix
+  freezes with it.
+
+A real font family name is never renamed (section 8).
+
+### 9.6 The shared globals
+
+`renameGlobals`. `UI`, `net`, `Auth`, `AppBus` and `showToast` survive obfuscation today by design, so
+the dist still reads `Auth.login`, `net.post`, `UI.showToast`. This is the highest-value rename in the
+build and **the highest-risk one**, and the risk has a name: renaming a shared global *per file* is the
+documented way to make a whole feature vanish with no error at all (section 18).
+
+What makes it safe is that it is not per file. `reservedGlobals` becomes the input list, each name gets
+one replacement, and step 9 applies it to every text file in the dist in a single pass. Two things it
+has to reach along with the JavaScript:
+
+- **`onclick="novoDoc()"` in the HTML**, which is a live pattern in this skill and already the cause of
+  one catalogued error;
+- **nothing in `src/main/java/**`** — proof 3 freezes any global the server writes into markup.
+
+Proof 7 is what stops `fetch` or `JSON` from being renamed, and `keepGlobals` is the manual escape.
+
+### 9.7 `data-*` attributes
+
+`renameData`. `data-action="excluir-usuario"` and `data-page="orcamentos"` hand over the intent of the
+screen in plain Portuguese. The attribute name is renamed under the same proof; the **value** is left
+alone, because it is content as often as it is a key.
+
+Two traps: `querySelectorAll('[data-action]')` built from a variable falls to proof 6, and
+`data-sitekey` / `data-theme` are read by Cloudflare's own script, so they ship in `keepData` from the
+start — along with `data-testid`, which an automated test depends on.
 
 ---
 
@@ -441,9 +571,60 @@ Enable it only when: the project has no public anchors, every ID is internal, th
 passes, and a manual keyboard and screen-reader test was done afterwards. Record the decision in
 `CLAUDE.md`.
 
+**This is the one name that did not follow the others**, and the asymmetry is deliberate. Classes, custom
+properties, globals, `data-*` and file names all flipped on at `protected` because a build can prove
+their references. An ID's references reach places no build reads: a bookmark somebody saved, a link on
+another site, and a screen reader walking the `for`/`id` pair. Proof 2 cannot hold for something the
+build cannot see, and accessibility is priority 3 against obfuscation's 8 (R20).
+
 ---
 
-## 11. Asset hashing and the cache rule
+## 11. File names
+
+Two mechanisms rename a file, for two unrelated reasons, in one pass: **11.1 renames to protect** (R19,
+on by default at `protected`) and **11.2 hashes to bust cache** (R25, off unless the client asked for
+cache). Either can run without the other.
+
+### 11.1 Renaming for protection
+
+`renameFiles`. Without it the dist hands over the map of the frontend for free: `ui.js`, `net.js`,
+`auth.js`, `app-state.js`, `messages.js`, sitting in `scripts/`, readable in the network tab before
+anyone looks at a single obfuscated line.
+
+`scripts/ui.js` → `scripts/x8k2d.js`, built exactly as 9.4 builds a class name, from the same salt.
+**Never `ui.8f91c2ad.js`** — a content hash keeps the original stem and leaks the very thing being
+hidden, which is why this is not simply `hashAssets` turned on.
+
+**No `.html` is ever renamed. The file name is the route.** `HtmlRouteAPI` registers one route per
+**file name** (`public/orcamentos/novo.html` becomes `/novo`, `public/index.html` becomes `/`), so
+renaming a page does not obscure it — it deletes a public address that may be indexed, linked from
+another site, or sitting in somebody's bookmarks. `**.html` is the first entry in `neverRename` for
+exactly that reason, and retiring a page stays a 301 redirect, never a rename (`dead-code.md`,
+`landing-seo-og.md`). On the static track the same name carries the URL through
+`try_files $uri $uri.html`, and `404.html` is reached by name from `error_page`.
+
+**The extension never changes.** It decides the `Content-Type` (`AssetsAPI.getContentType`, nginx's
+`mime.types`) and, on the static track, the `try_files $uri $uri.html`.
+
+**Folder segments are renamed too** — `scripts/` → `x7f1a/` — and that is cheap here for a reason worth
+writing down: this stack's CSP is origin-based (`script-src 'self'`, `turnstile.md`), not path-based,
+and the `nginx.conf` carries a single generic `location /` (`static-site.md`). Neither notices the
+change. `.well-known/` is the exception and never moves; it is a path fixed by specification.
+
+A folder holding both a page and a renameable file **splits, and that is the intended result**:
+`pages/contato.html` stays exactly where it is while `pages/extra.js` becomes `x1yvai/x1kk3j.js`, with
+the `<script src>` inside the page rewritten to match. Routing is by file name, so the page never needed
+the folder to keep its address — and the half-emptied `pages/` is not a defect to tidy up by dragging
+the HTML along with it.
+
+The proof is 9.3, unchanged, and proof 6 is the one that earns its keep: a single `'/assets/' + nome`
+anywhere in the source freezes the whole `assets/` folder, because no build can rewrite a path that does
+not exist until runtime.
+
+When `hashAssets` is on as well, the two compose into one name — obfuscated folder, obfuscated stem,
+`.hash`, original extension — computed and applied in a single rename pass.
+
+### 11.2 Hashing and the cache rule
 
 Hashing is **cache busting**: `app.js` → `app.8f91c2ad.js`, with every reference updated automatically.
 
@@ -458,19 +639,23 @@ Hashing is **cache busting**: `app.js` → `app.8f91c2ad.js`, with every referen
 Pay attention when updating references: `<link rel="preload">`, `<link rel="modulepreload">`, dynamic
 `import()`, `manifest.webmanifest`, `sw.js`, and any path assembled in JS.
 
-**What makes hashing provable:** in the source, every asset reference is **absolute from the site root**
-(`/styles/ds.css`, `/scripts/ui.js`). A path assembled at runtime (`'/assets/' + nome + '.png'`) cannot
-be rewritten — leave those files out of hashing (`neverHash`), or publish the generated map at
+**What makes either of them provable:** in the source, every asset reference is **absolute from the site
+root** (`/styles/ds.css`, `/scripts/ui.js`). A path assembled at runtime (`'/assets/' + nome + '.png'`)
+cannot be rewritten — leave those files in `neverRename`, or publish the generated map at
 `/assets/manifest.json` and read the final name from there.
 
 ---
 
 ## 12. PWA and service worker
 
-- `sw.js` and `manifest.webmanifest` are **never** hashed and **never** obfuscated. They are minified and
-  have their references updated last, once everything else has its final name.
-- If the service worker lists files, that list is rewritten from the build's hash map. A service worker
-  pointing at a file that no longer exists is a build failure.
+- `sw.js` and `manifest.webmanifest` are **never** renamed, **never** hashed and **never** obfuscated.
+  They are minified and have their references updated last, once everything else has its final name.
+- **The name `sw.js` is a contract twice over.** `navigator.serviceWorker.register('/sw.js', {scope:'/'})`
+  records that exact path, and the path is what **defines the scope** a service worker may control. And
+  a worker renamed on every build is a *new* worker on every build, while the old one stays registered
+  on the user's device with nobody left to update it.
+- If the service worker lists files, that list is rewritten from the build's rename and hash maps. A
+  service worker pointing at a file that no longer exists is a build failure.
 - Under R25 the service worker stores nothing: `install` with `skipWaiting()`, `activate` deleting every
   cache, `fetch` with no `respondWith` (`cache.md`). The build must not introduce a caching strategy the
   project did not ask for.
@@ -509,9 +694,24 @@ Every check below runs over `dist/` and **fails the build with `exit 1`**:
 | 8 | Stray source map | a `.map` inside `dist/public/` without `sourceMaps: true` |
 | 9 | Inline script | a `<script>` without `src` in a page, except `application/ld+json` |
 | 10 | Unrequested cache | `caches.put` / `caches.match` in the dist with `cacheAutorizado: false` (R25) |
+| 11 | Name synchronisation | the old spelling of a renamed file, folder, custom property, global or `data-*` still appears anywhere in the dist |
+| 12 | Comment in the dist | `/*` in a `.css` or `.js`, or `<!--` in an `.html` or `.svg`, outside `emails/**` and `vendor/**` |
 
 Checks 6 and 7 are R20 enforced mechanically: they make it impossible for obfuscation to quietly cost
-SEO or accessibility.
+SEO or accessibility. Check 11 is the counterpart of 2 for everything section 9 and 11.1 renamed — a
+half-applied rename produces a page that loads and does nothing, which is the failure mode this whole
+document exists to prevent.
+
+**Check 11 searches the whole dist for the old spelling, so only map a name the project actually uses.**
+A global listed in `reservedGlobals` but absent from the source has nothing to rename, and mapping it
+anyway turns the check into a search for a common word — `net` matches inside `exemplo.net` and fails an
+honest build.
+
+**Check 12 must not look for `//`.** `https://` appears in every canonical, every Open Graph tag and
+every `fetch` URL, so a bare search for `//` would reject every honest build and the fix would be to
+switch the check off. Line comments are already covered: the obfuscator rebuilds the AST at `protected`,
+and `legalComments: 'none'` handles `production` and `sw.js`. If a belt-and-braces check is still
+wanted, anchor it to the start of a line (`^\s*//`) and never leave it loose.
 
 ```bash
 grep -rn "cdn.tailwindcss\|unpkg.com/tailwindcss" dist/public && echo "FALHA: CDN"
@@ -519,6 +719,8 @@ grep -rn "caches.put\|caches.match" dist/public && echo "FALHA: cache nao pedido
 grep -rn "<script>" dist/public/*.html && echo "FALHA: script embutido"
 grep -rniE "api[_-]?key|secret|password|bearer [a-z0-9]{20,}|AKIA[0-9A-Z]{16}|sk_live_" dist/public && echo "FALHA: possivel segredo"
 find dist/public -name "*.map" | grep . && echo "FALHA: source map publicado"
+grep -rn --include=*.css --include=*.js -- "/\*" dist/public && echo "FALHA: comentario no dist"
+grep -rn --include=*.html --include=*.svg -- "<!--" dist/public | grep -vE "^dist/public/(emails|vendor)/" && echo "FALHA: comentario no dist"
 ```
 
 And the validation no script replaces: **start the server and open the screens** (R21, R29,
@@ -625,7 +827,7 @@ The code below keeps its comments in Portuguese, because it is code that lands i
  *
  * @author Angatu Sistemas
  */
-import { readFile, writeFile, mkdir, rm, readdir, cp } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rmdir, rm, readdir, cp } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash, randomBytes } from 'node:crypto';
 import path from 'node:path';
@@ -640,6 +842,10 @@ if (!opt) { console.error(`Nível desconhecido: ${level}`); process.exit(1); }
 
 const SRC = cfg.source, OUT = cfg.out, JAVA = 'src/main/java';
 const salt = process.env.ANGATU_BUILD_SALT || randomBytes(4).toString('hex');
+// com seed 0 o obfuscator sorteia a própria semente, e dois builds do mesmo source
+// com o mesmo salt saem diferentes — o que contraria a lei 2 (reprodutibilidade)
+const seed = Number(BigInt('0x' + createHash('sha256').update(salt)
+  .digest('hex').slice(0, 12)) % 2147483647n);
 const falhas = [];
 
 /** Lista recursivamente os arquivos de um diretório, em caminhos relativos com barra normal. */
@@ -670,81 +876,170 @@ const javaSrc = existsSync(JAVA)
 const intocavelSrc = (await Promise.all(arquivos
   .filter(f => ehTexto(f) && casa(f, cfg.neverTransform))
   .map(f => readFile(path.join(SRC, f), 'utf8')))).join('\n');
+// configuração de servidor: vive FORA da árvore do build, e ninguém a reescreve
+const foraDaArvore = (await Promise.all(['nginx.conf', 'tools/preview.py', 'Dockerfile']
+  .filter(existsSync).map(f => readFile(f, 'utf8')))).join('\n');
 await rm(OUT, { recursive: true, force: true });
 await mkdir(OUT, { recursive: true });
 await cp(SRC, OUT, { recursive: true });          // o source nunca é tocado a partir daqui
 
-// 4) renomeação de classes com prova de segurança ------------------------------
-const mapaClasses = new Map();
-if (opt.renameClasses) {
-  const cssProjeto = arquivos.filter(f => f.endsWith('.css')
-    && f !== 'styles/tailwind.css' && !casa(f, cfg.neverTransform));
-  const tailwind = existsSync(path.join(SRC, 'styles/tailwind.css'))
-    ? await readFile(path.join(SRC, 'styles/tailwind.css'), 'utf8') : '';
-  const intocaveis = new Set([...tailwind.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)].map(m => m[1]));
+// 4) renomeação de nomes com prova de segurança (9) ----------------------------
+const BUILTINS = new Set(['window', 'document', 'navigator', 'location', 'history', 'console', 'fetch',
+  'JSON', 'Math', 'Date', 'Promise', 'Array', 'Object', 'String', 'Number', 'Boolean', 'RegExp', 'Map',
+  'Set', 'URL', 'FormData', 'Headers', 'Event', 'CustomEvent', 'localStorage', 'sessionStorage']);
 
+const tailwind = existsSync(path.join(SRC, 'styles/tailwind.css'))
+  ? await readFile(path.join(SRC, 'styles/tailwind.css'), 'utf8') : '';
+const intocaveis = new Set([...tailwind.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)].map(m => m[1]));
+
+// fragmentos dinâmicos: literal colado a concatenação ou a interpolação
+const fragmentos = new Set();
+for (const f of arquivos.filter(f => /\.(js|mjs|html)$/.test(f) && !casa(f, cfg.neverTransform))) {
+  const txt = await readFile(path.join(SRC, f), 'utf8');
+  for (const m of txt.matchAll(/['"]([^'"\n]{2,})['"]\s*\+|\+\s*['"]([^'"\n]{2,})['"]/g))
+    fragmentos.add(m[1] ?? m[2]);
+  for (const m of txt.matchAll(/`([^`$]{2,})\$\{/g)) fragmentos.add(m[1]);
+}
+
+const usados = new Set(intocaveis);
+/** Nome curto e estável, derivado do salt do build, que ainda não está em uso. */
+function nomeNovo(nome) {
+  let novo, i = 0;
+  do {
+    novo = 'x' + BigInt('0x' + createHash('sha256').update(nome + salt + i++)
+      .digest('hex').slice(0, 12)).toString(36).slice(0, 5);
+  } while (usados.has(novo));
+  usados.add(novo);
+  return novo;
+}
+/** Casa a palavra inteira, para nunca atingir pedaço de outro nome. */
+const bordas = n => new RegExp(`(?<![\\w-])${escapa(n)}(?![\\w-])`, 'g');
+/** Congela caminho montado em runtime: '/assets/' + nome congela a pasta assets/ inteira. */
+const montado = alvo => [...fragmentos].some(fr => fr.includes(alvo) || alvo.includes(fr));
+/** A prova da 9.3. Devolve o MOTIVO de não renomear, ou null quando é seguro. */
+function provado(nome, manter = []) {
+  return casa(nome, manter)            ? 'lista keep'
+    : BUILTINS.has(nome)               ? 'nome de plataforma'
+    : intocaveis.has(nome)             ? 'utilitário do Tailwind'
+    : bordas(nome).test(javaSrc)       ? 'usado no Java (servidor)'
+    : bordas(nome).test(intocavelSrc)  ? 'usado em arquivo intocável'
+    : bordas(nome).test(foraDaArvore)  ? 'usado em configuração de servidor'
+    : [...fragmentos].some(fr => nome.startsWith(fr) || nome.includes(fr)) ? 'montado dinamicamente'
+    : null;
+}
+
+const mapaNomes = new Map();                      // tudo junto, para a passada única de 4.5
+const mapaClasses = new Map(), mapaVars = new Map();
+const mapaGlobais = new Map(), mapaData = new Map();
+const textoSrc = arquivos.filter(f => ehTexto(f) && !casa(f, cfg.neverTransform));
+/** Registra a troca, ignorando um nome que outra etapa já mapeou. */
+function mapear(mapa, velho, novo) {
+  if (mapaNomes.has(velho)) return;
+  mapa.set(velho, novo); mapaNomes.set(velho, novo);
+}
+
+// 4.1) classes (9.1)
+if (opt.renameClasses) {
   const candidatas = new Set();
-  for (const f of cssProjeto) {
+  for (const f of arquivos.filter(f => f.endsWith('.css')
+      && f !== 'styles/tailwind.css' && !casa(f, cfg.neverTransform))) {
     const css = (await readFile(path.join(SRC, f), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
     for (const bloco of css.split('}')) {
       const seletor = bloco.split('{')[0] ?? '';
       for (const m of seletor.matchAll(/\.([a-z][a-z0-9]*(?:-[a-z0-9]+)+)/g)) candidatas.add(m[1]);
     }
   }
-
-  // fragmentos dinâmicos: literal colado a concatenação ou a interpolação
-  const fragmentos = new Set();
-  for (const f of arquivos.filter(f => /\.(js|mjs|html)$/.test(f) && !casa(f, cfg.neverTransform))) {
-    const txt = await readFile(path.join(SRC, f), 'utf8');
-    for (const m of txt.matchAll(/['"]([^'"\n]{2,})['"]\s*\+|\+\s*['"]([^'"\n]{2,})['"]/g))
-      fragmentos.add(m[1] ?? m[2]);
-    for (const m of txt.matchAll(/`([^`$]{2,})\$\{/g)) fragmentos.add(m[1]);
-  }
-
-  const usados = new Set(intocaveis);
   for (const c of [...candidatas].sort()) {
-    const motivo =
-        intocaveis.has(c)                                         ? 'utilitário do Tailwind'
-      : casa(c, cfg.keepClasses)                                  ? 'keepClasses'
-      : new RegExp(`(?<![\\w-])${escapa(c)}(?![\\w-])`).test(javaSrc) ? 'usada no Java (servidor)'
-      : new RegExp(`(?<![\\w-])${escapa(c)}(?![\\w-])`).test(intocavelSrc) ? 'usada em arquivo intocável'
-      : [...fragmentos].some(fr => c.startsWith(fr) || c.includes(fr)) ? 'montada dinamicamente'
-      : null;
+    const motivo = provado(c, cfg.keepClasses);
     if (motivo) { console.log(`  mantida  ${c}  (${motivo})`); continue; }
-    let novo, i = 0;
-    do {
-      novo = 'x' + BigInt('0x' + createHash('sha256').update(c + salt + i++)
-        .digest('hex').slice(0, 12)).toString(36).slice(0, 5);
-    } while (usados.has(novo));
-    usados.add(novo); mapaClasses.set(c, novo);
+    mapear(mapaClasses, c, nomeNovo(c));
   }
-
-  for (const f of arquivos.filter(f => ehTexto(f) && !casa(f, cfg.neverTransform))) {
-    const p = path.join(OUT, f);
-    let txt = await readFile(p, 'utf8');
-    for (const [velho, novo] of mapaClasses)
-      txt = txt.replace(new RegExp(`(?<![\\w-])${escapa(velho)}(?![\\w-])`, 'g'), novo);
-    await writeFile(p, txt);
-  }
-  console.log(`  ${mapaClasses.size} classes renomeadas`);
 }
 
-// 5-7) minificação e ofuscação -------------------------------------------------
+// 4.2) variáveis CSS, @keyframes e companhia (9.5)
+if (opt.renameVars) {
+  const candidatas = new Set();
+  for (const f of arquivos.filter(f => f.endsWith('.css') && !casa(f, cfg.neverTransform))) {
+    const css = await readFile(path.join(SRC, f), 'utf8');
+    for (const m of css.matchAll(/(--[a-zA-Z][\w-]*)\s*:/g)) candidatas.add(m[1]);
+    for (const m of css.matchAll(/@keyframes\s+([\w-]+)/g)) candidatas.add(m[1]);
+    for (const m of css.matchAll(/@property\s+(--[\w-]+)/g)) candidatas.add(m[1]);
+    for (const m of css.matchAll(/(?:container-name|view-transition-name)\s*:\s*([\w-]+)/g))
+      candidatas.add(m[1]);
+  }
+  // uma variável pode nascer fora do CSS: style="--i: 3" no HTML, setProperty no JS
+  for (const f of textoSrc.filter(f => /\.(html|js|mjs)$/.test(f))) {
+    const txt = await readFile(path.join(SRC, f), 'utf8');
+    for (const m of txt.matchAll(/(--[a-zA-Z][\w-]*)\s*:/g)) candidatas.add(m[1]);
+    for (const m of txt.matchAll(/(?:setProperty|getPropertyValue)\(\s*['"](--[\w-]+)/g))
+      candidatas.add(m[1]);
+  }
+  for (const c of [...candidatas].sort()) {
+    const motivo = /^--(webkit|moz|ms|o)-/.test(c) ? 'prefixo de fabricante' : provado(c, cfg.keepVars);
+    if (motivo) { console.log(`  mantida  ${c}  (${motivo})`); continue; }
+    mapear(mapaVars, c, c.startsWith('--') ? '--' + nomeNovo(c) : nomeNovo(c));
+  }
+}
+
+// 4.3) globais compartilhados: um nome, uma troca, o programa inteiro (9.6)
+if (opt.renameGlobals) {
+  const usoSrc = (await Promise.all(textoSrc
+    .map(f => readFile(path.join(SRC, f), 'utf8')))).join('\n');
+  for (const g of (cfg.reservedGlobals ?? [])) {
+    // um nome que o projeto não usa não entra no mapa: mapeado, a validação 11
+    // passaria a procurá-lo no dist inteiro e reprovaria em 'exemplo.net'
+    if (!bordas(g).test(usoSrc)) continue;
+    const motivo = provado(g, cfg.keepGlobals);
+    if (motivo) { console.log(`  mantido  ${g}  (${motivo})`); continue; }
+    mapear(mapaGlobais, g, nomeNovo(g));
+  }
+}
+
+// 4.4) atributos data-*: só o nome do atributo, nunca o valor (9.7)
+if (opt.renameData) {
+  const candidatas = new Set();
+  for (const f of textoSrc) {
+    const txt = await readFile(path.join(SRC, f), 'utf8');
+    for (const m of txt.matchAll(/\b(data-[a-z][\w-]*)\s*[=\]]/g)) candidatas.add(m[1]);
+  }
+  for (const c of [...candidatas].sort()) {
+    const motivo = provado(c, cfg.keepData);
+    if (motivo) { console.log(`  mantido  ${c}  (${motivo})`); continue; }
+    mapear(mapaData, c, 'data-' + nomeNovo(c));
+  }
+}
+
+// 4.5) uma passada só, com os quatro mapas juntos
+if (mapaNomes.size) for (const f of textoSrc) {
+  const p = path.join(OUT, f);
+  let txt = await readFile(p, 'utf8');
+  for (const [velho, novo] of mapaNomes) txt = txt.replace(bordas(velho), novo);
+  await writeFile(p, txt);
+}
+console.log(`  ${mapaClasses.size} classes, ${mapaVars.size} variáveis, ${mapaGlobais.size} globais ` +
+            `e ${mapaData.size} data-* renomeados`);
+
+// 5-7) minificação e ofuscação — e nenhum comentário sobrevive a partir daqui ---
 if (opt.minify) for (const f of arquivos) {
   if (casa(f, cfg.neverTransform)) continue;
   const p = path.join(OUT, f);
   if (f.endsWith('.css')) {
     const css = await readFile(p, 'utf8');
-    await writeFile(p, (await transform(css, { loader: 'css', minify: true })).code);
+    await writeFile(p, (await transform(css, {
+      loader: 'css', minify: true, legalComments: 'none'    // 'none' tira /*! e @license
+    })).code);
   } else if (f.endsWith('.js')) {
     let js = (await transform(await readFile(p, 'utf8'), {
-      loader: 'js', minifyWhitespace: true, minifySyntax: true, minifyIdentifiers: false
+      loader: 'js', minifyWhitespace: true, minifySyntax: true,
+      minifyIdentifiers: false, legalComments: 'none'       // única etapa que roda sobre o sw.js
     })).code;
     if (opt.obfuscate && f !== 'sw.js' && !f.startsWith('vendor/')) {
       js = JavaScriptObfuscator.obfuscate(js, {
         compact: true, simplify: true, target: 'browser', renameGlobals: false,
-        identifierNamesGenerator: 'mangled',
-        reservedNames: (cfg.reservedGlobals ?? []).map(g => `^${g}$`),
+        identifierNamesGenerator: 'mangled', seed,   // sem seed o build não é reprodutível
+        // os globais já foram trocados em 4.3: o que se reserva aqui é o nome FINAL
+        reservedNames: (cfg.reservedGlobals ?? [])
+          .map(g => `^${escapa(mapaGlobais.get(g) ?? g)}$`),
         stringArray: !!opt.transformStrings, stringArrayThreshold: 0.75,
         stringArrayEncoding: ['base64'], stringArrayRotate: true,
         stringArrayShuffle: true, stringArrayIndexShift: true,
@@ -757,38 +1052,71 @@ if (opt.minify) for (const f of arquivos) {
     await writeFile(p, js);
   } else if (f.endsWith('.html')) {
     await writeFile(p, await minifyHtml(await readFile(p, 'utf8'), {
-      collapseWhitespace: true, removeComments: true, ignoreCustomComments: [/^!/, /^\s*\{/],
+      collapseWhitespace: true, removeComments: true,
+      ignoreCustomComments: [/^\s*\{/],   // só o placeholder do shell; o /^!/ saiu de propósito
       removeAttributeQuotes: false, removeRedundantAttributes: false, useShortDoctype: false,
       keepClosingSlash: true, sortAttributes: false, sortClassName: false,
       minifyCSS: true, minifyJS: false
     }));
+  } else if (f.endsWith('.svg')) {
+    // SVG não é minificado: um path "otimizado" é um desenho que ninguém reabre.
+    // Sai só o comentário de gerador, que é o que vazaria para o navegador.
+    await writeFile(p, (await readFile(p, 'utf8')).replace(/<!--[\s\S]*?-->/g, ''));
   }
 }
 
-// 8-9) hash de assets e reescrita de referências -------------------------------
-const mapaHash = new Map();
-if (opt.hashAssets) {
+// 8-9) renomeação e hash de arquivos, e reescrita das referências --------------
+const mapaArquivos = new Map();
+if (opt.renameFiles || opt.hashAssets) {
+  const pastas = new Map();
+  /** Decide o nome de um segmento de pasta uma única vez, e reusa a decisão. */
+  function pastaNova(seg) {
+    if (!pastas.has(seg)) {
+      const motivo = seg === '.well-known' ? 'caminho de especificação'
+        : provado(seg) ?? (montado('/' + seg + '/') ? 'caminho montado dinamicamente' : null);
+      if (motivo) console.log(`  mantida  pasta ${seg}/  (${motivo})`);
+      pastas.set(seg, motivo ? seg : nomeNovo(seg));
+    }
+    return pastas.get(seg);
+  }
+
   const folhas = arquivos.filter(f => /\.(png|jpe?g|webp|avif|gif|svg|woff2?|ttf|otf|ico|mp4|webm)$/.test(f));
-  const codigo = arquivos.filter(f => /\.(css|js)$/.test(f));
+  const codigo = arquivos.filter(f => /\.(css|js|mjs)$/.test(f));
   for (const grupo of [folhas, codigo]) {          // folhas primeiro; código depois
     for (const f of grupo) {
-      if (casa(f, cfg.neverHash) || casa(f, cfg.neverTransform)) continue;
+      if (casa(f, cfg.neverRename) || casa(f, cfg.neverTransform)) continue;
+      const dir = path.posix.dirname(f), base = path.posix.basename(f);
+      const ext = base.slice(base.indexOf('.'));   // preserva .min.js inteiro; a extensão NUNCA muda
+      const motivo = provado(base) ?? (montado('/' + f) ? 'caminho montado dinamicamente' : null);
+      if (motivo) { console.log(`  mantido  ${f}  (${motivo})`); continue; }
+
       const buf = await readFile(path.join(OUT, f));
-      const h = createHash('sha256').update(buf).digest('hex').slice(0, 8);
-      const novo = f.replace(/(\.[^.]+)$/, `.${h}$1`);
+      let nome = opt.renameFiles ? nomeNovo('/' + f) : base.slice(0, -ext.length);
+      if (opt.hashAssets) nome += '.' + createHash('sha256').update(buf).digest('hex').slice(0, 8);
+      const pasta = dir === '.' ? ''
+        : (opt.renameFiles ? dir.split('/').map(pastaNova).join('/') : dir) + '/';
+      const novo = pasta + nome + ext;
+      if (novo === f) continue;
+
+      await mkdir(path.join(OUT, path.dirname(novo)), { recursive: true });
       await writeFile(path.join(OUT, novo), buf);
       await rm(path.join(OUT, f));
-      mapaHash.set('/' + f, '/' + novo);
+      mapaArquivos.set('/' + f, '/' + novo);
     }
     for (const f of await walk(OUT)) {             // reescreve HTML, CSS, JS, manifest e sw
       if (!ehTexto(f) || casa(f, cfg.neverTransform)) continue;
       const p = path.join(OUT, f);
       let txt = await readFile(p, 'utf8'), mudou = false;
-      for (const [velho, novo] of mapaHash)
+      for (const [velho, novo] of mapaArquivos)
         if (txt.includes(velho)) { txt = txt.split(velho).join(novo); mudou = true; }
       if (mudou) await writeFile(p, txt);
     }
   }
+  // pasta vazia não entra no dist: o nome dela vazaria sozinho. rmdir falha de
+  // propósito quando ainda há arquivo dentro, que é exatamente a guarda desejada.
+  for (const d of [...new Set(arquivos.map(f => path.posix.dirname(f)))]
+        .filter(d => d !== '.').sort().reverse())
+    await rmdir(path.join(OUT, d)).catch(() => {});
 }
 
 // 10) informações do build (fora de public/, não é servido) --------------------
@@ -797,7 +1125,9 @@ const conteudoSource = (await Promise.all([...arquivos].sort()
 await writeFile('dist/.build-info.json', JSON.stringify({
   level, salt, geradoEm: new Date().toISOString(),
   sourceHash: createHash('sha256').update(conteudoSource).digest('hex'),
-  classes: Object.fromEntries(mapaClasses), assets: Object.fromEntries(mapaHash)
+  classes: Object.fromEntries(mapaClasses), vars: Object.fromEntries(mapaVars),
+  globais: Object.fromEntries(mapaGlobais), data: Object.fromEntries(mapaData),
+  arquivos: Object.fromEntries(mapaArquivos)
 }, null, 2));
 
 // 11) validação pós-build ------------------------------------------------------
@@ -810,9 +1140,6 @@ for (const f of gerados.filter(ehTexto)) {
     if (ref !== '/' && !ref.endsWith('.html') && !existe.has(ref))
       falhas.push(`referência quebrada em ${f}: ${ref}`);
   }
-  if (!casa(f, cfg.neverTransform)) for (const velho of mapaClasses.keys())
-    if (new RegExp(`(?<![\\w-])${escapa(velho)}(?![\\w-])`).test(txt))
-      falhas.push(`classe não sincronizada em ${f}: ${velho}`);
   if (/cdn\.tailwindcss|unpkg\.com\/tailwindcss/.test(txt)) falhas.push(`CDN do Tailwind em ${f}`);
   if (/api[_-]?key\s*[:=]\s*["'][^"']{12,}|sk_live_|AKIA[0-9A-Z]{16}/i.test(txt))
     falhas.push(`possível segredo em ${f}`);
@@ -826,6 +1153,19 @@ for (const f of gerados.filter(ehTexto)) {
   }
   if (!cfg.cacheAutorizado && /caches\.(put|match)\s*\(/.test(txt))
     falhas.push(`cache não autorizado em ${f} (R25)`);
+
+  if (!casa(f, cfg.neverTransform)) {
+    for (const velho of mapaNomes.keys())          // 2 e 11) nome dessincronizado
+      if (bordas(velho).test(txt)) falhas.push(`nome não sincronizado em ${f}: ${velho}`);
+    for (const velho of mapaArquivos.keys())
+      if (txt.includes(velho)) falhas.push(`caminho antigo em ${f}: ${velho}`);
+    // 12) comentário no dist. NUNCA procurar '//': https:// está em toda URL.
+    if (opt.minify && /\.(css|js|mjs)$/.test(f) && txt.includes('/*'))
+      falhas.push(`comentário no dist em ${f}`);
+    if (opt.minify && /\.(html|svg)$/.test(f) && /<!--(?!\s*\{)/.test(txt))
+      falhas.push(`comentário no dist em ${f}`);
+  }
+
   if (f.endsWith('.html') && existsSync(path.join(SRC, f))) {
     const src = await readFile(path.join(SRC, f), 'utf8');
     const conta = (s, re) => (s.match(re) ?? []).length;
@@ -874,6 +1214,8 @@ compare against this document:
 | 18 | Classes and IDs | semantic, or already random in the source? |
 | 19 | API exposure | endpoints and data exposed without need |
 | 20 | Secrets | a key, token or credential in the frontend |
+| 21 | Asset references | absolute from the site root, or assembled at runtime? This is what decides how much of 11.1 the project can actually use |
+| 22 | Comments | is there anything in them worth not publishing — a TODO, an internal URL, the name of a system? |
 
 **After the audit:** list the deviations, fix the architecture where it is incompatible, **preserve the
 features**, and avoid an unnecessary rewrite. Do not stack a new build on an incompatible architecture,
@@ -911,7 +1253,23 @@ classes written by hand.
   `reservedGlobals`.
 - **A whole feature disappears with no error at all:** a global shared across files (`Live`, `UI`,
   `AppBus`) outside `reservedGlobals` — each file started seeing a different name.
-- **Service worker stuck on an old version:** `sw.js` was hashed or obfuscated. Never (12).
+- **Service worker stuck on an old version:** `sw.js` was hashed, renamed or obfuscated. Never (12).
+- **404 on a script that exists in the dist:** its path was assembled at runtime (`'/scripts/' + nome`)
+  and the build could not rewrite it. Proof 6 should have frozen it — check whether the fragment is in a
+  file the scan does not read.
+- **Every page renders `{content}` as literal text:** `ignoreCustomComments` lost `/^\s*\{/` along with
+  `/^!/` when comment removal went in. Only `/^!/` was meant to go (7).
+- **A staggered list animates all at once:** `--i` was renamed in the CSS but not in the
+  `style="--i: 3"` inline in the HTML. The rewrite of 9.5 has to reach the attribute (9.5).
+- **A button works in `development` and not in `protected`:** a global was renamed but the `onclick=`
+  in the HTML kept the old name — the rename was not program-wide (9.6).
+- **A Java-served page loses its styling after `renameFiles`:** a handler serves the file by name
+  (`AssetsAPI.serveAsset(ctx, "scripts/ui.js")`). Proof 3 freezes it; if it did not, the string is built
+  in Java rather than written literally, and the file belongs in `neverRename`.
+- **Every asset changes name on every deploy:** no `ANGATU_BUILD_SALT`, so the salt is random per build
+  (16). Pin it per project.
+- **Two builds of the same commit produce different JS:** the salt is pinned but the obfuscator's `seed`
+  is not, so it draws its own (3.1). The names match and the bytes do not.
 - **`og:image` vanishes from shares:** the file was hashed without updating the meta tag, or hashed when
   it should not have been (8).
 - **Stale dist published:** the build predates the last source change. The `sourceHash` in
