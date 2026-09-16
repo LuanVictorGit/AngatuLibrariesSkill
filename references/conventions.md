@@ -80,7 +80,16 @@ startup (`AngatuLib`), routes, entities or environment variables is reflected in
 same commit**.
 
 It carries two things: the `AngatuLibrariesSkill` block from section 3 of `SKILL.md` (R1), and the project's
-own documentation. Template for the project part:
+own documentation.
+
+**The block is mandatory and it is the first thing in the file.** It is the only anchor that
+survives compaction, and what it demands is the skill loaded in context **before thinking** —
+reading, planning, answering, reviewing — not merely before writing code. A `CLAUDE.md` without it
+is a repository that loses the standard the first time a session runs long, silently, which is the
+worst way to lose it. Copy the block verbatim; the project's own text goes around it, never inside
+the markers.
+
+Template for the project part:
 
 ```markdown
 # <Nome> — one-liner

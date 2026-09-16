@@ -69,11 +69,17 @@ esac
 # ---------------------------------------------------------------------------
 secao 'SKILL.md'
 
+# O TETO SUBIU DE 400 PARA 430 QUANDO R36 ENTROU, E O MOTIVO IMPORTA.
+# Ele nao mede tamanho por si: mede se o SKILL.md continua despachante. Uma
+# regra nova custa poucas linhas aqui e o detalhe dela desce para references/ --
+# foi o que R36 fez, com whatsapp.md levando coordenadas, API e armadilhas. O
+# que o teto tem de barrar e conteudo que deveria estar num reference voltando
+# para ca; se subir de novo, a pergunta antes de mexer no numero e essa.
 LINHAS=$(wc -l < SKILL.md | tr -d ' ')
-if [ "$LINHAS" -gt 400 ]; then
-  falha "SKILL.md com $LINHAS linhas (teto 400) — conteudo deve descer para references/"
+if [ "$LINHAS" -gt 430 ]; then
+  falha "SKILL.md com $LINHAS linhas (teto 430) — conteudo deve descer para references/"
 else
-  ok "SKILL.md com $LINHAS linhas (teto 400)"
+  ok "SKILL.md com $LINHAS linhas (teto 430)"
 fi
 
 if grep -q 'AngatuLibrariesSkill:begin' SKILL.md && grep -q 'AngatuLibrariesSkill:end' SKILL.md; then
@@ -395,6 +401,35 @@ exige "$AA" 'R20' 'anti-ai-design.md preserva a ordem de R20'                   
 exige "$AA" 'R13' 'anti-ai-design.md cobre e-mail, erro e impressao'                   'anti-ai-design.md so cobre a landing'
 exige references/landing-copy.md 'anti-ai-design' 'landing-copy.md aponta para a metade visual'                                  'landing-copy.md nao liga texto e layout'
 exige references/frontend-preview.md 'anti-ai-design|screenshot of any other product'      'frontend-preview.md roda a pergunta de R35 no preview'      'frontend-preview.md nao roda a checagem visual onde ela e possivel'
+
+# R1 so vale se o bloco que vai para o CLAUDE.md do projeto exigir a skill
+# CARREGADA PARA PENSAR. "carregue no inicio da sessao" e conselho; o que a
+# regra precisa e da exigencia escrita no arquivo que sobrevive a compactacao.
+exige SKILL.md 'toda vez que se for pensar'       'bloco do CLAUDE.md exige a skill carregada para pensar'       'bloco do CLAUDE.md voltou a pedir so o carregamento no inicio da sessao'
+exige SKILL.md 'antes de responder'       'bloco do CLAUDE.md manda carregar antes de responder'       'bloco do CLAUDE.md sem a ordem de carregar antes de responder'
+
+# R4 deixou de ser so sobre AngatuLibraries. Sem os dois fatos escritos --
+# toda lib da Angatu, e a conferencia mesmo sem pedido -- ela volta a ser lida
+# como "confira quando for criar o pom".
+exige SKILL.md 'every Angatu library' 'R4 cobre toda biblioteca da Angatu'                                       'R4 voltou a cobrir so AngatuLibraries'
+exige SKILL.md 'even when nobody asked|checked unasked'       'R4 exige conferir mesmo sem pedido' 'R4 sem a conferencia nao pedida'
+
+# R36 tem dois modos de falhar. O primeiro e virar preferencia: sem o link
+# escrito, o agente resolve WhatsApp com a primeira biblioteca que lembrar. O
+# segundo e pior -- mandar automatizar sem dizer que o numero pode ser banido.
+WA=references/whatsapp.md
+exige SKILL.md 'AngatuWhatsappSDK' 'R36 nomeia o SDK no SKILL.md' 'R36 sem o nome do SDK'
+exige SKILL.md 'github\.com/LuanVictorGit/AngatuWhatsappSDK'       'R36 traz o link do repositorio' 'R36 sem o link — o agente nao tem onde ler'
+exige "$WA" 'github\.com/LuanVictorGit/AngatuWhatsappSDK'       'whatsapp.md traz o link do repositorio' 'whatsapp.md sem o link do repositorio'
+exige "$WA" 'banned|banimento' 'whatsapp.md avisa do risco de banimento'                                'whatsapp.md manda automatizar sem avisar do risco'
+exige "$WA" 'Baileys' 'whatsapp.md nomeia a base nao oficial' 'whatsapp.md esconde a base'
+exige "$WA" 'Never Baileys directly|nunca Baileys'       'whatsapp.md proibe usar Baileys direto' 'whatsapp.md sem a proibicao de Baileys direto'
+exige "$WA" 'no tags and no releases|publishes no tags'       'whatsapp.md registra que nao ha tag — a versao e o commit'       'whatsapp.md sem o fato de nao haver tag; vao procurar uma versao que nao existe'
+exige "$WA" 'R25' 'whatsapp.md reconcilia a sessao com R25'                   'whatsapp.md nao reconcilia com R25 — duas instrucoes opostas sobre guardar estado'
+exige "$WA" '/data' 'whatsapp.md poe a sessao no volume'                     'whatsapp.md sem o volume — todo deploy vai pedir QR Code de novo'
+exige "$WA" 'R22' 'whatsapp.md nao deixa o navegador escolher o destinatario'                   'whatsapp.md sem R22 — a rota vira relay de WhatsApp para qualquer numero'
+exige "$WA" 'shutdown hook|addShutdownHook' 'whatsapp.md lembra de fechar o bridge'                                             'whatsapp.md sem o encerramento — processo Node orfao'
+exige "$WA" 'R26' 'whatsapp.md preserva R26' 'whatsapp.md nao reconcilia com R26'
 
 CV=references/conventions.md
 exige "$CV" 'R31' 'conventions.md cita R31' 'conventions.md nao cita R31'

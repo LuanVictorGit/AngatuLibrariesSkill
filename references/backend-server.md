@@ -1,18 +1,36 @@
 # Backend server — dependencies, startup and JavalinAPI
 
-> Covers R4 (newest release), R5 (only the modules used), R6 (Jetty from Javalin) and R7 (HTTP by
-> default). Read this before writing `pom.xml` or `Main`.
+> Covers R4 (newest version of every Angatu library), R5 (only the modules used), R6 (Jetty from
+> Javalin) and R7 (HTTP by default). Read this before writing `pom.xml` or `Main`.
 
 ---
 
-## 1. Always the newest release (R4)
+## 1. Always the newest version (R4)
 
-Before creating or updating `pom.xml` / `build.gradle`:
+**The repository publishes no tags and no releases** — measured, not assumed, and the same is true
+of `AngatuWhatsappSDK`. So there is no "latest release" to take: the newest version is the
+**latest commit on `main`**, and JitPack accepts a commit hash where a version goes.
 
-1. Open <https://jitpack.io/#LuanVictorGit/AngatuLibraries> and take the **latest tag** — or run
-   `git ls-remote https://github.com/LuanVictorGit/AngatuLibraries.git`.
-2. Use `com.github.LuanVictorGit:AngatuLibraries:VERSION` with `VERSION` = that release.
-3. Align every third-party coordinate with the `pom.xml` of that tag (section 3 below).
+```bash
+curl -s https://api.github.com/repos/LuanVictorGit/AngatuLibraries/commits/main | grep -m1 '"sha"'
+# ou, sem a API:  git ls-remote https://github.com/LuanVictorGit/AngatuLibraries.git HEAD
+```
+
+Then:
+
+1. Use `com.github.LuanVictorGit:AngatuLibraries:COMMIT_HASH`.
+2. Align every third-party coordinate with the `pom.xml` of that commit (section 3 below).
+3. Record the hash in the project's `CLAUDE.md` (R2), so the next session knows what is pinned
+   without reading `pom.xml`.
+
+**This check is run every time, including when nobody asked for it.** On a new project it is
+obvious; on an existing one it is the whole point — the pinned hash is read and compared against
+`main` before it is trusted, and a project that is behind is **said out loud**, with the decision
+to move left to the owner. A version copied out of another project's `pom.xml` is how a codebase
+silently freezes a year behind.
+
+**The same rule covers every other Angatu library** the project pulls in — today that means
+`AngatuWhatsappSDK` (R36), which has its own coordinates. → `references/whatsapp.md`
 
 ```xml
 <!-- pom.xml -->

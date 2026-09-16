@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project; once a repo's CLAUDE.md names it, it governs every session there. Rules that override default behaviour - payments and AI go through the AngatuCRM API, never MercadoPagoAPI, DeepSeek or a provider SDK; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable and only the build obfuscates into dist, mandatory even on projects that never asked for it; every project ships a Dockerfile for Coolify, not for dev; WebSocket routes check the session inside the route; the client is hostile, so never trust what the browser sends. Always ask first - backend or static landing page, image compression strategy, Cloudflare Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, hero, Remotion, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, minify, obfuscate, WebSocket, live channel, session, cookie, login, OAuth, Google sign-in, security, rate limit, Turnstile, captcha, cache, image, compression, block download, copy protection, watermark, gallery, payment, PIX, Mercado Pago, checkout, webhook, AI, LLM, ai:chat.
+description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and keep it loaded to think, not just to code; once a repo's CLAUDE.md names it, it governs every session there. Rules that override default behaviour - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist, even unasked; every project ships a Dockerfile for Coolify, not for dev; WebSocket routes check the session inside the route; the client is hostile. Always ask first - backend or static landing page, image compression, Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, AngatuWhatsappSDK, WhatsApp, bot, Baileys, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, Remotion, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, obfuscate, WebSocket, session, cookie, login, OAuth, Google sign-in, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
 ---
 
 # AngatuLibraries — Angatu Sistemas engineering standard
@@ -32,6 +32,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Sessions, cookies, authorization, uploads, secrets, rate limiting, hostile client | `references/security.md` |
 | Live channels, `RouteType.WS`, reconnection, event shape | `references/websocket.md` |
 | Charging money, AI text generation, webhooks from the CRM | `references/crm-payments-ai.md` |
+| WhatsApp: sending, receiving, session, pacing, the Node bridge | `references/whatsapp.md` |
 | Cloudflare Turnstile: keys, verification, privacy policy, CSP | `references/turnstile.md` |
 | A login screen: Google OAuth through AngatuCRM | `references/auth-oauth.md` |
 | Filtering hostile networks: Spamhaus DROP | `references/ip-blocklist.md` |
@@ -72,9 +73,13 @@ rule says which one wins.
 
 ### Session and project
 
-- **R1 — This skill is sticky.** A project that used it once keeps using it. Write the
-  `AngatuLibrariesSkill` block of section 3 into the project's `CLAUDE.md`, and load this skill at the
-  start of every session in that repository, before reading or writing code.
+- **R1 — This skill is sticky, and the project's `CLAUDE.md` must demand it.** Writing the
+  section 3 block into `CLAUDE.md` is **mandatory**, not a nicety: that file is the only anchor
+  that survives compaction, and a repository without it loses the standard the first time a
+  session runs long. What the block demands is the skill **loaded in context before thinking** —
+  not merely before writing code: reading a file, planning a step, answering a question,
+  reviewing a diff. Not loaded → load it **before replying**. And never work from the rule
+  summary alone: it is an index of titles, and the edge cases are decided by the full text.
 - **R2 — `CLAUDE.md` stays current.** Any change to stack, structure, startup, routes, entities or
   environment variables updates `CLAUDE.md` in the same commit. → `references/conventions.md`
 - **R3 — Commits go to `development`.** `main` is production and receives only what the project
@@ -93,8 +98,13 @@ rule says which one wins.
 
 ### Library and hosting
 
-- **R4 — Always the newest AngatuLibraries release.** Check JitPack before writing `pom.xml`.
-  → `references/backend-server.md`
+- **R4 — Always the newest version of every Angatu library, verified every time.** Not only
+  `AngatuLibraries`: `AngatuWhatsappSDK` and anything else of Angatu's the project depends on.
+  **Verified even when nobody asked** — on a fresh `pom.xml`, and on an existing project, where
+  the pinned version is read before it is trusted and reported when it is behind. **Neither
+  repository publishes tags or releases**, so the newest version is the latest commit on `main`,
+  read from GitHub at that moment and never copied out of another project's `pom.xml`.
+  → `references/backend-server.md`, `references/whatsapp.md`
 - **R5 — Declare dependencies only for the modules actually used.** → `references/backend-server.md`
 - **R6 — Jetty comes from Javalin, transitively.** Never pin it by hand; on a version clash run
   `mvn dependency:tree -Dincludes=org.eclipse.jetty` and align everything to Javalin.
@@ -237,6 +247,14 @@ rule says which one wins.
   provider SDK, and never this library's own `MercadoPagoAPI` or `DeepSeek`. **This rule beats the
   integrations reference.** Truth lives at <https://crm.angatusistemas.com.br/docs-ia> and
   <https://crm.angatusistemas.com.br/docs-pagamentos>. → `references/crm-payments-ai.md`
+- **R36 — WhatsApp goes through `AngatuWhatsappSDK`, and the link is given out loud.** Every
+  WhatsApp feature — sending, receiving, a bot, a notifier, a broadcaster — uses the Java SDK at
+  <https://github.com/LuanVictorGit/AngatuWhatsappSDK>. Never Baileys directly, never
+  `whatsapp-web.js`, never a headless browser driving WhatsApp Web, never a Node service written
+  beside the Java one. **Name the library and give that address** whenever the subject comes up,
+  and **read the repository before coding** — the API is published there, not remembered. It
+  rides on Baileys, which is unofficial: say once that automating a number risks it being
+  banned, and use a disposable one while developing. → `references/whatsapp.md`
 - **R27 — Ask about Cloudflare Turnstile (G4).** When it is used: keys come from `.env`, the token
   is verified in the backend, the configuration covers the whole system, and the privacy policy
   gets Cloudflare's notice and link. → `references/turnstile.md`
@@ -286,14 +304,18 @@ rather than adding a second block — two anchors disagreeing is worse than one 
 <!-- AngatuLibrariesSkill:begin — não remover -->
 ## Padrão de engenharia — AngatuLibrariesSkill
 
-Este projeto é construído sob a **AngatuLibrariesSkill**. Carregue-a no início de toda sessão,
-antes de ler ou escrever qualquer código deste repositório. Se ela não estiver carregada,
-carregue-a antes de responder — não trabalhe apenas pelo resumo abaixo.
+Este projeto é construído sob a **AngatuLibrariesSkill**, e carregá-la é **obrigatório**. Ela
+precisa estar no contexto **toda vez que se for pensar sobre este repositório** — ler um
+arquivo, planejar uma etapa, responder uma pergunta, revisar um diff —, e não só antes de
+escrever código. Sessão nova, contexto compactado ou agente recém-aberto carregam de novo,
+**antes de responder**. O resumo abaixo é índice, uma linha por identificador: o que a regra
+exige, e qual delas vence quando duas colidem, só está no texto completo da skill.
 
 ### Resumo das regras (texto completo na skill; os IDs são estáveis)
 
 R1 skill obrigatória neste repositório · R2 CLAUDE.md sempre atualizado · R3 commits na
-`development`, nunca citar IA · R4 sempre a última versão da lib · R5 só as dependências usadas ·
+`development`, nunca citar IA · R4 sempre a última versão de toda lib da Angatu, conferida
+mesmo sem pedido · R5 só as dependências usadas ·
 R6 Jetty vem do Javalin · R7 HTTP por padrão, o TLS é do Coolify · R8 Dockerfile obrigatório, sem
 `-Xmx` · R9 Saveable não guarda nada em RAM, registro disputado usa `mutate` · R10 Saveable e Route
 só por `extends` · R11 arquitetura limpa e DRY · R12 código em inglês, Javadoc em PT-BR,
@@ -314,7 +336,10 @@ só depois de listar e perguntar; utilitário órfão, import não usado e códi
 commit · R33 tela de login criada do zero usa OAuth do Google pelo AngatuCRM, sem senha local — ler a
 documentação do CRM antes de cada integração, e parar e avisar se o endpoint não estiver publicado, em
 vez de inventar · R34 todo projeto filtra o tráfego de entrada pela lista DROP da Spamhaus, v4 e v6,
-falhando aberto, em memória, atualizada de hora em hora — `/health` e faixas privadas fora do filtro.
+falhando aberto, em memória, atualizada de hora em hora — `/health` e faixas privadas fora do
+filtro · R36 WhatsApp sempre pelo **AngatuWhatsappSDK**
+(<https://github.com/LuanVictorGit/AngatuWhatsappSDK>), nunca Baileys direto, `whatsapp-web.js`
+nem navegador headless — e o repositório é lido antes de escrever código.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -383,15 +408,14 @@ One line each; the detail lives in the reference named in section 0.
 **Core** — `AngatuLib` (startup), `JavalinAPI` (server, security headers, rate limiting),
 `Dependencies` (classload guard), `Console` + `AnsiColor` (logging), `Env`, `GsonAPI`, `Password`,
 `StringAPI`, `DataTime`, `Task`, `Request` / `Response` / `StatusCode`.
-
 **Persistence** — `Saveable` (SQLite + Gson, no RAM cache), with `mutate`, `transaction`,
 `createIndex` and `query`.
-
 **Web** — `Route` + `RouteType` (auto-discovered), `HtmlRouteAPI` (one page per file name),
 `AssetsAPI`, `IP`.
-
 **Integrations** — `EmailAPI`, `EmailFormatter`, `WebPushAPI` + `PushBootstrap`, `Bot` (Discord),
 `BrowserAPI` (Playwright), `ImageAPI`, `QRCodeAPI`.
+**Off-limits in client projects (R26)** — `MercadoPagoAPI` and `DeepSeek`: they exist for
+AngatuCRM itself, the only place a provider credential lives.
 
-**Present but off-limits in client projects (R26)** — `MercadoPagoAPI` and `DeepSeek`. They exist
-for AngatuCRM itself, which is the only place a provider credential lives.
+**Separate artefact, same standard** — `AngatuWhatsappSDK` (R36), its own repository and its own
+dependency. → `references/whatsapp.md`
