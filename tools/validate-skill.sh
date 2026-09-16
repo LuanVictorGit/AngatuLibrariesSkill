@@ -441,6 +441,15 @@ exige "$WA" 'R22' 'whatsapp.md nao deixa o navegador escolher o destinatario'   
 exige "$WA" 'shutdown hook|addShutdownHook' 'whatsapp.md lembra de fechar o bridge'                                             'whatsapp.md sem o encerramento — processo Node orfao'
 exige "$WA" 'R26' 'whatsapp.md preserva R26' 'whatsapp.md nao reconcilia com R26'
 
+# R19 alcanca o nome, e o renome de `data-*` tem uma metade que nao aparece em
+# lugar nenhum quando falta: o DOM le `data-action-change` como
+# dataset.actionChange, e `dataset` de chave ausente devolve undefined -- sem
+# erro e sem console sujo. Num projeto que despacha por `data-action`, isso e o
+# produto inteiro ficando mudo com a aba de rede toda verde.
+exige "$FB" 'dataset' 'frontend-build.md trata a contraparte dataset do renome de data-*'                       'frontend-build.md renomeia data-* sem o dataset -- o clique para de responder em silencio'
+exige "$FB" 'renameFiles' 'frontend-build.md traz o renome de arquivo'                           'frontend-build.md sem renameFiles'
+exige "$FB" 'Never `ui.8f91c2ad.js`|hash keeps the original stem|nunca e hash'       'frontend-build.md proibe nome novo derivado do conteudo'       'frontend-build.md deixa o nome novo virar hash, que preserva o radical'
+
 CV=references/conventions.md
 exige "$CV" 'R31' 'conventions.md cita R31' 'conventions.md nao cita R31'
 exige "$CV" 'Co-Authored-By' 'conventions.md nomeia o trailer proibido' \

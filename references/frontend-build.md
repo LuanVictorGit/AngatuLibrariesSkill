@@ -552,7 +552,16 @@ Proof 7 is what stops `fetch` or `JSON` from being renamed, and `keepGlobals` is
 screen in plain Portuguese. The attribute name is renamed under the same proof; the **value** is left
 alone, because it is content as often as it is a key.
 
-Two traps: `querySelectorAll('[data-action]')` built from a variable falls to proof 6, and
+**The trap that matters most is `dataset`, and it is silent.** The DOM exposes the same attribute
+under a second name: `data-action-change` is read as `element.dataset.actionChange`. Renaming only the
+attribute leaves every script looking up a key that no longer exists — and `dataset` of a missing key
+returns `undefined`, with no error and no console output. On a project that dispatches through
+`data-action`, that is the whole product going mute while the network tab stays green. **So the rename
+maps both forms in the same pass**, the attribute and its camelCase property. It was found on a
+codebase with 106 `dataset.*` reads; a build that renames the attribute without it is worse than one
+that renames nothing.
+
+Two more: `querySelectorAll('[data-action]')` built from a variable falls to proof 6, and
 `data-sitekey` / `data-theme` are read by Cloudflare's own script, so they ship in `keepData` from the
 start — along with `data-testid`, which an automated test depends on.
 
@@ -1005,7 +1014,13 @@ if (opt.renameData) {
   for (const c of [...candidatas].sort()) {
     const motivo = provado(c, cfg.keepData);
     if (motivo) { console.log(`  mantido  ${c}  (${motivo})`); continue; }
-    mapear(mapaData, c, 'data-' + nomeNovo(c));
+    const novo = nomeNovo(c);
+    mapear(mapaData, c, 'data-' + novo);
+    // a METADE QUE FALTA: o DOM le `data-action-change` como dataset.actionChange,
+    // e sem esta linha o script procura uma chave que nao existe mais — undefined,
+    // sem erro, com o clique deixando de fazer efeito (9.7)
+    const camelo = c.replace(/^data-/, '').replace(/-([a-z0-9])/g, (_, l) => l.toUpperCase());
+    mapaNomes.set('dataset.' + camelo, 'dataset.' + novo);
   }
 }
 
