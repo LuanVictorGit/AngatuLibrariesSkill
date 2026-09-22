@@ -60,6 +60,15 @@ case "$DESCRICAO" in
   *)          falha 'description sem lista de gatilhos ("Triggers")' ;;
 esac
 
+# O modulo de video so e alcancado se a description disparar no pedido. Sem os
+# gatilhos, "faz um video edit PHONK" nao carrega a skill -- e o video sai sem G5.
+for GATILHO in video PHONK; do
+  case "$DESCRICAO" in
+    *"$GATILHO"*) ok "description dispara em $GATILHO" ;;
+    *)            falha "description sem o gatilho $GATILHO -- pedido de video nao carrega a skill" ;;
+  esac
+done
+
 # ---------------------------------------------------------------------------
 # 2. SKILL.md continua despachante, nao conteudo
 #
@@ -69,17 +78,20 @@ esac
 # ---------------------------------------------------------------------------
 secao 'SKILL.md'
 
-# O TETO SUBIU DE 400 PARA 430 QUANDO R36 ENTROU, E O MOTIVO IMPORTA.
+# O TETO SUBIU DE 400 PARA 430 QUANDO R36 ENTROU, E DE 430 PARA 450 QUANDO O
+# MODULO DE VIDEO ENTROU (R37 E G5) -- E O MOTIVO IMPORTA.
 # Ele nao mede tamanho por si: mede se o SKILL.md continua despachante. Uma
 # regra nova custa poucas linhas aqui e o detalhe dela desce para references/ --
-# foi o que R36 fez, com whatsapp.md levando coordenadas, API e armadilhas. O
-# que o teto tem de barrar e conteudo que deveria estar num reference voltando
-# para ca; se subir de novo, a pergunta antes de mexer no numero e essa.
+# foi o que R36 fez, com whatsapp.md levando coordenadas, API e armadilhas, e o
+# que R37 fez: regra, portao, duas linhas de rota e o resumo do CLAUDE.md aqui,
+# contra sete references e onze ferramentas com o ciclo inteiro. O que o teto
+# tem de barrar e conteudo que deveria estar num reference voltando para ca; se
+# subir de novo, a pergunta antes de mexer no numero e essa.
 LINHAS=$(wc -l < SKILL.md | tr -d ' ')
-if [ "$LINHAS" -gt 430 ]; then
-  falha "SKILL.md com $LINHAS linhas (teto 430) — conteudo deve descer para references/"
+if [ "$LINHAS" -gt 450 ]; then
+  falha "SKILL.md com $LINHAS linhas (teto 450) — conteudo deve descer para references/"
 else
-  ok "SKILL.md com $LINHAS linhas (teto 430)"
+  ok "SKILL.md com $LINHAS linhas (teto 450)"
 fi
 
 if grep -q 'AngatuLibrariesSkill:begin' SKILL.md && grep -q 'AngatuLibrariesSkill:end' SKILL.md; then
@@ -88,7 +100,7 @@ else
   falha 'bloco AngatuLibrariesSkill:begin/end ausente do SKILL.md — R1 perde a ancora'
 fi
 
-for GATE in G1 G2 G3 G4; do
+for GATE in G1 G2 G3 G4 G5; do
   if grep -q "$GATE" SKILL.md; then
     ok "gate $GATE declarado"
   else
@@ -463,6 +475,178 @@ exige "$CV" 'reset --hard' 'conventions.md nomeia o atalho proibido na sincroniz
                'conventions.md nao proibe o reset --hard para forcar a sincronizacao'
 exige "$CV" 'sem pedir|without asking' 'conventions.md sincroniza sem pedir permissao (R1)' \
                'conventions.md nao diz que a sincronizacao roda sem pedir'
+
+# ---------------------------------------------------------------------------
+# 7b. o modulo de video (R37, G5)
+#
+# Tres modos de regredir sem erro nenhum. O video voltar a nascer de projeto
+# antigo ou sem plano -- sai rapido e sai igual ao anterior. "Pronto" voltar a
+# significar "renderizou": o agente nao assiste nem ouve, e sem o ciclo escrito
+# o primeiro render vira entrega. E as armadilhas que ja custaram render em
+# silencio: Audio renomeado, quadro relativo da Sequence, cor sem marcacao,
+# priming do AAC, caminho longo no Windows.
+# ---------------------------------------------------------------------------
+secao 'video (R37, G5)'
+VP=references/video-production.md; VB=references/video-briefing.md
+VL=references/video-plan.md;       VM=references/video-motion.md
+VA=references/video-audio.md;      VK=references/video-phonk.md
+VR=references/video-review.md
+
+exige SKILL.md '^- \*\*R37' 'R37 definida no SKILL.md' 'R37 ausente -- o modulo de video fica sem regra'
+exige SKILL.md 'video-production\.md' 'SKILL.md roteia o pedido de video' \
+               'SKILL.md sem rota para video-production.md -- o video cai no landing-motion'
+exige SKILL.md 'assistido e ouvido' 'bloco do CLAUDE.md resume R37' \
+               'bloco do CLAUDE.md sem R37 -- a regra some na compactacao'
+
+exige "$VP" 'R37' 'video-production.md cita R37' 'video-production.md nao cita R37'
+exige "$VP" 'From scratch' 'video-production.md exige projeto do zero' \
+            'video-production.md sem o zero -- vai adaptar o projeto do video anterior'
+exige "$VP" 'create-video.*--blank' 'video-production.md cria o projeto em branco' \
+            'video-production.md sem o create-video --blank'
+exige "$VP" 'Videos/Angatu' 'video-production.md fixa a pasta que fica' \
+            'video-production.md sem a pasta fixa -- cada video nasce num lugar'
+exige "$VP" 'node_modules' 'video-production.md apaga so o node_modules na entrega' \
+            'video-production.md sem a regra de retencao'
+exige "$VP" 'MAX_PATH' 'video-production.md avisa do caminho longo no Windows' \
+            'video-production.md sem o MAX_PATH -- o primeiro render falha com ENOENT'
+exige "$VP" 'EALLOWSCRIPTS' 'video-production.md contorna o remotion add no npm 12' \
+            'video-production.md manda usar npx remotion add, que quebra no npm 12'
+exige "$VP" 'R17' 'video-production.md separa a marca da Angatu no video de R17' \
+            'video-production.md nao reconcilia com R17 -- marca imposta ou esquecida'
+exige "$VP" 'R26' 'video-production.md mantem IA pelo AngatuCRM' 'video-production.md sem R26'
+exige "$VP" 'remotion\.pro' 'video-production.md registra a licenca do Remotion' \
+            'video-production.md sem a licenca do Remotion -- uso comercial sem conferir'
+exige "$VP" 'rendered once' 'video-production.md recusa pronto por ter renderizado' \
+            'video-production.md aceita pronto porque compilou ou renderizou uma vez'
+exige "$VP" '/goal' 'video-production.md diz que o ciclo e da skill, nao do /goal' \
+            'video-production.md nao separa o ciclo da skill do comando /goal'
+
+exige "$VB" 'G5' 'video-briefing.md cobre a G5' 'video-briefing.md sem a G5'
+exige "$VB" 'URL first' 'video-briefing.md pesquisa a URL antes de perguntar' \
+            'video-briefing.md pergunta o que a URL ja responde'
+exige "$VB" 'site-research' 'video-briefing.md usa a ferramenta de pesquisa do site' \
+            'video-briefing.md sem tools/site-research.mjs'
+exige "$VB" 'PHONK normal' 'video-briefing.md faz a pergunta do PHONK' \
+            'video-briefing.md sem a bifurcacao -- cliente novo da Angatu sai como edit comum'
+exige "$VB" 'marca da Angatu' 'video-briefing.md pergunta pela marca da Angatu' \
+            'video-briefing.md sem a pergunta da marca'
+exige "$VB" 'never invented' 'video-briefing.md proibe inventar asset' \
+            'video-briefing.md deixa inventar logo, tela ou numero'
+exige "$VB" 'LICENCAS\.md' 'video-briefing.md registra a licenca de cada arquivo' \
+            'video-briefing.md sem o registro de licenca'
+exige "$VB" 'api\.openverse\.org' 'video-briefing.md confere licenca pela API do Openverse' \
+            'video-briefing.md sem a conferencia de licenca por id'
+exige "$VB" 'LGPD' 'video-briefing.md exige dado ficticio em tela de sistema real' \
+            'video-briefing.md deixa dado real de cliente aparecer no video'
+
+exige "$VL" 'timeline\.ts' 'video-plan.md poe o plano em dado' \
+            'video-plan.md sem timeline.ts -- quadro digitado dentro da cena'
+exige "$VL" '[Dd]erived' 'video-plan.md deriva o tempo das ancoras' \
+            'video-plan.md deixa tempo escrito a mao -- envelhece calado'
+exige "$VL" 'check-plan' 'video-plan.md confere a tabela de quadros antes de renderizar' \
+            'video-plan.md sem a conferencia -- o erro so aparece no render'
+exige "$VL" 'VISUAL_LEAD' 'video-plan.md fixa onde o corte cai em relacao a batida' \
+            'video-plan.md sem VISUAL_LEAD'
+exige "$VL" 'Never after the beat' 'video-plan.md proibe o corte depois do som' \
+            'video-plan.md deixa a imagem chegar depois do som'
+
+exige "$VM" 'Math\.random' 'video-motion.md proibe aleatoriedade sem semente' \
+            'video-motion.md sem determinismo -- cintilacao que muda a cada render'
+exige "$VM" 'check-determinism' 'video-motion.md roda a checagem de determinismo' \
+            'video-motion.md sem tools/check-determinism.mjs'
+exige "$VM" 'TransitionSeries' 'video-motion.md explica por que a transicao nao move o corte' \
+            'video-motion.md sem a armadilha do TransitionSeries -- a sincronia anda a cada transicao'
+exige "$VM" 'already relative' 'video-motion.md avisa que o quadro da Sequence ja e relativo' \
+            'video-motion.md sem a armadilha da Sequence -- cena vazia sem erro'
+exige "$VM" 'd\.ts' 'video-motion.md manda ler os tipos instalados' \
+            'video-motion.md confia na memoria da API'
+exige "$VM" 'Html5Audio' 'video-motion.md registra as renomeacoes da API' \
+            'video-motion.md sem a tabela de renomeacoes'
+exige "$VM" '55 px' 'video-motion.md fixa o piso de texto' \
+            'video-motion.md sem o piso de 55 px -- texto ilegivel no celular'
+exige "$VM" 'bt709' 'video-motion.md marca a cor do render' \
+            'video-motion.md sem bt709 -- JPEG sai yuvj420p sem marcacao'
+exige "$VM" 'R35' 'video-motion.md aplica R35 ao video' 'video-motion.md sem R35'
+
+exige "$VA" 'cannot hear' 'video-audio.md poe o ouvido do usuario no laco' \
+            'video-audio.md finge que o agente ouve o video'
+exige "$VA" 'recorded file' 'video-audio.md usa narracao gravada' \
+            'video-audio.md deixa gerar a narracao'
+exige "$VA" 'R26' 'video-audio.md reconcilia voz sintetica com R26' \
+            'video-audio.md deixa gerar voz por fora do AngatuCRM'
+exige "$VA" 'anchor' 'video-audio.md alinha o efeito pelo impacto' \
+            'video-audio.md posiciona SFX pelo inicio do arquivo -- o impacto chega atrasado'
+exige "$VA" 'ENAMETOOLONG' 'video-audio.md mixa os efeitos num barramento' \
+            'video-audio.md sem o barramento -- muitas camadas estouram a linha de comando'
+exige "$VA" 'latency=1' 'video-audio.md masteriza sem atrasar o audio' \
+            'video-audio.md sem latency=1 -- o alimiter atrasa o audio e a sincronia quebra'
+exige "$VA" 'LUFS' 'video-audio.md fixa o alvo de loudness' \
+            'video-audio.md sem alvo de loudness -- cada video sai num volume'
+exige "$VA" 'dBTP' 'video-audio.md limita o pico real' 'video-audio.md sem limite de pico real'
+
+exige "$VK" 'reel/Dc1rntCBpNW' 'video-phonk.md traz o primeiro reel de referencia' \
+            'video-phonk.md sem o primeiro reel de referencia do B2'
+exige "$VK" 'reel/DdCid4ah2HP' 'video-phonk.md traz o segundo reel de referencia' \
+            'video-phonk.md sem o segundo reel de referencia do B2'
+exige "$VK" 'direction, not content' 'video-phonk.md trata a referencia como direcao' \
+            'video-phonk.md deixa copiar a referencia'
+exige "$VK" 'reel-analysis' 'video-phonk.md analisa o reel antes de produzir' \
+            'video-phonk.md sem tools/reel-analysis.js'
+exige "$VK" 'priming' 'video-phonk.md desconta o atraso do AAC na analise' \
+            'video-phonk.md le a sincronia do reel com o audio atrasado pelo priming'
+exige "$VK" 'image \+ auto zoom' 'video-phonk.md proibe foto com zoom automatico' \
+            'video-phonk.md deixa o edit virar foto com zoom'
+exige "$VK" 'three a second' 'video-phonk.md limita o flash' \
+            'video-phonk.md sem o limite de flash -- risco fotossensivel'
+
+exige "$VR" 'REVISAO\.md' 'video-review.md registra cada iteracao' 'video-review.md sem o registro'
+exige "$VR" 'freezedetect' 'video-review.md separa parada planejada de quadro congelado' \
+            'video-review.md nao detecta quadro congelado'
+exige "$VR" 'ebur128' 'video-review.md mede o loudness do arquivo final' 'video-review.md nao mede o loudness'
+exige "$VR" 'bt709' 'video-review.md confere a marcacao de cor na entrega' \
+            'video-review.md entrega sem conferir a cor'
+exige "$VR" 'three flashes' 'video-review.md limita flash por segundo' \
+            'video-review.md sem o limite de flash -- risco fotossensivel'
+exige "$VR" 'cannot hear' 'video-review.md poe o ouvido do usuario no laco' \
+            'video-review.md finge que o agente ouve o video'
+exige "$VR" '[Ss]top condition' 'video-review.md define quando o ciclo para' \
+            'video-review.md sem condicao de parada -- o ciclo vira laco'
+exige "$VR" '[Ee]scalat' 'video-review.md escala a falha repetida' \
+            'video-review.md sem escalada -- repete a mesma correcao'
+exige "$VR" 'Compiling does not finish' 'video-review.md recusa compilar como pronto' \
+            'video-review.md aceita compilar ou o primeiro render como pronto'
+
+# As ferramentas que os references mandam copiar precisam existir e compilar.
+FERRAMENTAS='analyze-music.py analyze-sfx.py transcribe.py check-determinism.mjs check-plan.mjs master.mjs reel-analysis.js render.mjs review.mjs sfx-bus.mjs site-research.mjs'
+AUSENTE=0
+for F in $FERRAMENTAS; do
+  if [ ! -f "tools/video/$F" ]; then
+    falha "tools/video/$F ausente -- os references mandam copiar"
+    AUSENTE=1
+  fi
+done
+if [ "$AUSENTE" -eq 0 ]; then ok 'as onze ferramentas de video existem'; fi
+if command -v node >/dev/null 2>&1; then
+  QUEBRA=0
+  for F in tools/video/*.mjs tools/video/*.js; do
+    if ! node --check "$F" >/dev/null 2>&1; then falha "sintaxe quebrada: $F"; QUEBRA=1; fi
+  done
+  if [ "$QUEBRA" -eq 0 ]; then ok 'scripts Node de video compilam'; fi
+else
+  aviso 'node ausente: sintaxe dos scripts de video nao conferida'
+fi
+PYTHON=$(command -v python || command -v python3 || true)
+if [ -n "$PYTHON" ]; then
+  QUEBRA=0
+  for F in tools/video/*.py; do
+    if ! "$PYTHON" -c "import ast, sys; ast.parse(open(sys.argv[1], encoding='utf-8').read())" "$F" >/dev/null 2>&1; then
+      falha "sintaxe quebrada: $F"; QUEBRA=1
+    fi
+  done
+  if [ "$QUEBRA" -eq 0 ]; then ok 'scripts Python de video compilam'; fi
+else
+  aviso 'python ausente: sintaxe dos scripts de video nao conferida'
+fi
 
 # ---------------------------------------------------------------------------
 # 8. o historico deste repositorio nao aponta para uma IA (R31)

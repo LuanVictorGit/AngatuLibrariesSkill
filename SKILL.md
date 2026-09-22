@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and keep it loaded to think, not just to code; once a repo's CLAUDE.md names it, it governs every session there. Rules that override default behaviour - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist, even unasked; every project ships a Dockerfile for Coolify, not for dev; WebSocket routes check the session inside the route; the client is hostile. Always ask first - backend or static landing page, image compression, Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, AngatuWhatsappSDK, WhatsApp, bot, Baileys, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, Remotion, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, obfuscate, WebSocket, session, cookie, login, OAuth, Google sign-in, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
+description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and keep it loaded to think, not just to code; once a repo's CLAUDE.md names it, it governs every session there. Overrides - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist, even unasked; every project ships a Dockerfile for Coolify, not for dev; WebSocket routes check the session inside the route; the client is hostile. Always ask first - backend or static landing page, image compression, Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, AngatuWhatsappSDK, WhatsApp, bot, Baileys, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, Remotion, video, motion graphics, PHONK, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, obfuscate, WebSocket, session, cookie, login, OAuth, Google sign-in, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
 ---
 
 # AngatuLibraries — Angatu Sistemas engineering standard
@@ -55,7 +55,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Final design audit before delivery | `references/design-audit.md` |
 | Build pipeline: minify, strip comments, obfuscate, rename file/folder/class/var/global, hash, validate | `references/frontend-build.md` |
 | **Landing page requested — read before anything else** | `references/landing-intake.md` |
-| Themed background, hero motion graphics, real material | `references/landing-motion.md` |
+| Landing only: themed background, the hero video, real material | `references/landing-motion.md` |
 | Copy that does not read as machine-written | `references/landing-copy.md` |
 | Design that does not look machine-generated | `references/anti-ai-design.md` |
 | Per-URL SEO and Open Graph cover art | `references/landing-seo-og.md` |
@@ -63,6 +63,8 @@ written in Brazilian Portuguese. See R12 and R16.
 | Transactional e-mail HTML | `references/email-design.md` |
 | Previewing a frontend and actually looking at it | `references/frontend-preview.md` |
 | Blocking image/video saving and text copying | `references/content-protection.md` |
+| **Any video that is not a landing hero — start here** (Remotion, from scratch, reviewed until it matches the plan) | `references/video-production.md` |
+| Video: brief and G5, plan and timeline, motion vocabulary, music/voice/SFX sync, PHONK and the Angatu client reel, the review loop | `references/video-briefing.md`, `video-plan.md`, `video-motion.md`, `video-audio.md`, `video-phonk.md`, `video-review.md` |
 
 ---
 
@@ -211,6 +213,18 @@ rule says which one wins.
   deterrence, not protection: what actually protects media is a watermark plus a reduced public version
   with the original behind an authenticated route. → `references/content-protection.md`
 
+### Video
+
+- **R37 — A video is directed before it is coded, and done only once it has been watched and
+  heard.** Any video that is not a landing hero starts from scratch, in its own folder that is kept
+  (`~/Videos/Angatu/<cliente>-<peca>/`; delivery deletes only `node_modules`). G5 comes first: the
+  client's URL is researched, only what it leaves open is asked, and whether the video carries the
+  Angatu Sistemas mark is asked every time — R17 governs pages and e-mails, not videos. Nothing is
+  built before the plan is approved, and the plan is data (scenes, beats or words, cues), never a
+  frame number typed into a scene. No asset is invented and nothing is downloaded unasked. Done
+  means the render matches the plan, measured and looked at in the review loop — "it compiled" and
+  "it rendered once" are not done. → `references/video-production.md`
+
 ### Security
 
 - **R22 — The client is hostile.** Assume an intercepting proxy (Burp Suite) rewriting the request
@@ -291,6 +305,7 @@ code. Answering on the user's behalf is the failure this section exists to preve
 | **G2 — Images** | the project starts saving images | compression strategy (A/B/C/D), maximum upload size, accepted formats, thumbnail needed. Recorded in `CLAUDE.md`, asked once per project. → `references/images.md` |
 | **G3 — Cache** | anything would store content | cache is never introduced on the agent's initiative. If it looks necessary, ask; the default is no cache. → `references/cache.md` |
 | **G4 — Turnstile** | a new project, and any existing project that does not have it yet | *"Will this system use Cloudflare Turnstile?"* If yes → `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` from `.env`, backend verification, system-wide coverage, and Cloudflare's notice added to the privacy policy. → `references/turnstile.md` |
+| **G5 — Video** | any video that is not a landing hero — motion graphics, an explainer, an ad, a PHONK edit | Research the client's URL first (logo, palette, type, copy, services, WhatsApp, screens), then ask only what it leaves open, starting with the type — narration or music edit — and, for a music edit, *"É uma edição PHONK normal ou é um vídeo para um novo cliente da Angatu Sistemas?"*. Always *"O vídeo leva a marca da Angatu Sistemas?"*, suggesting yes. Recorded in the video's `docs/BRIEFING.md`. **Not one scene before the answers and the approved plan.** → `references/video-briefing.md` |
 
 ---
 
@@ -347,7 +362,10 @@ vez de inventar · R34 todo projeto filtra o tráfego de entrada pela lista DROP
 falhando aberto, em memória, atualizada de hora em hora — `/health` e faixas privadas fora do
 filtro · R36 WhatsApp sempre pelo **AngatuWhatsappSDK**
 (<https://github.com/LuanVictorGit/AngatuWhatsappSDK>), nunca Baileys direto, `whatsapp-web.js`
-nem navegador headless — e o repositório é lido antes de escrever código.
+nem navegador headless — e o repositório é lido antes de escrever código · R37 vídeo que não é
+hero de landing nasce do zero, em pasta própria que fica, com briefing (G5) que pesquisa a URL do
+cliente e pergunta se leva a marca da Angatu, e plano aprovado antes da primeira cena; só fica
+pronto depois de assistido e ouvido no ciclo de revisão, nunca porque compilou ou renderizou uma vez.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -406,6 +424,7 @@ asked for it; R18 means the source is not rewritten to achieve that.
 - `references/testing.md`: the JAR runs, the routes answer, and the `dist` was tested too —
   minification defects never show up in the readable build.
 - `CLAUDE.md` updated (R2), commit on `development` with no mention of AI (R3).
+- A video is not a frontend: its list is the final checklist of `references/video-review.md` (R37).
 
 ---
 
