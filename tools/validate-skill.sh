@@ -648,6 +648,37 @@ else
   aviso 'python ausente: sintaxe dos scripts de video nao conferida'
 fi
 
+# O hero da landing: as correcoes que a pratica pediu nao podem voltar atras.
+LM=references/landing-motion.md
+exige "$LM" 'video-production' 'landing-motion.md manda o video avulso para o modulo de video' \
+            'landing-motion.md sem a fronteira com video-production.md'
+exige "$LM" 'bt709' 'landing-motion.md marca a cor do video' \
+            'landing-motion.md sem bt709 -- o Chrome recusa o WebM (PIPELINE_ERROR_DECODE)'
+exige "$LM" 'PIPELINE_ERROR_DECODE' 'landing-motion.md registra o incidente do WebM' \
+            'landing-motion.md esqueceu por que a cor e marcada'
+exige "$LM" 'matchMedia' 'landing-motion.md escolhe a fonte por script' \
+            'landing-motion.md sem o script de escolha da fonte'
+exige "$LM" 'POSTER_FRAME' 'landing-motion.md tira o quadro do poster do dado' \
+            'landing-motion.md sem o quadro do poster derivado'
+exige "$LM" 'marca da Angatu' 'landing-motion.md pergunta pela marca da Angatu no hero' \
+            'landing-motion.md sem a pergunta da marca'
+if grep -qE '<source[^>]*media=' "$LM"; then
+  falha 'landing-motion.md voltou ao <source media> -- quem pede menos movimento baixa o video'
+else
+  ok 'landing-motion.md sem <source media>'
+fi
+if grep -qE 'frame=[0-9]' "$LM"; then
+  falha 'landing-motion.md voltou a digitar o quadro do poster'
+else
+  ok 'landing-motion.md sem quadro de poster digitado'
+fi
+if grep -qE 'APAGAR o workspace|library is deleted|workspace \*\*deleted' "$LM" \
+   || grep -q 'studio is deleted' references/landing-seo-og.md; then
+  falha 'landing-motion.md ou landing-seo-og.md voltou a mandar apagar o estudio'
+else
+  ok 'o estudio do hero fica, so o node_modules sai'
+fi
+
 # ---------------------------------------------------------------------------
 # 8. o historico deste repositorio nao aponta para uma IA (R31)
 #

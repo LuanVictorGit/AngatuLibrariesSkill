@@ -173,12 +173,13 @@ composição 1200×630
 Three routes, in order of preference:
 
 1. **Remotion `still`** — the best result, and the studio already exists if the landing has a video hero
-   (`landing-motion.md`). One `OgCover` composition parameterised by props, one render per page, and the
-   studio is deleted at the end:
+   (`landing-motion.md`). One `OgCover` composition parameterised by props, one render per page. The
+   studio is kept outside the application and only its `node_modules` goes at the end; the props travel
+   in a file, because JSON typed on a Windows command line breaks on the quotes:
 
 ```bash
-npx remotion still src/index.ts OgCover out/og/instalacao.jpg \
-  --props='{"titulo":"Instalação de ar-condicionado em Porangatu","foto":"footage/instalacao-01.jpg"}'
+npx remotion still src/index.ts OgCover out/og/instalacao.jpg --props=./og/instalacao.json
+# og/instalacao.json: {"titulo": "Instalação de ar-condicionado em Porangatu", "foto": "footage/instalacao-01.jpg"}
 ```
 
 2. **Canvas 2D** with the same engine as `canvas-generative.md`: a local generator page draws the

@@ -11,50 +11,58 @@
 > (`frontend-build.md`).
 >
 > Gate G1 comes first (`landing-intake.md`).
+>
+> **This file is the landing hero only.** Any other video — an ad, an explainer, a reel, a PHONK edit,
+> anything with sound — is `video-production.md` (R37, G5). The hero may borrow that module's planning,
+> tools and review loop; its own limits here (muted, looping, weight budget) always win.
 
 ---
 
 ## 1. What Remotion is here — and what it is not
 
-**Remotion is an authoring tool, and it is disposable.** It is used to create the video from scratch
-and, once the final file is validated, **the library is deleted**. What stays in the project is **only
-the video**. No 500 MB `node_modules`, no React dependency in the application repository, no
-accumulated debris.
+**Remotion is an authoring studio, and it lives outside the application.** It creates the video from
+scratch in `~/Videos/Angatu/<cliente>-hero/`, and what enters the application is **only the rendered
+files**. No `node_modules`, no React dependency in the application repository, nothing in its Docker
+image, nothing in the frontend build's `package.json`.
+
+The studio itself is **kept**, with its `node_modules` deleted after delivery: a hero gets revised — a
+word, a photo, the pace — and rebuilding a studio from nothing to change one word is waste. What is
+created from scratch is each new hero, not each revision of the same one.
 
 | | |
 |---|---|
-| **It is** | a temporary studio producing `hero-desktop.mp4`, `hero-mobile.mp4` and the poster |
+| **It is** | a studio outside the application, producing `hero-desktop.mp4`, `hero-mobile.mp4` and the poster |
 | **It is not** | an application dependency, a page framework, runtime animation, or part of the build |
 
 This does **not** contradict the rule against swapping a project's technology: the page stays vanilla
-HTML, CSS and JS, and receives a `<video>` tag. React lives outside the repository, for a few hours,
-and then disappears.
+HTML, CSS and JS, and receives a `<video>` tag. React lives in the studio, never in the repository.
 
 ### 1.1 The mandatory cycle
 
 ```
-criar workspace fora do repositório  →  compor as cenas  →  renderizar desktop + mobile + pôster
-        →  copiar os arquivos para src/main/resources/public/assets/
+criar o estúdio fora do repositório (~/Videos/Angatu/<cliente>-hero/)  →  compor as cenas
+        →  renderizar desktop + mobile + pôster  →  copiar os arquivos para src/main/resources/public/assets/
         →  validar na página, com o servidor rodando (R21, R29)
-        →  APAGAR o workspace inteiro (projeto + node_modules)
-        →  registrar no CLAUDE.md o que o vídeo comunica, proporções, duração e material usado
+        →  apagar SÓ o node_modules do estúdio: código e docs ficam para a próxima revisão
+        →  registrar no CLAUDE.md da aplicação onde o estúdio está, o que o vídeo comunica,
+           proporções, duração e material usado
 ```
 
-The `CLAUDE.md` record is what makes the video **recreatable** later — and recreating from scratch is
-the agreed way of working. Without it, months later nobody knows what that file showed or where the
-photos came from.
+The `CLAUDE.md` record is what makes the video **findable and revisable** later. Without it, months
+later nobody knows what that file showed, where the photos came from, or where its source is.
 
 ```bash
 # fora do repositório da aplicação — nunca dentro de src/
-cd "$TEMP" && npx create-video@latest hero-<cliente>
-# ... compor, renderizar ...
+cd ~/Videos/Angatu && npx --yes create-video@latest --yes --blank --no-tailwind <cliente>-hero
+# ... compor e renderizar com as ferramentas de video-motion.md ...
 cp out/hero-*.mp4 out/hero-poster.jpg <projeto>/src/main/resources/public/assets/
-rm -rf "$TEMP/hero-<cliente>"        # o estúdio some; o vídeo fica
+rm -rf ~/Videos/Angatu/<cliente>-hero/node_modules      # o estúdio fica; o peso vai embora
 ```
 
-If for any reason the workspace is created inside the project, it goes into `.gitignore` **before** the
-first commit and is deleted at the end. It never reaches the repository, never enters the Docker image,
-and never appears in the frontend build's `package.json`.
+Never inside the application's repository: Remotion in the application's `package.json` drags React
+into its build and its image, and `create-video --yes` refuses to run inside a Git repository anyway.
+The project setup, the render configuration and the tools are the same as for any video
+(`video-production.md`, section 7; `video-motion.md`, section 1).
 
 ---
 
@@ -62,9 +70,9 @@ and never appears in the frontend build's `package.json`.
 
 Every landing video produced here is **muted, short and looping**, presented as a high-quality GIF:
 
-- **No audio track.** Render with `--muted`; do not use `<Audio>` in the composition. Unexpected sound
-  on a landing is the fastest way to make a visitor close the tab.
-- **No controls.** `autoplay muted loop playsinline`, without `controls`.
+- **No audio track.** Render with `--muted`, and put no audio component in the composition at all.
+  Unexpected sound on a landing is the fastest way to make a visitor close the tab.
+- **No controls.** `muted loop playsinline`, without `controls`.
 - **Short, with a natural loop: 8 to 15 seconds.** The last frame should talk to the first so the loop
   does not visibly cut.
 - **`muted` is not decoration:** it is what allows autoplay to work on iOS and Android. `playsinline`
@@ -75,32 +83,54 @@ be the **only** carrier of any information. Everything the video communicates al
 page. The video reinforces; the text informs.
 
 ```html
-<!-- Hero: vídeo tipo GIF, mudo, com pôster e alternativa textual -->
+<!-- Hero: vídeo tipo GIF, mudo, com pôster e alternativa textual; a fonte é escolhida por script -->
 <div class="relative overflow-hidden rounded-2xl">
   <video
-    class="h-full w-full object-cover"
+    class="hero-video h-full w-full object-cover"
     poster="/assets/hero-poster.jpg"
-    autoplay muted loop playsinline preload="metadata"
+    muted loop playsinline preload="none"
     aria-label="Demonstração do processo de montagem realizado pela empresa">
-    <source src="/assets/hero-mobile.webm"  type="video/webm" media="(max-width: 767px)">
-    <source src="/assets/hero-mobile.mp4"   type="video/mp4"  media="(max-width: 767px)">
-    <source src="/assets/hero-desktop.webm" type="video/webm">
-    <source src="/assets/hero-desktop.mp4"  type="video/mp4">
     <img src="/assets/hero-poster.jpg" alt="Equipe montando a estrutura metálica no galpão da empresa">
   </video>
 </div>
+<script src="/scripts/hero-video.js" defer></script>
 ```
 
-```css
-/* Movimento reduzido: o pôster assume e o vídeo não roda. */
-@media (prefers-reduced-motion: reduce) {
-  .hero-video  { display: none; }
-  .hero-poster { display: block; }
+```js
+// Escolhe a fonte do vídeo do hero: formato pela largura, WebM só onde o navegador decodifica,
+// nada baixado com movimento reduzido, e o MP4 de reserva se o WebM falhar.
+// Caminhos literais e inteiros: o renome de arquivos do build (R19, frontend-build.md) só troca
+// o que consegue provar, e caminho montado em tempo de execução congela a pasta inteira.
+const FONTES = {
+  mobile: { webm: '/assets/hero-mobile.webm', mp4: '/assets/hero-mobile.mp4' },
+  desktop: { webm: '/assets/hero-desktop.webm', mp4: '/assets/hero-desktop.mp4' },
+};
+const video = document.querySelector('.hero-video');
+const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)');
+const estreito = window.matchMedia('(max-width: 767px)');
+
+function carregar() {
+  if (!video || reduzir.matches) return; // o pôster fica e nenhum byte de vídeo é baixado
+  const par = estreito.matches ? FONTES.mobile : FONTES.desktop;
+  const webm = par.webm && video.canPlayType('video/webm; codecs="vp9"') !== '';
+  video.onerror = webm ? () => { video.onerror = null; video.src = par.mp4; video.play().catch(() => {}); } : null;
+  video.src = webm ? par.webm : par.mp4;
+  video.play().catch(() => {}); // autoplay recusado: o pôster continua na tela
 }
+
+carregar();
+estreito.addEventListener('change', carregar); // girou o celular ou mudou a janela: troca a fonte
 ```
 
-The page's JavaScript respects the preference too — if the visitor asked for less motion, `video.pause()`
-and show the poster.
+**Why a script and not `<source media>`** — tested in Chrome 153 on 2026-09-22: the browser honours the
+`media` attribute only when the element loads, and keeps that choice after a resize or a rotation; with
+autoplay and preload, a visitor who asked for reduced motion still downloads the file; and a WebM that
+fails to decode has no way back to the MP4. The script solves the three, and it is an external file
+because the static track's CSP (`script-src 'self'`) blocks inline scripts.
+
+**The breakpoint is measured, not assumed.** 767 px is the starting point; the right one is where
+`object-fit: cover` starts cropping what the hero must show (one hero needed 1024 px for its card). Set
+it in the script and in the CSS together.
 
 ---
 
@@ -188,8 +218,8 @@ real image of the location.
   transição → outra imagem real → explicação visual → produto/serviço`.
 - **Treat it before use:** framing thought through for each aspect ratio, exposure corrected where
   needed, and the same colour temperature across pieces so the video does not look like a collage.
-- In Remotion, use `<Img src={staticFile('...')}/>` and `<OffthreadVideo/>` for video footage —
-  `OffthreadVideo` is what renders the correct frame.
+- In Remotion, use `<Img src={staticFile('...')}/>` for photos and `<Video>` from `@remotion/media` for
+  footage — frame-exact, and it falls back to `OffthreadVideo` for codecs it cannot read.
 
 ---
 
@@ -208,8 +238,15 @@ The company's mark **stays identifiable throughout the video**, as a visual sign
   alternative safe area (the opposite corner) for that scene.
 - **Proportion and quality preserved** — never stretched; exported at a resolution sufficient for 1920px.
 
-> **Do not confuse it with the Angatu credit (R17).** The watermark is the **client's**. The
-> "Desenvolvido por Angatu Sistemas" credit stays in the page footer, as in every project.
+**The Angatu mark in the hero is a question, asked every time**, suggesting yes:
+
+> **"O vídeo do hero leva a marca da Angatu Sistemas?"**
+
+If yes: the official Angatu logo, smaller and quieter than the client's watermark, never competing with
+it, never over text. If no: the video carries only the client's mark. Record the answer in `CLAUDE.md`.
+
+> **Either way, the page keeps the Angatu credit (R17).** The watermark in the video is the **client's**;
+> the "Desenvolvido por Angatu Sistemas" credit stays in the page footer, as in every project.
 
 ```tsx
 // Marca d'água em área segura, com reposicionamento por cena
@@ -224,16 +261,36 @@ const Watermark: React.FC<{corner: 'br' | 'bl'; safeArea: number; scale: number}
 
 ## 7. Rendering and optimising the video
 
+The render configuration is the one of `video-motion.md`, section 1 — PNG frames, bt709, yuv420p — in
+`remotion.config.ts`, so every command below inherits it.
+
 ```bash
 # desktop — H.264 para compatibilidade universal, sem faixa de áudio
 npx remotion render src/index.ts HeroDesktop out/hero-desktop.mp4 --codec=h264 --crf=23 --muted
 # mobile — composition própria, não recorte do desktop
 npx remotion render src/index.ts HeroMobile  out/hero-mobile.mp4  --codec=h264 --crf=24 --muted
-# variante moderna, menor: WebM/VP9 (a página oferece as duas fontes)
+# variante WebM/VP9 — só entra se sair pelo menos 15% menor que o MP4 da mesma composition
 npx remotion render src/index.ts HeroDesktop out/hero-desktop.webm --codec=vp9 --crf=32 --muted
-# pôster: quadro representativo, é ele que aparece antes do vídeo e com movimento reduzido
-npx remotion still  src/index.ts HeroDesktop out/hero-poster.jpg --frame=45
+# pôster: o quadro vem do dado (POSTER_FRAME em src/data/timeline.ts), nunca digitado
+POSTER=$(node -e "import('./src/data/timeline.ts').then((m) => console.log(m.POSTER_FRAME))")
+npx remotion still  src/index.ts HeroDesktop out/hero-poster.jpg --frame="$POSTER"
 ```
+
+**The poster frame is data.** Best: rotate the loop so its most representative moment is frame 0 and set
+`POSTER_FRAME = 0` — the poster then matches the first frame (no jump when playback takes over), and the
+visitor who asked for reduced motion sees the whole message. A frame number typed on the command line
+goes stale the first time the pace changes.
+
+> **Why the colour is tagged.** A hero rendered from JPEG frames came out full-range (`yuvj420p`) and
+> untagged; its VP9 version was refused by Chrome with `PIPELINE_ERROR_DECODE` on the first frame, and the
+> banner froze on the poster. With PNG frames and bt709, H.264 and VP9 both come out `yuv420p`, limited
+> range, bt709 in primaries, transfer and matrix, and both play in Chrome. Before shipping, each file must
+> pass `ffprobe -v error -select_streams v:0 -show_entries
+> stream=pix_fmt,color_range,color_primaries,color_transfer,color_space -of compact <arquivo>` with
+> `yuv420p|tv|bt709|bt709|bt709`, and play in the page's preview (R21) — WebM included.
+
+WebM earns its place by weight: on flat vector art it saved nothing against the MP4; on photographs it
+saved about a third. Measure it per hero.
 
 **Budget — not a suggestion, a limit:**
 
@@ -249,8 +306,10 @@ cut a scene, or simplify the movement — never ship an 8 MB hero. Remember that
 default (R25) this file is downloaded **on every visit**: this is the case where it is worth raising the
 cache exception with the client, with hashed assets (`cache.md`, `frontend-build.md`).
 
-On the page: `preload="metadata"` for the hero, and `preload="none"` plus `loading="lazy"` for a video
-below the fold.
+On the page: the hero downloads nothing until the script picks its source (`preload="none"`). A video
+below the fold also starts at `preload="none"` and gets its source from the same external script when it
+nears the viewport (`IntersectionObserver`) — `loading="lazy"` exists for images and iframes, not for
+`<video>`.
 
 ---
 
@@ -351,18 +410,19 @@ video. Video in an inner section only when it demonstrates something a still ima
 
 ## 11. Development layout
 
-In the temporary authoring workspace:
+In the studio, kept outside the application:
 
 ```
-hero-<cliente>/
+~/Videos/Angatu/<cliente>-hero/
   src/
     Root.tsx            # compositions (uma por proporção)
     scenes/             # uma cena por arquivo, parametrizada por props
     components/         # marca d'água, títulos, cartelas, transições
-    data/copy.ts        # textos, cores e caminhos — nunca no meio da cena
+    data/               # timeline.ts (POSTER_FRAME), copy.ts: textos, cores e caminhos — nunca no meio da cena
   public/
     brand/              # logos oficiais do cliente
     footage/            # fotos e vídeos reais, já tratados
+  tools/                # os instrumentos de tools/video/ da skill
   out/                  # renderizações
 ```
 
@@ -376,9 +436,8 @@ src/main/resources/public/assets/
   bg-<segmento>.svg  bg-<segmento>-mobile.svg
 ```
 
-Compositions stay parameterised and editable, and scene code stays readable during development (R18) —
-even knowing the workspace will be deleted. The script has to be comprehensible while it is being made,
-and `CLAUDE.md` has to record enough to recreate it.
+Compositions stay parameterised and editable, and scene code stays readable (R18) — the studio is kept
+for the next revision, and `CLAUDE.md` records where it is and what the video shows.
 
 ---
 
@@ -402,17 +461,22 @@ the identity is not there yet.
 - [ ] `<body>` background with a themed SVG **exclusive** to this project, with a mobile variant
 - [ ] Text contrast over the background measured (≥ 4.5:1)
 - [ ] Hero video that **communicates** something rather than decorating
-- [ ] Muted, looping, `autoplay muted loop playsinline`, with a poster
+- [ ] Muted, looping, `muted loop playsinline`, with a poster; the source chosen by the external script
 - [ ] Desktop **and** mobile compositions planned separately
 - [ ] Company watermark present, discreet, in a safe area, legible in both formats
+- [ ] The Angatu mark in the video asked and recorded (the footer credit stays either way)
+- [ ] Colour tagged bt709 and limited range (`ffprobe`), and every file played in a real browser, WebM included
+- [ ] Poster frame taken from the data (`POSTER_FRAME`), not typed
 - [ ] Real material used where it exists, clearly related, with **confirmed permission**
 - [ ] Everything the video says also available as text (accessibility)
 - [ ] `prefers-reduced-motion` shows the poster and does not play the video
 - [ ] Weight budget respected (video, poster, SVG)
 - [ ] No empty, generic, over-textual or off-theme section
 - [ ] Every visual element has a function stateable in one sentence
-- [ ] Remotion workspace **deleted**; only the video stayed in the project
-- [ ] `CLAUDE.md` records what the video communicates, ratios, duration, material and permissions
+- [ ] Remotion studio kept outside the application with its `node_modules` deleted; only the rendered
+      files entered the project
+- [ ] `CLAUDE.md` records where the studio lives, what the video communicates, ratios, duration,
+      material and permissions
 - [ ] SVG, image and video optimisation happening **in the build**, not in the source (R18)
 - [ ] Rendered on a running server and looked at, desktop and mobile (R21)
 
