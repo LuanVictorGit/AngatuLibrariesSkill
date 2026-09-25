@@ -11,32 +11,29 @@
 - A service worker that stores screens, scripts or styles (`caches.put`, precaching, a "cache first"
   strategy).
 - `Cache-Control` with a long `max-age` on a page, script, style or image.
-- Caching library assets — `AssetsAPI` ships with caching **on**; turn it off.
+- Turning on the library's asset cache — `AssetsAPI` ships with it **off**; leave it off.
 - Storing an API response in `localStorage` / `sessionStorage` to display later as if it were current.
 
 ## 2. What to do at bootstrap, before serving traffic
 
 ```java
-// Nada de conteúdo guardado, nem no servidor nem no navegador.
-AssetsAPI.setCacheEnabled(false);
-
+// Nada de conteúdo guardado no navegador. ANTES do new AngatuLib: é na criação do servidor que
+// estes cabeçalhos também passam a valer para os arquivos estáticos de public/.
 JavalinAPI.setSecurityHeader("Cache-Control", "no-store, no-cache, must-revalidate");
 JavalinAPI.setSecurityHeader("Pragma", "no-cache");
 JavalinAPI.setSecurityHeader("Expires", "0");
 
-// O servidor de estáticos aplica o próprio Cache-Control depois do before-handler, e as folhas
-// de estilo e scripts saem com max-age=0 — que manda revalidar, não descartar. Carimbe a
-// resposta já pronta. No Javalin 7 os manipuladores ficam em unsafe.routes, não na instância.
-JavalinAPI.get().unsafe.routes.after(ctx -> {
-    ctx.header("Cache-Control", "no-store, no-cache, must-revalidate");
-    ctx.header("Pragma", "no-cache");
-    ctx.header("Expires", "0");
-});
+new AngatuLib(host, port, true);
 ```
 
-The `after` handler is the part people leave out, and it is the part that matters: the static-file
-server writes its own `Cache-Control` **after** the before-handler, so stamping only the security
-header is not enough.
+The order is the part that matters. The static-file server writes its own headers **after** the
+security filter — `Cache-Control: max-age=0`, which means "revalidate", not "discard". The library
+hands the cache headers declared before startup to the static-file server as well, so CSS, JS and
+images carry the same `no-store` as the pages. Declared after startup, they reach pages and routes
+only.
+
+Do not register an `after` handler on the running server to stamp the headers: Javalin's handler
+list does not accept additions while requests are being served.
 
 ## 3. A service worker that caches nothing
 

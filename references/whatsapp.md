@@ -134,7 +134,8 @@ client.connect().join();
   `isGroup`, `isFromMe`, `pushName`, `quotedMessage`, `rawData`.
 - Chat ids are `5511999999999@s.whatsapp.net`. Build them in one helper, never inline in screens.
 - **`close()` is not automatic.** The SDK registers no JVM shutdown hook; without one, the bridge
-  process is orphaned. In an `AngatuLib` project the hook is where `Task.shutdown()` already is.
+  process is orphaned. In an `AngatuLib` project, register a hook of your own that calls `close()`:
+  the library's hook covers the server, `Task` and the database, not the SDK.
   → `references/backend-server.md`
 - `filePath` on the media senders is read by the **bridge process**, on the same machine. A path
   that only exists inside the Java process's imagination fails there, not here.

@@ -11,8 +11,10 @@ lookup goes to the database and returns a new instance, and every change only ex
 **The database format did not change:** table `(id TEXT PRIMARY KEY, data TEXT NOT NULL)`, written
 with `INSERT OR REPLACE`. No new column, no `ALTER TABLE` — databases already in production keep
 working, including with older versions of the library. What changed is in-memory behaviour and
-concurrency: one HikariCP pool per application (it used to be one per entity class), WAL,
-`busy_timeout`, and `IMMEDIATE` transactions.
+concurrency: **one writer connection** with a fair queue for the turn to write, reads in parallel on
+a separate read-only pool (WAL), a nested transaction is a savepoint, and every wait has a deadline.
+It is built for thousands of simultaneous reads and writes, on virtual threads or on a large platform
+pool — the library's `SaveableConcurrencyTest` is that contract.
 
 ---
 
@@ -40,9 +42,14 @@ public class User extends Saveable {
 Class names in English, Javadoc in PT-BR, `@author Angatu Sistemas` on every class (R12). Never
 `Usuario` or `Produto`.
 
-Table name is `SimpleName.toLowerCase()` + `s` (`User→users`, `Key→keys`). `transient` fields are not
-persisted. New fields are backward compatible; use null-safe getters for collections. The constructor
-is `protected` and the class is `abstract` — R10.
+The table name comes from `Saveable.tableName(User.class)`: the simple name in lower case, plus `s`
+only when it does not already end in `s` (`User→users`, `Address→address`, `Category→categorys` —
+there is no other plural rule). Two entities with the same simple name in different packages share
+one table, so give them distinct names. Hand-written SQL calls `tableName` instead of typing the name.
+`transient` fields are not persisted. New fields are backward compatible; use null-safe getters for
+collections. The entity needs an `id` field (`String` or `UUID`, it may live in a base class) that
+`getId()` returns — `save()` throws `IllegalStateException` otherwise. The constructor is `protected`
+and the class is `abstract` — R10.
 
 ## 2. Reading and writing
 
@@ -61,7 +68,8 @@ Saveable.createIndex(User.class, "role");   // enum: index it too, and query by 
 User byEmail       = Saveable.findFirstByField(User.class, "email", "joao@exemplo.com");
 List<User> byField = Saveable.findByField(User.class, "name", "João");
 List<User> result  = Saveable.query(User.class,
-        "SELECT data FROM users WHERE json_extract(data,'$.name')=?", "João");
+        "SELECT data FROM " + Saveable.tableName(User.class) + " WHERE json_extract(data,'$.name')=?", "João");
+List<User> noPhone = Saveable.findByField(User.class, "phone", null); // IS NULL in the SQL, missing key included
 
 // full-table scan — use it knowing the size
 List<User> all      = Saveable.findAll(User.class);
@@ -94,6 +102,7 @@ Routes, scheduled tasks and workers touch the same records at the same time. Cho
 | Change a contested record (balance, stock, counter, list) | `Saveable.mutate(Class, id, obj -> …)` | Reads, changes and writes **in one transaction** — no lost update |
 | Re-read before deciding | `obj.reload()` | Current state from the database, discarding uncommitted local changes |
 | Two writes that must hold together | `Saveable.transaction(() -> {…})` | All or nothing; `computeInTransaction(...)` returns a value |
+| A step that may fail without sinking the rest | a `transaction` nested inside another | A savepoint: if it throws and the outer one catches and continues, only the inner part is undone |
 | Batch | `Saveable.saveAll(list)` | A single transaction |
 
 ```java
@@ -110,6 +119,36 @@ Saveable.transaction(() -> { stock.save(); new Order(userId, productId).save(); 
 **Stock and quantity checks belong inside the transaction**, not before it — otherwise the check is
 made against a state that changes before the write lands. This is also where R22 meets R9: the
 quantity comes from a hostile client, so it is validated server-side *and* applied atomically.
+
+**Nothing slow inside `transaction` or `mutate`.** Both hold the single turn to write, so every other
+write in the process waits behind them. A network call inside (payment, e-mail, HTTP, CRM) makes the
+whole system wait for that provider. The library logs a warning naming the caller when a transaction
+holds the turn for too long, and a write that waits longer than `ANGATU_DB_BUSY_TIMEOUT_MS` (30 s by
+default) gets `PersistenceException`. Call the network first, then write the result.
+
+**What the library guarantees, so the project does not work around it:**
+
+- A failure is `PersistenceException`, never `null` or an empty list: `findById` returning `null`
+  means the record does not exist.
+- A table touched for the first time inside a transaction only exists after the commit; a rollback
+  discards it, and a table that disappeared is recreated on the next call.
+- `mutate` refuses a block that changes the record's id (`IllegalStateException`) — create the new
+  record with `save()`.
+- A read inside a transaction sees what the transaction wrote; a read outside does not see it until
+  the commit.
+- A transaction SQLite undoes on its own — disk full, I/O error, out of memory, `ON CONFLICT
+  ROLLBACK` — ends in `PersistenceException` ("Transação perdida") even when the block caught the
+  failure and went on. Nothing of it is written; the earlier log line, ending in "o SQLite desfez a
+  transação inteira", is the cause. Do not retry piecemeal inside the same block: fix the cause and
+  run the whole operation again.
+- A pending interrupt does not drop a read or a write: a cancelled task can still save its state,
+  and the interrupt is back on the thread afterwards.
+- `Saveable.query` sends a `SELECT` (comments in front included) to the read pool; any other command
+  is a write, and outside a transaction it runs alone in autocommit — `VACUUM` and `ATTACH` work.
+  Transaction control (`BEGIN`, `COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT`, `RELEASE`) is refused with
+  `IllegalArgumentException`: use `Saveable.transaction`.
+- `Saveable.shutdown()` waits for the reads in flight before closing — never skip it to "shut down
+  faster"; a connection left open holds the file and the `-wal`.
 
 ## 4. Consequences of having no cache
 
@@ -136,6 +175,11 @@ Read this before porting an older project.
 `ANGATU_DB_PATH=/data/database.db` (already in the template `Dockerfile`) points that project's
 SQLite at its persistent volume. Without it the database dies on every deploy.
 `Saveable.databasePath()` shows the path in use.
+
+**Native memory:** SQLite's page cache lives outside the Java heap, one cache per connection. The
+defaults (`ANGATU_DB_CACHE_KIB=8192` per connection, `ANGATU_DB_POOL_SIZE=12` read connections plus
+the writer) cap it at about 104 MiB. On a small container, `ANGATU_DB_CACHE_KIB=4096` and
+`ANGATU_DB_POOL_SIZE=6` bring it to about 28 MiB with no visible effect on indexed queries.
 
 ---
 
@@ -202,6 +246,22 @@ grep -rn "assertSame" --include="*.java" src/test
 localhost any more) and TLS is no longer the application's job: read the port from `PORT`, remove any
 request for HTTPS from Javalin, and create `Dockerfile`, `.dockerignore` and `GET /health` (R8). Also
 fix whatever pointed at the old port — test scripts, `CLAUDE.md`, development URLs.
+
+**10. Database failures changed type.** Inside a transaction they are `PersistenceException` (it used
+to be `IllegalStateException`). A `catch (IllegalStateException e)` around `transaction` stops catching
+them:
+
+```bash
+grep -rn "catch (IllegalStateException" --include="*.java" src/main/java
+```
+
+**11. Hand-written table names.** Replace every literal table name in `Saveable.query(...)` with
+`Saveable.tableName(X.class)`: the rule does not pluralise the way a person would (`Category` is
+`categorys`), and a typo fails only when that query runs.
+
+```bash
+grep -rn "FROM [a-z]" --include="*.java" src/main/java
+```
 
 ### The real case behind this procedure
 

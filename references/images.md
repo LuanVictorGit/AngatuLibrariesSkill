@@ -49,11 +49,19 @@ ImageAPI.createThumbnail(origem, destino, 400, 400);
 - **File on the volume, path in the database.** Write to `/data/uploads/...` (persistent on Coolify,
   `deploy-coolify.md`) and persist only the path or name on the `Saveable` entity.
 - **Do not put image bytes inside SQLite.** `Saveable` serialises the whole object to JSON: a `byte[]`
-  becomes Base64 inside the `data` column, bloating the database and every read of that entity. The
-  library's `Image` entity exists for small, occasional cases (an icon, a QR code) — not for a gallery.
-- **Validate before writing:** `ImageAPI.isValidImage(...)`, maximum size, and extension. Validation is
-  by real content, never by the extension the client claims (`security.md`).
+  becomes a JSON array of numbers inside the `data` column — about 3.6 characters per byte — bloating
+  the database and every read of that entity. The library's `Image` entity exists for small,
+  occasional cases (an icon, a QR code) — not for a gallery. It is served by `GET /image?id=...` to
+  **anyone who knows the id**, so never an image that needs a login.
+- **Validate before writing, by content:** `ImageAPI.bytesToImage(bytes)` or
+  `ImageAPI.extractToImageObject(id, bytes)` recognise PNG, JPEG, GIF, BMP, TIFF and WebP from the
+  bytes and refuse everything else — SVG and HTML included, because an SVG served from the site's own
+  origin runs script. They also refuse an image above 40 megapixels (a decompression bomb) before
+  allocating it; `ImageAPI.setMaxPixels(n)` changes the ceiling. Add a maximum upload size of your own.
+  Never trust the extension or the type the client claims (`security.md`).
 - **Name by a generated ID**, never by the name the user sent.
+- **Phone photos come out upright:** the JPEG EXIF orientation is applied on read. Do not rotate again
+  after `readImage`.
 
 ## 4. Memory
 

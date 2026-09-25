@@ -154,17 +154,14 @@ public class Main {
     public static void main(String[] args) {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
 
-        JavalinAPI.setTrustedProxyHops(1);   // antes do construtor
-        new AngatuLib("meusite.com.br", port, true);
-
+        // Tudo antes do construtor: vale desde a primeira requisição
+        JavalinAPI.setTrustedProxyHops(1);
         JavalinAPI.addIgnoredPath("/health");
         JavalinAPI.configureApiRateLimit("/api/*");
         JavalinAPI.configureLoginRateLimit("/api/login");
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Saveable.shutdown();
-            Task.shutdown();
-        }));
+        // O AngatuLib registra o próprio gancho de desligamento (servidor, tarefas, banco)
+        new AngatuLib("meusite.com.br", port, true);
     }
 }
 ```
@@ -262,6 +259,7 @@ uncommitted CSS, the wrong JAR and a missing health route.
 6. Check whoever uses `isLocalhost()`: it now comes from `ANGATU_ENV` (the `Dockerfile` sets
    `production`) or from the local host — no longer from a certificate folder.
 7. Commit `public/styles/tailwind.css` if it only existed on your machine.
-8. Keep `manageSsl = true` only if the project stays outside Coolify, with its own certificates.
+8. Remove `manageSsl` and `javalin-ssl`: the library no longer serves HTTPS, and `manageSsl = true`
+   throws on startup (R7). There is no deploy outside Coolify.
 9. Install the frontend build pipeline with obfuscation (R19) even if nobody asked — see
    `frontend-build.md`.

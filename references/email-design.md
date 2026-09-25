@@ -103,23 +103,39 @@ project keeps two logo files (section 7).
 ## 6. Structure of a template
 
 ```
-src/main/resources/emails/
+src/main/resources/public/emails/
   base.html          # wrapper, header, footer — o esqueleto compartilhado
   welcome.html       # conteúdo específico
   order-confirmed.html
 ```
 
-Placeholders are `{{nome}}`, filled by `EmailAPI.loadHtmlTemplate` (`backend-utilities.md`):
+`EmailAPI` reads templates from `public/` on the classpath, and **`public/` is the folder the server
+publishes at the site root** — treat every template as public. Nothing confidential goes into one: no
+internal link, no comment meant for the team. Customer data enters only through placeholders.
+
+Placeholders are `{{nome}}`, filled by `EmailAPI.loadHtmlTemplate` (`backend-utilities.md`). Every
+value is **HTML-escaped**, so a customer named `<a href=...>` shows up as text:
 
 ```java
 String html = EmailAPI.loadHtmlTemplate("/emails/welcome.html", Map.of(
         "nome", user.getName(),
         "linkPedido", AngatuLib.getInstance().getOriginHost() + "/pedidos/" + order.getId()));
 EmailAPI.sendHtml(user.getEmail(), "Bem-vindo à Loja", html);
+
+// A block of HTML the system builds (the order lines) goes through the trusted map, unescaped —
+// and the customer data inside it is escaped while building it
+String rows = order.getItems().stream()
+        .map(item -> "<tr><td>" + EmailAPI.escapeHtml(item.getName()) + "</td></tr>")
+        .collect(Collectors.joining());
+String confirmed = EmailAPI.loadHtmlTemplateWithTrustedHtml("/emails/order-confirmed.html",
+        Map.of("nome", user.getName()), Map.of("itens", rows));
 ```
 
 Build the absolute URL from `getOriginHost()` rather than writing the domain into the template, so
-development and production do not diverge.
+development and production do not diverge. Escaping makes text and a quoted attribute safe; it does
+**not** make a URL safe — `href="{{link}}"` would still accept `javascript:`. Links are built and
+validated by the system, never taken from the customer. A recipient list takes **one address per
+item**: an item with a comma, a group or a line break refuses the whole send.
 
 **`emails/**` is never transformed by the build** — not minified, not obfuscated, no renaming of any
 kind (class, custom property, `data-*`, file or folder), no asset hashing, and **no comment removal**

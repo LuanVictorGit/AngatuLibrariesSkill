@@ -64,12 +64,15 @@ public class CreateUserRoute extends Route {
 `RouteType`: `GET, POST, PUT, DELETE, PATCH, WS`.
 
 **A `WS` route has its own gate and its own rules — read `websocket.md` (R24).** The upgrade request
-passes through none of the library's filters.
+goes through the block and the rate limit, but through none of the other filters, and the library
+authenticates nobody: the route checks the session itself, in `onConnect`, before accepting any
+message.
 
 Constructors are `protected`. Discovery uses Reflections: every concrete subclass with an empty
-constructor is `newInstance().register()`-ed during `setup` (`app.unsafe.routes.*`). Path parameters:
-`"/api/users/{id}"` → `ctx.pathParam("id")`. Never instantiate a `Route` directly, and never call
-`register()` before setup.
+constructor is instantiated and registered during `setup`, **before the server accepts its first
+connection** — also under `mvn exec:java` and from a JAR whose classpath lives in the manifest.
+Path parameters: `"/api/users/{id}"` → `ctx.pathParam("id")`. Never instantiate a `Route` directly,
+and never call `register()` before setup.
 
 ### 1.1 What belongs in a route, and what does not
 
@@ -86,18 +89,23 @@ Every route validates authorization in the backend (R23) and treats every incomi
 ## 2. `HtmlRouteAPI` — one page per file name
 
 Every `.html` under `src/main/resources/public/` becomes a route named after the **file**
-(`public/orcamentos/novo.html → /novo`, `public/index.html → /`). Names must be unique. A request
-with `.html` redirects to the extensionless path.
+(`public/orcamentos/novo.html → /novo`, `public/index.html → /`), except the `emails/` and `others/`
+folders. Names must be unique: a second file with the same name is skipped with a warning in the log,
+and the first one wins. A GET/HEAD of any `.html` path redirects to the page route, on the same site
+(`//evil.com/x.html` cannot become an open redirect), case-insensitively (`/Sobre.HTML → /sobre`) and
+keeping the query string; `/index.html` goes to `/`.
 
 ```java
 HtmlRouteAPI.registerAllRoutes(javalin); // uses /index.html as the base shell
 HtmlRouteAPI.registerAllRoutes(javalin, "/index.html", () -> java.util.List.of("/sobre.html"));
 HtmlRouteAPI.addIgnoredPath("admin");
+HtmlRouteAPI.isPage("/sobre");               // true when /sobre is a registered page
 HtmlRouteAPI.extractPageName("/a/Meu.html"); // "meu"
 HtmlRouteAPI.getAllHtmlPages();              // /public/*.html except /emails and /others
 ```
 
-Rendering: `baseHtml` + `pageContent`, substituting `{page}`, `{content}` and `{%nome_active}`.
+Rendering: `baseHtml` + `pageContent`, substituting `{page}`, `{content}` and `{%nome_active}`. Pages
+are read on every request — nothing is cached (R25).
 
 **The shell** carries the single `<head>`, `#nav-menu`, `<main id="app">{content}</main>` and the
 global scripts. Page files are fragments without their own `<head>`.
@@ -118,28 +126,34 @@ The build carries `{content}`, `{page}` and `{%nome_active}` through untouched, 
 Serves from the classpath at `public/`.
 
 ```java
-AssetsAPI.readAssetAsString(path);  AssetsAPI.readAssetAsBytes(path);
-AssetsAPI.assetExists(path);        AssetsAPI.getContentType(path);
+AssetsAPI.readAssetAsString(path);   AssetsAPI.readAssetAsBytes(path);
+AssetsAPI.assetExists(path);         AssetsAPI.getContentType(path);
 AssetsAPI.serveAsset(ctx, path);
-AssetsAPI.listAssets();             AssetsAPI.listAssetsByExtension(ext);
-AssetsAPI.listClasspathResources(); AssetsAPI.listAllAssetsRecursive();
-AssetsAPI.getAssetSize(path);       AssetsAPI.getAssetLastModified(path);
-AssetsAPI.setCacheEnabled(false);   // R25 — turn it off; it ships enabled
-AssetsAPI.setDefaultCacheTtl(ttl);  AssetsAPI.putInCache(path, bytes);
+AssetsAPI.listAssets(dir);           AssetsAPI.listAssetsByExtension(dir, ext);
+AssetsAPI.listClasspathResources(f); AssetsAPI.listAllAssetsRecursive(dir);
+AssetsAPI.getAssetSize(path);        AssetsAPI.getAssetLastModified(path);
+AssetsAPI.setCacheEnabled(true);     // off by default (R25) — only when asked
+AssetsAPI.setDefaultCacheTtl(ttl);   AssetsAPI.putInCache(path, bytes, ttl);
 ```
 
-`AssetsAPI` ships **with caching on**. The default policy is no cache (R25), so turn it off at
-startup. See `cache.md` for the full bootstrap, including the `after` handler that stamps `no-store`
-on the already-built response.
+`AssetsAPI` ships **with caching off** (R25), and `serveAsset` sets no `Cache-Control` — the cache
+policy is the project's (`cache.md`). A path with `..`, `./` or a backslash never leaves `public/`:
+it reads as missing. Listings return paths relative to `public/` (`/css/app.css`). `.mjs` goes out as
+`text/javascript`, which `nosniff` requires for a module script.
 
 ---
 
 ## 4. `IP`
 
 ```java
-IP.get(ctx); // X-Forwarded-For → X-Real-IP → CF-Connecting-IP → True-Client-IP → ctx.ip()
+IP.get(ctx); // the client's address — the same rule as the rate limiter, the logs and the DROP filter
 ```
 
-Prefer `JavalinAPI` with `setTrustedProxyHops(...)`, which knows how many proxies to trust. Behind
-Coolify that is `1`; without it every client looks like the proxy and the rate limit blocks everyone
-at once (`deploy-coolify.md`).
+The rule, in order: a header declared with `JavalinAPI.setClientIpHeader("CF-Connecting-IP")` (only
+when **all** traffic goes through that CDN); a proxy count declared with `setTrustedProxyHops(n)`,
+counting `n` hops from the **right** of `X-Forwarded-For`; with nothing declared, the last
+`X-Forwarded-For` hop only when the connection comes from a private network (the Coolify proxy), and
+the socket address otherwise. The left end of `X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP` and
+`True-Client-IP` are written by the client and are never trusted on their own. Behind Coolify declare
+`setTrustedProxyHops(1)` (2 with Cloudflare in front) — too many hops hands the address back to the
+client; too few makes every client look like the proxy (`deploy-coolify.md`).

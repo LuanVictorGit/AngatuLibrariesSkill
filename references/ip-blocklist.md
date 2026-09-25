@@ -82,7 +82,7 @@ timer is not content — it is configuration. Fetching 1,800 CIDRs per request w
 would get the project rate-limited by Spamhaus within minutes.
 
 Refresh on a schedule through the library's `Task` (`backend-utilities.md`), not a bare `Thread`, so
-it stops with `Task.shutdown()` in the shutdown hook like everything else. **Do not fetch more often
+it stops with the library's own shutdown hook like everything else. **Do not fetch more often
 than hourly** — the list changes slowly and hammering it is abuse of a free service. **Never fetch
 synchronously at startup**: the first load happens in the background and the filter stays inert until
 it succeeds, which is the fail-open rule applied to boot.
@@ -187,7 +187,7 @@ dropping the checks that actually hold.
 - [ ] `X-Forwarded-For` never read directly
 - [ ] Fails open: unreachable, unparsed or not-yet-loaded list serves every request
 - [ ] First load asynchronous — startup never blocks on Spamhaus
-- [ ] Refresh through `Task`, no more than hourly, stopped by `Task.shutdown()`
+- [ ] Refresh through `Task`, no more than hourly, stopped by the library's shutdown hook
 - [ ] Parsed as JSON Lines, metadata line skipped, count checked against `records`
 - [ ] List swapped atomically on success; never cleared before a refresh
 - [ ] Range matching by numeric comparison, not string prefix

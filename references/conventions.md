@@ -125,7 +125,7 @@ Template for the project part:
 # <Nome> — one-liner
 
 ## Stack
-Java 21, AngatuLibraries <versão> (https://github.com/LuanVictorGit/AngatuLibraries), Javalin 7.2.2, SQLite/HikariCP/Gson
+Java 21, AngatuLibraries <versão> (https://github.com/LuanVictorGit/AngatuLibraries), Javalin 7.2.3, SQLite/HikariCP/Gson
 
 ## Estrutura
 src/main/java/com/company/store/{Main, entities/, routes/, services/, utils/}

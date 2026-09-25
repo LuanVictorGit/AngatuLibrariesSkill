@@ -36,8 +36,10 @@ mvn -Pfrontend-dist package -DskipTests && java -jar target/<app>.jar    # é is
 > the second test exists. Open the screens, check the console for errors, and test forms, API,
 > WebSocket, PWA and service worker against the `dist`.
 
-5. **Clean shutdown:** make sure `Saveable.shutdown()`, `Task.shutdown()` and `BrowserAPI.shutdown()`
-   (if used) run in a shutdown hook.
+5. **Clean shutdown:** `AngatuLib` registers its own shutdown hook — it stops the server, drains
+   `Task` and closes the database. The project's hook closes only what the project opened:
+   `BrowserAPI.shutdown()`, `Bot.shutdown()`, the WhatsApp SDK's `close()`. Never `Task.shutdown()`
+   there: it discards the queue the library's hook is waiting on.
 6. Only call it done once the server starts with no exception and the routes answer with the expected
    status and body.
 
@@ -99,7 +101,7 @@ has one.
 
 ## 4. New-project checklist
 
-- [ ] `Main` with `new AngatuLib(dominio, porta de PORT, true)` (HTTP, no `manageSsl`) +
+- [ ] `Main` with `new AngatuLib(dominio, porta de PORT, true)` (HTTP; the TLS is Coolify's) +
       `setTrustedProxyHops(1)` + rate limits
 - [ ] `Dockerfile` + `.dockerignore` at the root from day one, `EXPOSE`/`PORT` consistent — and
       `docker build` exercised **before the deploy**, not during development (R8)
@@ -124,11 +126,11 @@ has one.
 - [ ] Presentational media and text protected per element; contact data and form fields still copyable (R30)
 - [ ] `.env` + `.gitignore` (`database.db`, `.env`, `tools/tailwindcss*` when not committed)
 - [ ] `CLAUDE.md` created, with the `AngatuLibrariesSkill` block (R1)
-- [ ] Angatu watermark on every page and e-mail — **the 429 and 403 block pages included** (R17);
-      block page shows the real remaining time, is `noindex`, self-contained, and leaks no limit values
-      (`backend-server.md` 6.2)
-- [ ] No cache: `AssetsAPI.setCacheEnabled(false)`, `no-store` on every response, a service worker that
-      stores nothing (R25)
+- [ ] Angatu watermark on every page and e-mail — **the 429 and 403 block pages included** (R17),
+      rendered through `JavalinAPI.setDenyPage`; the block page shows the real remaining time, is
+      `noindex`, self-contained, and leaks no limit values (`backend-server.md` 6.2)
+- [ ] No cache: `AssetsAPI` cache left off (the default), `Cache-Control: no-store` declared before
+      `new AngatuLib` so it reaches static files too, a service worker that stores nothing (R25)
 - [ ] Session cookie `HttpOnly` + `SameSite` + conditional `Secure`; token never in a URL (R23)
 - [ ] Totals, stock and identifiers validated server-side; no mass assignment (R22)
 - [ ] Pages outside the rate limit; API and login with their own
@@ -154,8 +156,9 @@ has one.
 
 - `.java` needs recompiling; HTML/JS copied into `target/classes/public/` only counts under
   `mvn exec:java`.
-- `Saveable.query` always with `?`, never concatenation. `Saveable.shutdown()` + `Task.shutdown()`
-  (+ `BrowserAPI.shutdown()`) in the shutdown hook.
+- `Saveable.query` always with `?`, never concatenation. The shutdown hook of the project closes
+  only what the project opened (`BrowserAPI.shutdown()`, `Bot.shutdown()`); `AngatuLib` already drains
+  `Task` and closes `Saveable`.
 - **No cache in `Saveable`:** an object changed without `save()` changes nothing; `findById` returns a
   new instance each call; a contested record needs `Saveable.mutate(...)` (R9).
 - **`findByField` with an enum scans the table:** only text, numbers and booleans become
@@ -163,10 +166,11 @@ has one.
 - **`mutate` returns `null` when the record does not exist** — and the change simply does not happen.
 - **Port:** the one you pass is the one used; there is no redirect to 80 on localhost. Read it from
   `PORT`.
-- **Never enable HTTPS in Javalin on Coolify** (R7): TLS belongs to the hosting.
+- **There is no HTTPS in Javalin** (R7): TLS belongs to Coolify, and `manageSsl = true` throws on
+  startup.
 - **A database with no volume disappears on deploy:** `/data` mounted plus `ANGATU_DB_PATH` (R8).
-- **`isLocalhost()` now comes from the environment** (`ANGATU_ENV`) or the host, not from a certificate
-  folder — check whoever depends on it (`Secure` cookie, development shortcuts).
+- **`isLocalhost()` comes from the environment** (`ANGATU_ENV`) or the host — check whoever depends on
+  it (`Secure` cookie, development shortcuts).
 - The default CSP is permissive — tighten it before `new AngatuLib(...)` in production, and remember
   Turnstile needs `challenges.cloudflare.com` allowed (`turnstile.md`).
 - `RateLimitConfig` / `BlockInfo` are `final` — do not extend them.

@@ -107,8 +107,8 @@ ctx.cookie(cookie);
 - **`SameSite=Lax`** covers the common CSRF case. If the API genuinely needs cross-origin requests,
   consider `None` + `Secure` plus an origin check, and document why.
 - **`Secure` is conditional.** Hard-coding `true` breaks login on `http://localhost` in development;
-  decide from the request host, or from `AngatuLib.getInstance().isLocalhost()`, which now comes from
-  the environment (`ANGATU_ENV`) and not from a certificate folder. **On Coolify the application
+  decide from the request host, or from `AngatuLib.getInstance().isLocalhost()`, which comes from the
+  environment (`ANGATU_ENV`) or the host. **On Coolify the application
   speaks HTTP inside the container and HTTPS to the world:** deciding `Secure` from `ctx.scheme()`
   without `setTrustedProxyHops(1)` drops the cookie in production.
 
@@ -125,7 +125,9 @@ return null;
 ```
 
 **Never accept a token as a query parameter on an HTTP route.** A URL leaks into browser history,
-server logs, proxy logs and the `Referer` header when someone clicks an external link.
+server logs, proxy logs and the `Referer` header when someone clicks an external link. The library's
+own request log prints the path of every request as it came, and masks only query values whose name
+looks secret — a token in the path, or under an innocent name, goes to the terminal.
 
 **The one justified exception** is the WebSocket handshake, because the browser's `WebSocket` API
 cannot send custom headers. Accept the token in the query **there only**, and validate it with the
@@ -204,6 +206,11 @@ the API and the login, not screen reads.
 
 Also leave out anything fed continuously (location updates) and anything third-party with automatic
 retries (payment webhooks).
+
+**The counter is per route, not per URL.** `/api/orders/1` and `/api/orders/2` spend the same budget,
+on `/api/orders/{id}` — which is what stops a coupon or order code tried in series. A screen that
+legitimately fetches many items of one parameterised route in a row gets its own, looser limit on that
+route (`backend-server.md` 6.1) instead of a blanket exemption.
 
 > **When testing:** the login limit is usually a few attempts per minute with a long block. A polling
 > loop hitting `/api/login` burns that budget before the test starts — probe readiness with a

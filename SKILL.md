@@ -26,7 +26,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Task at hand | Read |
 |---|---|
 | **Session start: sync this skill with its repository (R1, mandatory, no asking)** | `references/conventions.md` (section 3.1) |
-| Starting a project, dependencies, `AngatuLib`, Javalin, rate limiting | `references/backend-server.md` |
+| Starting a project, dependencies, `AngatuLib`, Javalin, rate limiting, request log | `references/backend-server.md` |
 | Entities, SQLite, queries, indexes, concurrency, porting an old project | `references/backend-persistence.md` |
 | HTTP routes, path params, page serving, assets, client IP | `references/backend-routes-html.md` |
 | Console, Gson, Env, Password, StringAPI, DataTime, Task, Request, e-mail, push, Discord, QR code | `references/backend-utilities.md` |
@@ -115,8 +115,10 @@ rule says which one wins.
 - **R6 — Jetty comes from Javalin, transitively.** Never pin it by hand; on a version clash run
   `mvn dependency:tree -Dincludes=org.eclipse.jetty` and align everything to Javalin.
   → `references/backend-server.md`
-- **R7 — HTTP by default; HTTPS only when explicitly asked.** Coolify terminates TLS. Asking
-  Javalin for SSL inside the container breaks the deploy. → `references/backend-server.md`
+- **R7 — HTTP only; TLS belongs to Coolify.** The library has no HTTPS mode: `new AngatuLib(host,
+  port, rateLimit)` serves HTTP on the port it is given, and Coolify's edge proxy issues, renews and
+  terminates the certificate. The deprecated four-argument constructor with `manageSsl = true`
+  throws on startup, and `javalin-ssl` is never a dependency. → `references/backend-server.md`
 - **R8 — Every project ships `Dockerfile` and `.dockerignore` — and they are for production.**
   Hosting is Coolify; without them the project does not deploy. **Development never runs inside the
   container:** it runs on the JVM (`mvn exec:java`, `java -jar`), where the loop is seconds instead of
@@ -337,7 +339,7 @@ exige, e qual delas vence quando duas colidem, só está no texto completo da sk
 R1 skill obrigatória neste repositório e sincronizada com o próprio repo a cada sessão, sem pedir · R2 CLAUDE.md sempre atualizado · R3 commits na
 `development`, nunca citar IA · R4 sempre a última versão de toda lib da Angatu, conferida
 mesmo sem pedido · R5 só as dependências usadas ·
-R6 Jetty vem do Javalin · R7 HTTP por padrão, o TLS é do Coolify · R8 Dockerfile obrigatório, sem
+R6 Jetty vem do Javalin · R7 só HTTP, o TLS é do Coolify · R8 Dockerfile obrigatório, sem
 `-Xmx` · R9 Saveable não guarda nada em RAM, registro disputado usa `mutate` · R10 Saveable e Route
 só por `extends` · R11 arquitetura limpa e DRY · R12 código em inglês, Javadoc em PT-BR,
 `@author Angatu Sistemas` · R13 o sistema de design vale para toda superfície renderizada,

@@ -106,14 +106,10 @@ public final class ServidorDeTeste {
         if (instancia == null) {
             // Porta 0: o sistema escolhe uma livre e nenhum teste colide com
             // um servidor de desenvolvimento já aberto em 8080.
+            // O AngatuLib registra o próprio gancho de desligamento: para o servidor, espera as
+            // tarefas e fecha o banco. Nada a registrar aqui.
             instancia = new AngatuLib("localhost", 0, true);
             origem = "http://127.0.0.1:" + JavalinAPI.get().port();
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                Saveable.shutdown();
-                Task.shutdown();
-                JavalinAPI.get().stop();
-            }));
         }
         return origem;
     }
@@ -231,9 +227,13 @@ The real rate limiter is running, because that is the point. A suite that hammer
 `JavalinAPI.setRateLimitingEnabled(false)` inside the harness when the suite is not testing limits.
 Decide it once, in the harness, and write down which you chose.
 
+The request log is running too: every call prints a line to `System.out`. That is useful when a test
+fails; if the suite is noisy, `JavalinAPI.setRequestLogMode(RequestLogMode.ERRORS)` in the harness
+keeps only the failures. Never assert on it by sleeping — the lines are written by another thread.
+
 ### 3.3 Why not `javalin-testtools`
 
-`io.javalin:javalin-testtools` exists for 7.2.2 and is a good tool — but it does not fit this stack.
+`io.javalin:javalin-testtools` exists for 7.2.3 and is a good tool — but it does not fit this stack.
 `JavalinTest.test(app, ...)` calls `app.start(0)` itself, and in AngatuLibraries the server is already
 started: `JavalinAPI.setup(...)` calls `start(port)` during `new AngatuLib(...)`
 (`backend-server.md` 5.2). Handing it an already-running instance is not what it expects.
