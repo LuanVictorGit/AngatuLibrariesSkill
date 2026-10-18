@@ -62,9 +62,15 @@ Three boundaries make that workable rather than destructive, and they are not ne
   **1** correct behaviour · **2** real security · **3** accessibility · **4** SEO · **5** compatibility ·
   **6** performance · **7** maintainability · **8** obfuscation. A transformation that cannot be proven
   safe is not applied — which is why `renameClasses` needs the proof in section 9 and `renameIds` stays
-  off (section 10).
+  off (section 10). **Tudo que atrapalhar o SEO é estritamente ignorado pelo ofuscador:** endereços de
+  imagens, pastas de assets (`assets/**`, `images/**`, etc.), URLs de mídia e metadados visuais **nunca**
+  são ofuscados ou renomeados. Ofuscar caminhos de imagem destrói o rankeamento no Google Imagens,
+  rastreamento de Open Graph e dados estruturados (schema.org). **Apenas o conteúdo de scripts (JavaScript)
+  deve ser ofuscado.**
 - **The exclusions hold.** `emails/**` is never transformed at all; `sw.js` and `vendor/**` are never
-  obfuscated and never renamed; already-obfuscated legacy stays frozen in `vendor/` (section 17.1).
+  obfuscated and never renamed; all image and media assets (`assets/**`, `images/**`, `img/**`,
+  `**/*.{png,jpg,jpeg,webp,svg,gif,ico,avif}`) remain untouched and un-obfuscated for SEO;
+  already-obfuscated legacy stays frozen in `vendor/` (section 17.1).
   Those two also keep their comments, for reasons that are not about taste: `<!--[if mso]>` is a
   **functional** conditional comment — it is how Outlook receives its table layout — and a third-party
   licence header is a legal obligation that has to travel with the code.
@@ -161,8 +167,8 @@ technique just because it exists. That is R20 in practice, not an exception to R
   "keepVars": [],
   "keepGlobals": [],
   "keepData": ["data-sitekey", "data-theme", "data-testid"],
-  "neverTransform": ["emails/**", "vendor/**"],
-  "neverRename": ["**.html", "sw.js", "**/sw.js", "manifest.webmanifest", "**/manifest.webmanifest", "robots.txt", "sitemap.xml", "favicon.ico", "apple-touch-icon*", ".well-known/**", "emails/**", "vendor/**", "assets/og/**"],
+  "neverTransform": ["emails/**", "vendor/**", "assets/**", "images/**", "img/**", "media/**", "**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.webp", "**/*.svg", "**/*.gif", "**/*.ico", "**/*.avif"],
+  "neverRename": ["**.html", "sw.js", "**/sw.js", "manifest.webmanifest", "**/manifest.webmanifest", "robots.txt", "sitemap.xml", "favicon.ico", "apple-touch-icon*", ".well-known/**", "emails/**", "vendor/**", "assets/**", "images/**", "img/**", "media/**", "icons/**", "**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.webp", "**/*.svg", "**/*.gif", "**/*.ico", "**/*.avif"],
   "reservedGlobals": ["UI", "net", "Auth", "AppBus", "showToast"],
   "cacheAutorizado": false
 }
@@ -178,6 +184,11 @@ technique just because it exists. That is R20 in practice, not an exception to R
 and hashing for cache (11.2), because every entry is there for the same reason: the name is a contract
 with something outside the build. It replaces the old `neverHash`, which meant the same thing under a
 narrower name.
+
+**Imagens e assets visuais são estritamente intocáveis:** Todas as pastas e extensões de imagem
+(`assets/**`, `images/**`, `*.webp`, `*.jpg`, `*.png`, etc.) constam em `neverRename`. O ofuscador ignora
+obrigatoriamente tudo que prejudicar o SEO; somente o código de scripts (`scripts/**.js`) tem permissão
+para ser ofuscado.
 
 **The globs are anchored with `**` on purpose.** `casa()` compiles `*` into `[^/]*`, which does not
 cross a slash — so a bare `*.html` protects `index.html` and **misses `pages/contato.html`**. That was
@@ -615,10 +626,14 @@ exactly that reason, and retiring a page stays a 301 redirect, never a rename (`
 **The extension never changes.** It decides the `Content-Type` (`AssetsAPI.getContentType`, nginx's
 `mime.types`) and, on the static track, the `try_files $uri $uri.html`.
 
-**Folder segments are renamed too** — `scripts/` → `x7f1a/` — and that is cheap here for a reason worth
+**Imagens, assets visuais e pastas de mídia NUNCA são renomeados ou ofuscados.**
+Pastas como `assets/`, `images/`, `img/`, `media/`, `icons/`, bem como arquivos de imagem (`.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, `.gif`, `.ico`, `.avif`) **nunca** sofrem renomeação ou ofuscação. Renomear caminhos ou arquivos de imagem destrói o SEO no Google Imagens, impede os rastreadores de redes sociais (Open Graph) e quebra metadados estruturados (`application/ld+json`).
+**Regra soberana de SEO:** Tudo que atrapalhar o SEO deve ser estritamente ignorado pelo ofuscador. A ofuscação aplica-se **exclusivamente ao conteúdo de scripts (`scripts/**.js`)**, mantendo a estrutura de imagens e assets 100% canônica e indexável.
+
+**Folder segments are renamed too** — `scripts/` → `x7f1a/` (apenas para pastas de script, nunca pastas de assets) — and that is cheap here for a reason worth
 writing down: this stack's CSP is origin-based (`script-src 'self'`, `turnstile.md`), not path-based,
 and the `nginx.conf` carries a single generic `location /` (`static-site.md`). Neither notices the
-change. `.well-known/` is the exception and never moves; it is a path fixed by specification.
+change. `.well-known/`, `assets/`, `images/` and media folders are exceptions and never move.
 
 A folder holding both a page and a renameable file **splits, and that is the intended result**:
 `pages/contato.html` stays exactly where it is while `pages/extra.js` becomes `x1yvai/x1kk3j.js`, with
@@ -698,7 +713,7 @@ Every check below runs over `dist/` and **fails the build with `exit 1`**:
 | 3 | JS syntax | `new Function(code)` fails on any generated `.js` |
 | 4 | Secrets | a key, token or password pattern found in the dist |
 | 5 | Forbidden CDN | `cdn.tailwindcss` or `unpkg.com/tailwindcss` present (R14) |
-| 6 | SEO preserved | `<title>`, `canonical`, `og:`, `twitter:`, `ld+json` or `meta` in smaller quantity than the source |
+| 6 | SEO preserved | `<title>`, `canonical`, `og:`, `twitter:`, `ld+json`, `meta`, or image URLs/paths (`<img src>`, `og:image`) modified or obfuscated |
 | 7 | Accessibility preserved | the count of `aria-`, `alt=`, `role=`, `for=` lower than in the source |
 | 8 | Stray source map | a `.map` inside `dist/public/` without `sourceMaps: true` |
 | 9 | Inline script | a `<script>` without `src` in a page, except `application/ld+json` |
@@ -707,7 +722,8 @@ Every check below runs over `dist/` and **fails the build with `exit 1`**:
 | 12 | Comment in the dist | `/*` in a `.css` or `.js`, or `<!--` in an `.html` or `.svg`, outside `emails/**` and `vendor/**` |
 
 Checks 6 and 7 are R20 enforced mechanically: they make it impossible for obfuscation to quietly cost
-SEO or accessibility. Check 11 is the counterpart of 2 for everything section 9 and 11.1 renamed — a
+SEO or accessibility. Check 6 guarantees that all image addresses, asset paths and metadata tags
+remain 100% intact, readable and indexable by search engines. Check 11 is the counterpart of 2 for everything section 9 and 11.1 renamed — a
 half-applied rename produces a page that loads and does nothing, which is the failure mode this whole
 document exists to prevent.
 

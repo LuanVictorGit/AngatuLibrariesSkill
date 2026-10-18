@@ -49,6 +49,8 @@ Every page delivers, in its own `<head>`:
 </head>
 ```
 
+> **Imunidade de SEO contra ofuscação:** Todas as URLs de imagem (`og:image`, `twitter:image`, `apple-touch-icon`, favicons e imagens do corpo da página) permanecem 100% canônicas, legíveis e intocadas pelo build. O ofuscador ignora obrigatoriamente tudo que possa atrapalhar o SEO; apenas o código de scripts (`.js`) é ofuscado.
+
 Also include, where they make sense: PWA icons, `robots`, `hreflang`, and structured data of the right
 type (`LocalBusiness`, `Organization`, `Service`, `Product`, `FAQPage`).
 

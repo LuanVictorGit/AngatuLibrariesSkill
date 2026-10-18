@@ -53,7 +53,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Touch, thumb zones, safe areas, mobile budgets | `references/mobile-principles.md` |
 | Hover, pointer precision, keyboard, multi-window | `references/desktop-principles.md` |
 | Final design audit before delivery | `references/design-audit.md` |
-| Build pipeline: minify, strip comments, obfuscate, rename file/folder/class/var/global, hash, validate | `references/frontend-build.md` |
+| Build pipeline: minify, strip comments, script-only obfuscation, keep images/assets intact for SEO, validate | `references/frontend-build.md` |
 | **Landing page requested — read before anything else** | `references/landing-intake.md` |
 | Landing only: themed background, the hero video, real material | `references/landing-motion.md` |
 | Copy that does not read as machine-written | `references/landing-copy.md` |
@@ -192,17 +192,11 @@ rule says which one wins.
   debuggable from beginning to end, comments included. Minification, comment removal, obfuscation,
   every rename (class, custom property, global, `data-*`, file, folder) and asset hashing exist only
   in the build, writing into `dist/`. **The build never rewrites `src/`.** → `references/frontend-build.md`
-- **R19 — Obfuscation is mandatory on every published frontend**, including one that never asked
-  for it, and it covers the **name** as much as the content: file, folder, class, CSS custom
-  property, shared global and `data-*` are renamed **under proof** — what cannot be proven safe keeps
-  its spelling — and the dist ships with no comments. Bounded by R18 (the build, never a source
-  rewrite) and R20 (always on is not always maximum). `emails/**` is never transformed; `sw.js` and
-  `vendor/**` are never obfuscated, renamed or stripped of comments; already-obfuscated legacy stays
-  frozen in `vendor/`. → `references/frontend-build.md`
+- **R19 — Obfuscation applies strictly to script content**, preserving all image addresses, media assets, and SEO elements completely untouched. Obfuscation and scoped renaming (internal classes, script files, CSS custom properties) protect client-side application logic under proof, but **the obfuscator must ignore anything that harms SEO**. Image addresses, asset paths (`assets/**`, `images/**`, `img/**`, `media/**`, `icons/**`), media filenames, Open Graph covers, and semantic HTML markup are **never** obfuscated or renamed. Obfuscating only script content (`<script>`, `.js` files) is the advised and mandatory standard. `emails/**` is never transformed; `sw.js` and `vendor/**` are never obfuscated, renamed or stripped of comments; already-obfuscated legacy stays frozen in `vendor/`. → `references/frontend-build.md`
 - **R20 — Obfuscation is not security, and never outranks anything.** Priority order, lower number
   wins every conflict: **1** correct behaviour · **2** real security · **3** accessibility ·
   **4** SEO · **5** compatibility · **6** performance · **7** maintainability · **8** obfuscation.
-  A transformation that cannot be proven safe is not applied. → `references/frontend-build.md`
+  **Tudo que atrapalhar o SEO deve ser estritamente ignorado pelo obfuscador.** Image URLs, media assets, canonical tags, and structured metadata outrank obfuscation; a transformation that impairs search engine indexing, Google Images ranking, or image discoverability is never applied. → `references/frontend-build.md`
 - **R21 — Preview every frontend on a running server, and look at it.** Nothing visual is finished
   until it has been rendered and inspected at desktop and mobile widths, and what was seen has been
   stated. Starting a server is not the verification; looking is.
@@ -345,10 +339,7 @@ só por `extends` · R11 arquitetura limpa e DRY · R12 código em inglês, Java
 `@author Angatu Sistemas` · R13 o sistema de design vale para toda superfície renderizada,
 inclusive erro, e-mail e impressão · R14 Tailwind local, nunca CDN · R15 responsividade só em
 Tailwind · R16 português impecável no texto visível · R35 nada que a skill renderiza pode ter cara de gerado por IA — traço decorativo em rótulo, texto em gradiente, paleta roxo-rosa, blobs borrados e emoji como ícone ficam de fora · R17 rodapé da Angatu em página e e-mail ·
-R18 source legível, build protege, dist publica · R19 ofuscação obrigatória mesmo sem pedido, e
-alcança o nome — arquivo, pasta, variável CSS, global e `data-*` renomeados com prova, dist sem
-comentário, e `sw.js`, `*.html`, `emails/**` e `vendor/**` mantêm nome e comentário ·
-R20 ofuscação nunca vence funcionamento, segurança, acessibilidade ou SEO · R21 todo frontend é
+R18 source legível, build protege, dist publica · R19 ofuscação restrita ao conteúdo de script (JS/lógica interna) — imagens, assets e URLs de mídia nunca são ofuscados ou renomeados para não prejudicar o SEO; tudo que atrapalhar o SEO o ofuscador ignora; `sw.js`, `*.html`, `emails/**`, assets de imagem e `vendor/**` mantêm nome e integridade · R20 ofuscação nunca vence funcionamento, segurança, acessibilidade ou SEO — tudo que prejudicar o SEO deve ser ignorado pelo ofuscador · R21 todo frontend é
 visto rodando antes de ser entregue · R22 o cliente é hostil: presuma um proxy interceptando ·
 R23 cookie HttpOnly, token fora da URL, autorização em toda rota · R24 rota WS confere a sessão
 dentro dela · R25 nunca usar cache sem pedido · R26 pagamento e IA pela API do AngatuCRM ·
