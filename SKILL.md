@@ -196,7 +196,7 @@ rule says which one wins.
 - **R20 — Obfuscation is not security, and never outranks anything.** Priority order, lower number
   wins every conflict: **1** correct behaviour · **2** real security · **3** accessibility ·
   **4** SEO · **5** compatibility · **6** performance · **7** maintainability · **8** obfuscation.
-  **Tudo que atrapalhar o SEO deve ser estritamente ignorado pelo obfuscador.** Image URLs, media assets, canonical tags, and structured metadata outrank obfuscation; a transformation that impairs search engine indexing, Google Images ranking, or image discoverability is never applied. → `references/frontend-build.md`
+  **Anything that harms SEO must be strictly ignored by the obfuscator.** Image URLs, media assets, canonical tags, and structured metadata outrank obfuscation; a transformation that impairs search engine indexing, Google Images ranking, or image discoverability is never applied. → `references/frontend-build.md`
 - **R21 — Preview every frontend on a running server, and look at it.** Nothing visual is finished
   until it has been rendered and inspected at desktop and mobile widths, and what was seen has been
   stated. Starting a server is not the verification; looking is.

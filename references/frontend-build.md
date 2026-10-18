@@ -62,11 +62,11 @@ Three boundaries make that workable rather than destructive, and they are not ne
   **1** correct behaviour · **2** real security · **3** accessibility · **4** SEO · **5** compatibility ·
   **6** performance · **7** maintainability · **8** obfuscation. A transformation that cannot be proven
   safe is not applied — which is why `renameClasses` needs the proof in section 9 and `renameIds` stays
-  off (section 10). **Tudo que atrapalhar o SEO é estritamente ignorado pelo ofuscador:** endereços de
-  imagens, pastas de assets (`assets/**`, `images/**`, etc.), URLs de mídia e metadados visuais **nunca**
-  são ofuscados ou renomeados. Ofuscar caminhos de imagem destrói o rankeamento no Google Imagens,
-  rastreamento de Open Graph e dados estruturados (schema.org). **Apenas o conteúdo de scripts (JavaScript)
-  deve ser ofuscado.**
+  off (section 10). **Anything that harms SEO must be strictly ignored by the obfuscator:** image
+  addresses, asset folders (`assets/**`, `images/**`, etc.), media URLs, and visual metadata are **never**
+  obfuscated or renamed. Obfuscating image paths destroys Google Images rankings,
+  Open Graph crawling, and structured data (schema.org). **Only script content (JavaScript)
+  should be obfuscated.**
 - **The exclusions hold.** `emails/**` is never transformed at all; `sw.js` and `vendor/**` are never
   obfuscated and never renamed; all image and media assets (`assets/**`, `images/**`, `img/**`,
   `**/*.{png,jpg,jpeg,webp,svg,gif,ico,avif}`) remain untouched and un-obfuscated for SEO;
@@ -185,10 +185,10 @@ and hashing for cache (11.2), because every entry is there for the same reason: 
 with something outside the build. It replaces the old `neverHash`, which meant the same thing under a
 narrower name.
 
-**Imagens e assets visuais são estritamente intocáveis:** Todas as pastas e extensões de imagem
-(`assets/**`, `images/**`, `*.webp`, `*.jpg`, `*.png`, etc.) constam em `neverRename`. O ofuscador ignora
-obrigatoriamente tudo que prejudicar o SEO; somente o código de scripts (`scripts/**.js`) tem permissão
-para ser ofuscado.
+**Images and visual assets are strictly untouched:** All image directories and file extensions
+(`assets/**`, `images/**`, `*.webp`, `*.jpg`, `*.png`, etc.) are listed in `neverRename`. The obfuscator
+must strictly ignore anything that harms SEO; only script code (`scripts/**.js`) is permitted
+to be obfuscated.
 
 **The globs are anchored with `**` on purpose.** `casa()` compiles `*` into `[^/]*`, which does not
 cross a slash — so a bare `*.html` protects `index.html` and **misses `pages/contato.html`**. That was
@@ -626,11 +626,11 @@ exactly that reason, and retiring a page stays a 301 redirect, never a rename (`
 **The extension never changes.** It decides the `Content-Type` (`AssetsAPI.getContentType`, nginx's
 `mime.types`) and, on the static track, the `try_files $uri $uri.html`.
 
-**Imagens, assets visuais e pastas de mídia NUNCA são renomeados ou ofuscados.**
-Pastas como `assets/`, `images/`, `img/`, `media/`, `icons/`, bem como arquivos de imagem (`.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, `.gif`, `.ico`, `.avif`) **nunca** sofrem renomeação ou ofuscação. Renomear caminhos ou arquivos de imagem destrói o SEO no Google Imagens, impede os rastreadores de redes sociais (Open Graph) e quebra metadados estruturados (`application/ld+json`).
-**Regra soberana de SEO:** Tudo que atrapalhar o SEO deve ser estritamente ignorado pelo ofuscador. A ofuscação aplica-se **exclusivamente ao conteúdo de scripts (`scripts/**.js`)**, mantendo a estrutura de imagens e assets 100% canônica e indexável.
+**Image addresses, visual assets, and media directories are NEVER renamed or obfuscated.**
+Folders such as `assets/`, `images/`, `img/`, `media/`, `icons/`, as well as image files (`.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, `.gif`, `.ico`, `.avif`) **never** undergo renaming or obfuscation. Renaming image paths or files ruins SEO in Google Images, breaks social media crawlers (Open Graph), and corrupts structured data (`application/ld+json`).
+**Sovereign SEO Rule:** Anything that harms SEO must be strictly ignored by the obfuscator. Obfuscation applies **exclusively to script content (`scripts/**.js`)**, keeping image and asset structures 100% canonical, crawlable, and indexable.
 
-**Folder segments are renamed too** — `scripts/` → `x7f1a/` (apenas para pastas de script, nunca pastas de assets) — and that is cheap here for a reason worth
+**Folder segments are renamed too** — `scripts/` → `x7f1a/` (for script folders only, never asset folders) — and that is cheap here for a reason worth
 writing down: this stack's CSP is origin-based (`script-src 'self'`, `turnstile.md`), not path-based,
 and the `nginx.conf` carries a single generic `location /` (`static-site.md`). Neither notices the
 change. `.well-known/`, `assets/`, `images/` and media folders are exceptions and never move.
