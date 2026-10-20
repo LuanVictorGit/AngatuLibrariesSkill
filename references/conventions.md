@@ -103,10 +103,10 @@ The sync touches **only the skill's own directory**. It never rewrites history, 
 and never reaches the project repository — where R3 still sends commits to `development` and R31 still
 governs every message.
 
-## 4. `CLAUDE.md` (R1, R2)
+## 4. `CLAUDE.md` and `GEMINI.md` (R1, R2)
 
-Keep `CLAUDE.md` at the project root always current. Any feature or fix that changes stack, structure,
-startup (`AngatuLib`), routes, entities or environment variables is reflected in `CLAUDE.md` **in the
+Keep `CLAUDE.md` (in Claude Code) and/or `GEMINI.md` (in Gemini / Antigravity) at the project root always current. Any feature or fix that changes stack, structure,
+startup (`AngatuLib`), routes, entities or environment variables is reflected in `CLAUDE.md` and `GEMINI.md` **in the
 same commit**.
 
 It carries two things: the `AngatuLibrariesSkill` block from section 3 of `SKILL.md` (R1), and the project's
@@ -114,7 +114,7 @@ own documentation.
 
 **The block is mandatory and it is the first thing in the file.** It is the only anchor that
 survives compaction, and what it demands is the skill loaded in context **before thinking** —
-reading, planning, answering, reviewing — not merely before writing code. A `CLAUDE.md` without it
+reading, planning, answering, reviewing — not merely before writing code. A `CLAUDE.md` or `GEMINI.md` without it
 is a repository that loses the standard the first time a session runs long, silently, which is the
 worst way to lose it. Copy the block verbatim; the project's own text goes around it, never inside
 the markers.

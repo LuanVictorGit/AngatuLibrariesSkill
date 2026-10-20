@@ -134,7 +134,7 @@ fi
 CITADOS=$(grep -rhE '[a-z0-9-]+\.md' --include='*.md' SKILL.md references/ 2>/dev/null \
           | grep -v '^\*Original source:' \
           | grep -oE '[a-z0-9-]+\.md' \
-          | sort -u | grep -vE '^(SKILL|SKILL.old|MASTER|README|CLAUDE)\.md$' || true)
+          | sort -u | grep -vE '^(SKILL|SKILL.old|MASTER|README|CLAUDE|GEMINI|gemini)\.md$' || true)
 
 AUSENTES=0
 TOTAL_CITADOS=0
@@ -695,7 +695,7 @@ PADRAO_IA='co-authored-by|generated with|claude|anthropic|copilot|\bGPT\b|\bLLM\
 conta_sujos() {
   git log --format='%H' "$1" 2>/dev/null \
     | while read -r SHA; do
-        if git log -1 --format='%B' "$SHA" | sed 's/CLAUDE\.md//g' \
+        if git log -1 --format='%B' "$SHA" | sed -e 's/CLAUDE\.md//g' -e 's/GEMINI\.md//g' \
            | grep -qiE "$PADRAO_IA"; then printf '%s\n' "$SHA"; fi
       done | wc -l | tr -d ' '
 }
