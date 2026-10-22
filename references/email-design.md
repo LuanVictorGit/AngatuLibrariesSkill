@@ -104,8 +104,8 @@ project keeps two logo files (section 7).
 
 ```
 src/main/resources/public/emails/
-  base.html          # wrapper, header, footer — o esqueleto compartilhado
-  welcome.html       # conteúdo específico
+  base.html          # wrapper, header, footer: the shared skeleton
+  welcome.html       # this message's own content
   order-confirmed.html
 ```
 
@@ -113,13 +113,14 @@ src/main/resources/public/emails/
 publishes at the site root** — treat every template as public. Nothing confidential goes into one: no
 internal link, no comment meant for the team. Customer data enters only through placeholders.
 
-Placeholders are `{{nome}}`, filled by `EmailAPI.loadHtmlTemplate` (`backend-utilities.md`). Every
-value is **HTML-escaped**, so a customer named `<a href=...>` shows up as text:
+Placeholders are `{{name}}`, filled by `EmailAPI.loadHtmlTemplate` (`backend-utilities.md`). Their
+keys are code, so they are English (R12); what fills them is the customer's text. Every value is
+**HTML-escaped**, so a customer named `<a href=...>` shows up as text:
 
 ```java
 String html = EmailAPI.loadHtmlTemplate("/emails/welcome.html", Map.of(
-        "nome", user.getName(),
-        "linkPedido", AngatuLib.getInstance().getOriginHost() + "/pedidos/" + order.getId()));
+        "name", user.getName(),
+        "orderLink", AngatuLib.getInstance().getOriginHost() + "/pedidos/" + order.getId()));
 EmailAPI.sendHtml(user.getEmail(), "Bem-vindo à Loja", html);
 
 // A block of HTML the system builds (the order lines) goes through the trusted map, unescaped —
@@ -128,7 +129,7 @@ String rows = order.getItems().stream()
         .map(item -> "<tr><td>" + EmailAPI.escapeHtml(item.getName()) + "</td></tr>")
         .collect(Collectors.joining());
 String confirmed = EmailAPI.loadHtmlTemplateWithTrustedHtml("/emails/order-confirmed.html",
-        Map.of("nome", user.getName()), Map.of("itens", rows));
+        Map.of("name", user.getName()), Map.of("items", rows));
 ```
 
 Build the absolute URL from `getOriginHost()` rather than writing the domain into the template, so
@@ -176,8 +177,8 @@ generate a tinted variant preserving the alpha channel byte for byte — only th
 shapes stay identical:
 
 ```java
-int alfa = (origem.getRGB(x, y) >>> 24) & 0xFF;
-destino.setRGB(x, y, (alfa << 24) | (r << 16) | (g << 8) | b);  // azul da marca: #101073
+int alpha = (source.getRGB(x, y) >>> 24) & 0xFF;
+target.setRGB(x, y, (alpha << 24) | (r << 16) | (g << 8) | b);  // brand blue: #101073
 ```
 
 Commit both: `angatu-sistemas.png` (white, dark background) and `angatu-sistemas-escuro.png` (blue,
@@ -205,19 +206,24 @@ An e-mail is a rendered surface, so it gets the same treatment as a page:
 
 ```java
 /**
- * Pré-visualização de e-mail, apenas em desenvolvimento.
+ * GET /dev/emails/{name}: renders an e-mail template with sample data, in development only.
  *
  * @author Angatu Sistemas
  */
-public class EmailPreviewRoute extends Route {
-    public EmailPreviewRoute() { super("/dev/emails/{nome}", RouteType.GET, EmailPreviewRoute::handle); }
+public final class EmailPreviewRoute extends Route {
 
-    private static void handle(io.javalin.http.Context ctx) {
-        if (!AngatuLib.getInstance().isLocalhost()) {        // nunca em produção
-            ctx.status(StatusCode.NOT_FOUND.code()); return;
+    private static final Pattern TEMPLATE_NAME = Pattern.compile("[a-z0-9-]{1,60}");
+
+    public EmailPreviewRoute() {
+        super("/dev/emails/{name}", RouteType.GET, EmailPreviewRoute::handle);
+    }
+
+    private static void handle(Context ctx) {
+        String name = ctx.pathParam("name");
+        if (!AngatuLib.getInstance().isLocalhost() || !TEMPLATE_NAME.matcher(name).matches()) {
+            throw new NotFoundResponse();
         }
-        ctx.contentType("text/html").result(
-                EmailAPI.loadHtmlTemplate("/emails/" + ctx.pathParam("nome") + ".html", sampleData()));
+        ctx.html(EmailAPI.loadHtmlTemplate("/emails/" + name + ".html", sampleData()));
     }
 }
 ```

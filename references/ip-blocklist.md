@@ -55,10 +55,10 @@ library's `IP` helper, with `setTrustedProxyHops(1)` already configured
 one you think it is:
 
 ```bash
-# do lado de fora, contra o ambiente publicado
-curl -s https://<dominio>/health -H 'X-Forwarded-For: 1.10.16.1'
-# se essa requisição for bloqueada, o número de hops está errado e o cabeçalho
-# do cliente está sendo obedecido — isso é pior que não ter filtro nenhum
+# from outside, against the published environment
+curl -s https://<domain>/health -H 'X-Forwarded-For: 1.10.16.1'
+# if this request is blocked, the hop count is wrong and the header the client
+# wrote is being obeyed: worse than having no filter at all
 ```
 
 ---

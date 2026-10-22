@@ -1,89 +1,22 @@
-# Conventions — architecture, language, CLAUDE.md and commits
+# Conventions — keeping the skill current, CLAUDE.md and commits
 
-> Covers R2 (`CLAUDE.md` current), R3 (commits), R11 (clean architecture) and R12 (code English,
-> docs Portuguese).
-
----
-
-## 1. Well-architected code (R11)
-
-Everything generated has to be well architected. It is not optional.
-
-- **Extract utilities** whenever there is repetition: `utils/Validators.java`, `utils/Money.java`,
-  `utils/AuditLog.java`, `utils/Auth.java`, `utils/EmailTemplates.java`. Never duplicate `byToken`,
-  body parsing, e-mail or CPF validation, money and date formatting, or error responses across routes.
-- **Separate the layers:** `entities/` (Saveable) → `services/` (business rules, no `Context`) →
-  `routes/` (HTTP only, thin, delegating) → `utils/` (pure, testable). A route never contains pricing,
-  stock or permission logic — it delegates.
-- Prefer composition over inheritance; `final` classes when they are not meant to be extended; private
-  constructors in utility classes.
-- Name with intent (`CreateOrderService`, `OrderCalculator`, `TokenAuth`) and keep methods short
-  (under 30 lines). If one grew, split it.
-- **Remove what the extraction orphaned**, in the same commit (R32, `dead-code.md`). Extracting a
-  utility and leaving the old copy behind is not cleaning up — it is duplicating, which is the thing
-  this section exists to prevent. The `utils/` and `services/` layers are pure by construction, and
-  that is exactly what makes an orphan there safe to delete once the three greps come back empty.
-
-### 1.1 Optimisation
-
-- Reuse `GsonAPI.get()` — never scatter `new Gson()`.
-- Create `json_extract(data,'$.campo')` indexes for every field filtered or sorted frequently; use
-  `LIMIT`/`OFFSET` for pagination.
-- Avoid `findAll` plus an in-memory filter when a `query` solves it; avoid N+1 (fetch in batch).
-- Validate input early (fail fast) and use the right `StatusCode` (400/401/403/404/409/422/429).
-- Prefer `StringAPI`, `DataTime` and `Password` from the library over reinventing them.
-- Log through `Console` at the right level; never log a secret, token or password.
-
-## 2. Documentation
-
-- **Every public class and method carries Javadoc** in the AngatuLibraries style: purpose, when to use
-  and when not to, integrations, flow, pre- and post-conditions, side effects, and an example when it
-  helps.
-- Keep `README.md` and `CLAUDE.md` consistent with the code; document non-obvious decisions (why
-  `perIp=false` on a given route, why a particular `json_extract` index exists).
-- Self-explanatory code beats a redundant comment. Comment the "why", never the obvious "what".
-
-## 3. Language of code and audit tag (R12)
-
-- **Packages and classes ALWAYS in English.** Never Portuguese in `package`, `class`, `interface`,
-  `enum`, methods or variables. Correct: `com.store.core`, `com.store.entities`, `com.store.routes`,
-  `com.store.services`, `com.store.utils`; classes `User`, `Company`, `Order`, `Product`,
-  `CreateUserRoute`, `ListOrdersRoute`, `UpdateProductRoute`, `AuthService`, `MoneyUtils`,
-  `Validators`. Forbidden: `Usuario`, `CriarUsuario`, `CriarPedidoService`, `utils/Validadores`.
-- **Javadoc and explanatory comments in Portuguese (PT-BR)**, following the library's own style. The
-  code itself stays 100% English.
-- **Every class carries the Angatu audit tag** at the top of its class Javadoc:
-
-```java
-/**
- * Serviço responsável por criar pedidos com cálculo de totais e validação de estoque.
- * <p>Valida entrada, calcula valores no backend e persiste via Saveable.</p>
- *
- * @author Angatu Sistemas
- */
-public final class CreateOrderService {
-}
-```
-
-Never create a class without `@author Angatu Sistemas`. In utilities, also describe when to use and
-when not to, integrations, and an example — always in Portuguese.
-
-> This is the boundary the skill's own translation does not cross. The skill is written in English;
-> what it produces is not. See also R16 for user-visible text.
+> Covers R1 (the skill stays current), R2 (`CLAUDE.md` and `GEMINI.md` current), R3 (commits) and R31
+> (no trace of AI in the repository). How code is written — architecture, performance, language and
+> Javadoc — is `java-standard.md` (R11, R12, R38–R40).
 
 ---
 
-## 3.1 The skill keeps itself current (R1)
+## 1. The skill keeps itself current (R1)
 
 The standard lives in a repository, and a session that reasons from an old copy produces work that has
 to be redone. So **the first thing a session does is bring the skill up to date, and it does that
 without asking.** Permission is not the question here: the repository *is* the standard.
 
 ```bash
-S=~/.claude/skills/AngatuLibrariesSkill      # o diretório onde este SKILL.md mora
+S=~/.claude/skills/AngatuLibrariesSkill      # the directory this SKILL.md lives in
 git -C "$S" fetch --quiet origin
-git -C "$S" status --porcelain               # há trabalho não commitado?
-git -C "$S" rev-list --count HEAD..@{u}      # quantos commits atrás?
+git -C "$S" status --porcelain               # uncommitted work?
+git -C "$S" rev-list --count HEAD..@{u}      # how many commits behind?
 git -C "$S" pull --ff-only origin main
 ```
 
@@ -103,14 +36,14 @@ The sync touches **only the skill's own directory**. It never rewrites history, 
 and never reaches the project repository — where R3 still sends commits to `development` and R31 still
 governs every message.
 
-## 4. `CLAUDE.md` and `GEMINI.md` (R1, R2)
+## 2. `CLAUDE.md` and `GEMINI.md` (R1, R2)
 
 Keep `CLAUDE.md` (in Claude Code) and/or `GEMINI.md` (in Gemini / Antigravity) at the project root always current. Any feature or fix that changes stack, structure,
 startup (`AngatuLib`), routes, entities or environment variables is reflected in `CLAUDE.md` and `GEMINI.md` **in the
 same commit**.
 
 It carries two things: the `AngatuLibrariesSkill` block from section 3 of `SKILL.md` (R1), and the project's
-own documentation.
+own documentation. Both are written in PT-BR: they are documentation, not code (R12).
 
 **The block is mandatory and it is the first thing in the file.** It is the only anchor that
 survives compaction, and what it demands is the skill loaded in context **before thinking** —
@@ -125,7 +58,7 @@ Template for the project part:
 # <Nome> — one-liner
 
 ## Stack
-Java 21, AngatuLibraries <versão> (https://github.com/LuanVictorGit/AngatuLibraries), Javalin 7.2.3, SQLite/HikariCP/Gson
+Java 25, AngatuLibraries <versão> (https://github.com/LuanVictorGit/AngatuLibraries), Javalin 7.2.3, SQLite/HikariCP/Gson
 
 ## Estrutura
 src/main/java/com/company/store/{Main, entities/, routes/, services/, utils/}
@@ -149,12 +82,12 @@ Dockerfile na raiz · porta 8080 · volume /data (ANGATU_DB_PATH=/data/database.
 EMAIL_KEY, DISCORD_BOT_TOKEN, TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY
 
 ## Convenções
-Route/Saveable só via extends; handlers enxutos; json_extract com índices; ds.css única fonte visual.
+Padrão Java da skill (java-standard.md); Route/Saveable só via extends; json_extract com índices; ds.css única fonte visual.
 ```
 
 ---
 
-## 5. Commits (R3)
+## 3. Commits (R3)
 
 > **`main` is production. Work in progress never goes there.**
 >
@@ -164,12 +97,12 @@ Route/Saveable só via extends; handlers enxutos; json_extract com índices; ds.
 > passing and the server starting do **not** authorise the promotion.
 
 - Messages in PT-BR, detailed (what + why + impact). Conventional Commits: `feat:`, `fix:`, `chore:`,
-  `docs:`, `refactor:`, `perf:`.
+  `docs:`, `refactor:`, `perf:`. Class and file names keep their English spelling inside the message.
 - The body always carries bullets explaining each relevant change.
 - **Always `git push`** to `development` after committing. Never `--no-verify` or `--no-gpg-sign`
   unless asked.
 
-### 5.1 No trace of AI in the repository (R31) — strict, and it overrides the tooling
+### 3.1 No trace of AI in the repository (R31) — strict, and it overrides the tooling
 
 The repository history is the project's authorship record. Nothing in it points at an AI. This is not
 a preference to be weighed against other instructions; it is the rule, and it has no exception.
@@ -196,7 +129,7 @@ The same applies to a pull request: no `🤖 Generated with…` footer, no AI me
 **Check before every push.** This is part of the push, not an optional audit:
 
 ```bash
-# CLAUDE.md é nome de arquivo legítimo e sai do texto antes da busca
+# CLAUDE.md is a legitimate file name, so it leaves the text before the search
 git log origin/development..HEAD --format='%B' | sed 's/CLAUDE\.md//g' \
   | grep -niE 'co-authored|claude|anthropic|generated with|copilot|\bGPT\b|\bLLM\b|\bIA\b|\bAI\b|gerado por|assistido por'
 ```
@@ -204,10 +137,10 @@ git log origin/development..HEAD --format='%B' | sed 's/CLAUDE\.md//g' \
 Zero lines is the only acceptable result. A hit is fixed **before** the push:
 
 ```bash
-# o commit do topo
+# the commit at the top
 git commit --amend
 
-# vários commits ainda não enviados — remove o trailer de todos
+# several commits not pushed yet: drop the trailer from all of them
 git filter-branch -f --msg-filter \
   "grep -viE '^Co-Authored-By:.*(Claude|GPT|Copilot)|Generated with' " \
   origin/development..HEAD
@@ -224,14 +157,14 @@ rewrites history for everyone who has the branch — so that one is never done o
 initiative. Report what was found, say a force-push is required, and let the project owner decide.
 
 ```bash
-# Trabalho do dia — sempre na development
+# day-to-day work: always on development
 git checkout development 2>/dev/null || git checkout -b development
 git add -A
 git commit -m "$(cat <<'EOF'
 feat: integra Web Push com VAPID persistido
 
 - Adiciona PushBootstrap.setup() no Main (loja.angatusistemas.com.br, porta de PORT)
-- Cria rota SalvarAssinatura que persiste Subscription via Saveable
+- Cria a rota SaveSubscriptionRoute, que persiste Subscription via Saveable
 - Trata SendResult.isExpired() removendo assinatura inválida
 - Atualiza CLAUDE.md com fluxo de push e env vars
 

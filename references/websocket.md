@@ -15,12 +15,20 @@ does not use them.
 
 The consequence: a `WS` route that forgets to check the session **produces no error**. It serves
 whoever arrives, the console shows real data, and the defect only surfaces the day someone discovers
-the address. There is no second layer to catch it.
+the address. There is no second layer to catch it. This route compiles, starts and serves anyone, and
+nothing warns you:
 
 ```java
-// WRONG — and nothing warns you.
-public class ChatRoute extends Route {
-    public ChatRoute() { super("/ws/chat", ws -> ws.onMessage(ctx -> ctx.send(ctx.message()))); }
+/**
+ * Echoes chat messages back to the sender.
+ *
+ * @author Angatu Sistemas
+ */
+public final class ChatRoute extends Route {
+
+    public ChatRoute() {
+        super("/ws/chat", ws -> ws.onMessage(ctx -> ctx.send(ctx.message())));
+    }
 }
 ```
 
@@ -45,37 +53,41 @@ it just opens the door. Concentrate the door in one place and let each channel c
 
 ```java
 /**
- * Porta única dos canais ao vivo do projeto.
+ * The single door of the project's live channels: checks the session, then registers the connection.
  *
  * @author Angatu Sistemas
  */
 public final class LiveHub {
 
-    private static final int PING_SECONDS = 25;
     public static final int SESSION_EXPIRED = 4401;
+    private static final int PING_SECONDS = 25;
 
     private final Set<WsContext> viewers = ConcurrentHashMap.newKeySet();
 
-    /** @param ask o que fazer com mensagem da tela; null quando o canal só empurra. */
-    public void accept(WsConfig ws, BiConsumer<WsContext, String> ask) {
+    public void accept(WsConfig ws, BiConsumer<WsContext, String> onScreenMessage) {
         ws.onConnect(ctx -> {
-            if (Auth.accountOf(ctx) == null) {            // 1. confere
-                ctx.closeSession(SESSION_EXPIRED, "Sessao expirada");
+            if (Auth.accountOf(ctx) == null) {
+                ctx.closeSession(SESSION_EXPIRED, "session expired");
                 return;
             }
             ctx.enableAutomaticPings(PING_SECONDS, TimeUnit.SECONDS);
-            viewers.add(ctx);                              // 2. só então registra
+            viewers.add(ctx);
             send(ctx, event("ready"));
         });
         ws.onMessage(ctx -> {
-            if (ask == null || !viewers.contains(ctx)) return;   // não passou, não pede
-            ask.accept(ctx, ctx.message());
+            if (viewers.contains(ctx)) {
+                onScreenMessage.accept(ctx, ctx.message());
+            }
         });
         ws.onClose(viewers::remove);
         ws.onError(viewers::remove);
     }
 }
 ```
+
+Each channel holds its hub in a `private static final LiveHub` field — the viewer set is concurrent,
+because one route instance serves every connection (R40). A channel that only pushes passes
+`(ctx, message) -> { }` instead of `null`.
 
 **The order is the rule:** check, then register. Registering first delivers events to anyone who merely
 found the address. And a message from an unregistered connection is discarded before it becomes a

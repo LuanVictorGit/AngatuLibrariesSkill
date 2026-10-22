@@ -51,8 +51,8 @@ is served from the project, never from a CDN — the same reasoning as R14.
 ### `animation-range`
 
 ```css
-animation-range: entry 0% entry 100%;     /* só durante a entrada */
-animation-range: contain 0% contain 100%; /* enquanto totalmente visível */
+animation-range: entry 0% entry 100%;     /* only during the entry */
+animation-range: contain 0% contain 100%; /* while fully visible */
 animation-range: entry 25% exit 75%;
 ```
 
@@ -82,8 +82,8 @@ document.startViewTransition(() => updateContent());
 ```css
 @view-transition { navigation: auto; }
 
-.card        { view-transition-name: card-detail; }  /* origem */
-.detail-hero { view-transition-name: card-detail; }  /* destino */
+.card        { view-transition-name: card-detail; }  /* origin */
+.detail-hero { view-transition-name: card-detail; }  /* destination */
 
 .card { view-transition-class: card; }
 ::view-transition-group(*.card) { animation-duration: 350ms; }

@@ -1,20 +1,20 @@
 ---
 name: AngatuLibrariesSkill
-description: Angatu Sistemas engineering standard - Java 21 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and keep it loaded to think, not just to code; once a repo's CLAUDE.md names it, it governs every session there. Overrides - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist, even unasked; every project ships a Dockerfile for Coolify, not for dev; WebSocket routes check the session inside the route; the client is hostile. Always ask first - backend or static landing page, image compression, Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuLib, AngatuWhatsappSDK, WhatsApp, bot, Baileys, Saveable, Route, JavalinAPI, Coolify, Dockerfile, deploy, new project, route, entity, screen, landing page, Remotion, video, motion graphics, PHONK, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, obfuscate, WebSocket, session, cookie, login, OAuth, Google sign-in, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
+description: Angatu Sistemas engineering standard - Java 25 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and keep it loaded to think, not just to code; once a repo's CLAUDE.md names it, it governs every session there. Overrides - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist, even unasked; every project ships a Dockerfile for Coolify, not for dev; WebSocket routes check the session inside the route; the client is hostile. Always ask first - backend or static landing page, image compression, Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuWhatsappSDK, WhatsApp, bot, Baileys, Saveable, Route, JavalinAPI, Java, Javadoc, Coolify, Dockerfile, deploy, new project, entity, screen, landing page, Remotion, video, motion graphics, PHONK, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, obfuscate, WebSocket, session, cookie, login, OAuth, Google sign-in, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
 ---
 
 # AngatuLibraries — Angatu Sistemas engineering standard
 
 > Library: <https://github.com/LuanVictorGit/AngatuLibraries> · versions via JitPack <https://jitpack.io/#LuanVictorGit/AngatuLibraries>
-> Java 21+, Maven or Gradle · hosting is Coolify · frontend is vanilla HTML/CSS/JS with local Tailwind
+> Java 25 (LTS), Maven or Gradle · hosting is Coolify · frontend is vanilla HTML/CSS/JS with local Tailwind
 
 **This file is a dispatcher, not a manual.** It carries the rules that are never broken, the
 questions that are asked before any code is written, and a map to the reference that holds the
 detail. Open the reference for the task at hand instead of working from memory of this page.
 
-**Language.** This skill is written in English. What it produces is not: Javadoc and code
-comments, user-visible frontend text, commit messages and the project's own `CLAUDE.md` and `GEMINI.md` are all
-written in Brazilian Portuguese. See R12 and R16.
+**Language.** This skill is written in English, and so is all the code it produces — identifiers,
+comments, Javadoc, log lines (R12). Brazilian Portuguese is for what people read: the product's
+user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md` and `GEMINI.md`.
 
 **Method.** Before writing a file, read one or two existing files of the same kind (`entities/`,
 `routes/`, `public/*.html`) and match their style. Never reimplement what the library already does.
@@ -25,8 +25,9 @@ written in Brazilian Portuguese. See R12 and R16.
 
 | Task at hand | Read |
 |---|---|
-| **Session start: sync this skill with its repository (R1, mandatory, no asking)** | `references/conventions.md` (section 3.1) |
-| Starting a project, dependencies, `AngatuLib`, Javalin, rate limiting, request log | `references/backend-server.md` |
+| **Session start: sync this skill with its repository (R1, mandatory, no asking)** | `references/conventions.md` (section 1) |
+| **Any Java at all — writing, editing or reviewing a class** (Java 25, structure, performance, errors, Javadoc) | `references/java-standard.md` |
+| Starting a project, `pom.xml` for Java 25, `AngatuLib`, Javalin, rate limiting, request log | `references/backend-server.md` |
 | Entities, SQLite, queries, indexes, concurrency, porting an old project | `references/backend-persistence.md` |
 | HTTP routes, path params, page serving, assets, client IP | `references/backend-routes-html.md` |
 | Console, Gson, Env, Password, StringAPI, DataTime, Task, Request, e-mail, push, Discord, QR code | `references/backend-utilities.md` |
@@ -39,7 +40,7 @@ written in Brazilian Portuguese. See R12 and R16.
 | Filtering hostile networks: Spamhaus DROP | `references/ip-blocklist.md` |
 | Saving, resizing or compressing images | `references/images.md` |
 | Cache policy, service worker, asset hashing | `references/cache.md` |
-| Architecture, DRY, Javadoc, naming, `CLAUDE.md` / `GEMINI.md`, commits | `references/conventions.md` |
+| `CLAUDE.md` / `GEMINI.md`, commits, branches | `references/conventions.md` |
 | Removing dead code and orphan files, the first-use sweep | `references/dead-code.md` |
 | Running, testing, project checklist, known traps | `references/testing.md` |
 | Automated tests for routes and services, without packaging | `references/route-testing.md` |
@@ -85,7 +86,7 @@ rule says which one wins.
   summary alone: it is an index of titles, and the edge cases are decided by the full text.
   **And the copy in use is the current one:** every session begins by syncing this skill with its own
   repository (`git pull --ff-only` on `origin/main`), run **without asking** — a stale standard is
-  worse than none, and a fast-forward can never discard work. → `references/conventions.md` (section 3.1)
+  worse than none, and a fast-forward can never discard work. → `references/conventions.md` (section 1)
 - **R2 — `CLAUDE.md` and `GEMINI.md` stay current.** Any change to stack, structure, startup, routes, entities or
   environment variables updates `CLAUDE.md` and `GEMINI.md` in the same commit. → `references/conventions.md`
 - **R3 — Commits go to `development`.** `main` is production and receives only what the project
@@ -137,9 +138,22 @@ rule says which one wins.
 
 ### Code
 
-- **R11 — Clean architecture, always.** Extract utilities, no repetition, layers kept apart
-  (`entities` → `services` → `routes` → `utils`), Javadoc on every public API, short methods.
-  → `references/conventions.md`
+- **R38 — Java 25, stable features only.** Every project targets Java 25 (LTS) and uses records,
+  sealed types, pattern matching and virtual threads where they pay; no `--enable-preview` and no
+  incubator module without a justification the owner approved in `CLAUDE.md`. → `references/java-standard.md`
+- **R11 — One structure, nothing duplicated, no idle layer.** `entities` → `services` → `routes`, pure
+  `utils`, names fixed by role; the library first, then the project, then the JDK, and a new dependency
+  only with a reason. A rule written twice is extracted; an abstraction that does not pay is not written.
+- **R39 — Performance first, by design; micro-optimisation only with a measurement.** Indexed queries,
+  no N+1, no avoidable I/O or per-request allocation, nothing slow inside a transaction, concurrency
+  bounded — decided before the code is written, never at the cost of correctness.
+- **R40 — Production grade.** Refusals thrown as `HttpResponseException`, no `catch (Exception)` in a
+  route, nothing swallowed; every `AutoCloseable` closed; no mutable state in routes or services — one
+  instance serves every request; contracts explicit in the types (records, `Optional`, sealed outcomes).
+- **R12 — Code in English; Javadoc only on the class.** Identifiers, comments and log lines in English,
+  in every language the skill writes; Portuguese only in what the end user reads (R16). One Javadoc
+  block per Java file, on its top-level type, ending in `@author Angatu Sistemas` — none on methods,
+  fields, constructors or nested types. R11, R12 and R38–R40 → `references/java-standard.md`
 - **R32 — Dead code and orphan files are removed, and the proof comes first.** A project carries no
   junk. But in this stack a live endpoint has **zero static references** — `Route` and `Saveable` are
   found by `org.reflections`, and every HTML file under `/public` is a live URL — so deleting by grep
@@ -150,9 +164,6 @@ rule says which one wins.
   imports, commented-out code, and the agent's own `.bak` leftovers. One full sweep on first use,
   recorded in `CLAUDE.md`; after that, only what the task touches. JS and CSS stay under
   `frontend-build.md` — R32 does not loosen it. → `references/dead-code.md`
-- **R12 — Code in English, documentation in Portuguese.** Packages, classes, methods and variables
-  always in English; Javadoc and comments always PT-BR; every class carries
-  `@author Angatu Sistemas`. → `references/conventions.md`
 
 ### Frontend and design
 
@@ -335,8 +346,11 @@ R1 skill obrigatória neste repositório e sincronizada com o próprio repo a ca
 mesmo sem pedido · R5 só as dependências usadas ·
 R6 Jetty vem do Javalin · R7 só HTTP, o TLS é do Coolify · R8 Dockerfile obrigatório, sem
 `-Xmx` · R9 Saveable não guarda nada em RAM, registro disputado usa `mutate` · R10 Saveable e Route
-só por `extends` · R11 arquitetura limpa e DRY · R12 código em inglês, Javadoc em PT-BR,
-`@author Angatu Sistemas` · R13 o sistema de design vale para toda superfície renderizada,
+só por `extends` · R11 uma estrutura só, nada duplicado, nenhuma camada ociosa · R12 todo código em
+inglês (identificador, comentário, log), Javadoc só no cabeçalho da classe, com `@author Angatu Sistemas` ·
+R38 Java 25, só recurso estável, sem preview · R39 desempenho primeiro: consulta indexada, sem N+1,
+micro-otimização só com medição · R40 qualidade de produção: recusa lançada como `HttpResponseException`,
+nada engolido, recurso fechado, rota e service sem estado mutável · R13 o sistema de design vale para toda superfície renderizada,
 inclusive erro, e-mail e impressão · R14 Tailwind local, nunca CDN · R15 responsividade só em
 Tailwind · R16 português impecável no texto visível · R35 nada que a skill renderiza pode ter cara de gerado por IA — traço decorativo em rótulo, texto em gradiente, paleta roxo-rosa, blobs borrados e emoji como ícone ficam de fora · R17 rodapé da Angatu em página e e-mail ·
 R18 source legível, build protege, dist publica · R19 ofuscação restrita ao conteúdo de script (JS/lógica interna) — imagens, assets e URLs de mídia nunca são ofuscados ou renomeados para não prejudicar o SEO; tudo que atrapalhar o SEO o ofuscador ignora; `sw.js`, `*.html`, `emails/**`, assets de imagem e `vendor/**` mantêm nome e integridade · R20 ofuscação nunca vence funcionamento, segurança, acessibilidade ou SEO — tudo que prejudicar o SEO deve ser ignorado pelo ofuscador · R21 todo frontend é
@@ -387,8 +401,8 @@ Rewrite the block when a rule changes. Everything outside the markers belongs to
 ### 4.1 New project
 
 1. Answer G4 (Turnstile) and, if this is a landing page, G1 first.
-2. `references/backend-server.md` — `pom.xml` on the newest release, `Main` with
-   `new AngatuLib(host, port, true)`, proxy hops, rate limits.
+2. `references/backend-server.md` — `pom.xml` for Java 25 on the newest library commit, `Main` with
+   `new AngatuLib(host, port, true)`, proxy hops, rate limits. Every class follows `java-standard.md`.
 3. `references/deploy-coolify.md` — `Dockerfile`, `.dockerignore`, `GET /health`, `/data` volume.
 4. `references/backend-persistence.md` — entities, and indexes created at startup.
 5. `references/backend-routes-html.md` — routes and the page shell.
@@ -416,6 +430,7 @@ asked for it; R18 means the source is not rewritten to achieve that.
 - `references/design-audit.md`: run it even when the user said they liked it.
 - `references/testing.md`: the JAR runs, the routes answer, and the `dist` was tested too —
   minification defects never show up in the readable build.
+- `references/java-standard.md` section 8: every Java change passes the review checklist.
 - `CLAUDE.md` / `GEMINI.md` updated (R2), commit on `development` with no mention of AI (R3).
 - A video is not a frontend: its list is the final checklist of `references/video-review.md` (R37).
 

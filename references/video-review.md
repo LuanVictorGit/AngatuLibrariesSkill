@@ -221,7 +221,7 @@ Compiling does not finish it, and neither does the first render.
 
 ```bash
 chrome --headless=new --autoplay-policy=no-user-gesture-required --virtual-time-budget=6000 \
-  --dump-dom "file:///<pasta>/teste-decodificacao.html"      # a pagina toca o video e escreve erro/readyState/tempo
+  --dump-dom "file:///<folder>/decode-test.html"      # the page plays the video and writes error/readyState/time
 ```
 
 - **Records**: `docs/REVISAO.md` closed with the approval, `docs/LICENCAS.md` complete, the folder's

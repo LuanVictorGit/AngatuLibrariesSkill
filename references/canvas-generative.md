@@ -47,14 +47,14 @@ function handleResize(canvas, ctx, draw) {
 ```js
 let rafId, prevTime = 0;
 function loop(time) {
-  const dt = Math.min((time - prevTime) / 1000, 0.1);  // cap evita espiral após aba oculta
+  const dt = Math.min((time - prevTime) / 1000, 0.1);  // the cap avoids a spiral after a hidden tab
   prevTime = time;
   update(dt);
   render(ctx);
   rafId = requestAnimationFrame(loop);
 }
 rafId = requestAnimationFrame(loop);
-// parar: cancelAnimationFrame(rafId);
+// stop: cancelAnimationFrame(rafId);
 ```
 
 Stop the loop under `prefers-reduced-motion`, and when the canvas leaves the viewport — a background

@@ -55,24 +55,24 @@ A protection that blocks a phone number is not protection. It is a bug with a ra
 ```css
 .protected-media img,
 .protected-media video {
-  -webkit-user-drag: none;          /* impede arrastar para a área de trabalho */
+  -webkit-user-drag: none;          /* prevents dragging to the desktop */
   user-select: none;
-  -webkit-touch-callout: none;      /* impede o menu de salvar no iOS */
+  -webkit-touch-callout: none;      /* prevents the save menu on iOS */
 }
 ```
 
 ```js
 /**
- * Bloqueia o menu de contexto apenas sobre mídia de apresentação.
+ * Blocks the context menu only over presentational media.
  *
- * <p>O bloqueio é por elemento, nunca na página inteira: menu de contexto global
- * atrapalha quem usa o navegador de boa-fé e não impede ninguém de salvar a imagem
- * por outro caminho.</p>
+ * <p>The block is per element, never page-wide: a global context menu gets in the
+ * way of whoever uses the browser in good faith and does not stop anyone from saving
+ * the image another way.</p>
  */
 document.querySelectorAll('.protected-media img, .protected-media video')
   .forEach(function (el) {
-    el.addEventListener('contextmenu', function (evento) { evento.preventDefault(); });
-    el.addEventListener('dragstart',   function (evento) { evento.preventDefault(); });
+    el.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+    el.addEventListener('dragstart',   function (event) { event.preventDefault(); });
   });
 ```
 
@@ -135,17 +135,17 @@ the material wherever it ends up (`landing-motion.md`).
 ## 4. Text
 
 ```css
-/* Bloco de apresentação: título, texto institucional, descrição. */
+/* Presentational block: title, institutional text, description. */
 .no-copy,
 .hero h1, .hero p,
-.secao-institucional {
+.institutional-section {
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* O que continua selecionável, sempre. Esta regra vem depois e vence. */
+/* What stays selectable, always. This rule comes later and wins. */
 .selectable,
-address, .contato, .telefone, .email, .codigo, .pix, .pedido,
+address, .contact, .phone, .email, .code, .pix, .order,
 input, textarea, select, [contenteditable] {
   user-select: text !important;
   -webkit-user-select: text !important;
@@ -154,22 +154,22 @@ input, textarea, select, [contenteditable] {
 
 ```js
 /**
- * Impede a cópia de texto de apresentação.
+ * Prevents copying presentational text.
  *
- * <p>Só atua quando a seleção está inteiramente dentro de um bloco marcado como
- * não copiável. Seleção em campo de formulário, em dado de contato ou em código
- * que o visitante precisa copiar passa normalmente.</p>
+ * <p>It only acts when the selection is entirely inside a block marked as
+ * not copyable. A selection in a form field, in contact data or in a code
+ * the visitor needs to copy goes through normally.</p>
  */
-document.addEventListener('copy', function (evento) {
-  var selecao = document.getSelection();
-  if (!selecao || selecao.isCollapsed) return;
+document.addEventListener('copy', function (event) {
+  var selection = document.getSelection();
+  if (!selection || selection.isCollapsed) return;
 
-  var no = selecao.anchorNode;
-  var elemento = no && no.nodeType === 1 ? no : no && no.parentElement;
-  if (!elemento) return;
+  var node = selection.anchorNode;
+  var element = node && node.nodeType === 1 ? node : node && node.parentElement;
+  if (!element) return;
 
-  if (elemento.closest('.selectable, input, textarea, [contenteditable]')) return;
-  if (elemento.closest('.no-copy')) evento.preventDefault();
+  if (element.closest('.selectable, input, textarea, [contenteditable]')) return;
+  if (element.closest('.no-copy')) event.preventDefault();
 });
 ```
 

@@ -96,13 +96,13 @@ orphaned them:
 The proof for a `utils/`/`services/` class, in full:
 
 ```bash
-# 1. nenhuma referência como identificador, em qualquer fonte
+# 1. no reference as an identifier, in any source file
 grep -rn '\bMoneyFormatter\b' --include='*.java' src/ | grep -v 'utils/MoneyFormatter.java'
 
-# 2. nenhuma referência dentro de literal de string (reflexão por nome)
+# 2. no reference inside a string literal (reflection by name)
 grep -rn '"[^"]*MoneyFormatter' --include='*.java' --include='*.json' src/ .env* 2>/dev/null
 
-# 3. não é alcançada por reflexão
+# 3. not reached by reflection
 grep -n 'extends Route\|extends Saveable' src/main/java/**/MoneyFormatter.java
 ```
 

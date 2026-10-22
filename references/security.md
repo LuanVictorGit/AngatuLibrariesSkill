@@ -45,29 +45,31 @@ code. This one is about **rewriting your requests**, and it changes what you wri
   one by one, and ignore everything else.
 
 ```java
-// WRONG — the client decides what it is worth, and what it is
-var order = GsonAPI.get().fromJson(ctx.body(), Order.class);
+// WRONG — the client decides what the order is worth, and what it is
+Order order = GsonAPI.get().fromJson(ctx.body(), Order.class);
 order.save();
 
 // RIGHT — the client sends intent; the server decides the facts
-var body    = GsonAPI.get().fromJson(ctx.body(), JsonObject.class);
-var account = Guard.requireAccount(ctx);
-if (account == null) return;
-
-var product = Saveable.findById(Product.class, body.get("productId").getAsString());
-if (product == null || !account.getTenantId().equals(product.getTenantId())) {
-    ctx.status(StatusCode.NOT_FOUND.code()); return;   // 404, não 403
+Account account = Guard.requireAccount(ctx);
+Body body = JsonBody.read(ctx, Body.class);   // record Body(String productId, int quantity): nothing else is read
+if (body.productId() == null || body.quantity() < 1 || body.quantity() > MAX_QUANTITY) {
+    throw new BadRequestResponse("Escolha um produto e uma quantidade válida.");
 }
+Product product = Optional.ofNullable(Saveable.findById(Product.class, body.productId()))
+        .filter(found -> found.getTenantId().equals(account.getTenantId()))
+        .orElseThrow(NotFoundResponse::new);  // another account's product: 404, never 403
 
-int quantity = Math.max(1, body.get("quantity").getAsInt());
-var order = new Order();
-order.setTenantId(account.getTenantId());               // da sessão
+Order order = new Order();
+order.setTenantId(account.getTenantId());
 order.setProductId(product.getId());
-order.setQuantity(quantity);
-order.setUnitPrice(product.getPrice());                 // do banco
-order.setTotal(product.getPrice().multiply(quantity));  // calculado aqui
+order.setQuantity(body.quantity());
+order.setTotal(OrderService.total(product, body.quantity()));
 order.save();
 ```
+
+The tenant comes from the session and the total from the price stored in the database; the request
+carries neither. The complete flow — stock reserved in the same transaction, the outcome mapped to a
+status — is `java-standard.md` 7.
 
 - **A route with no gate raises no error.** It serves whoever arrives. That is true of HTTP routes,
   and more dangerous for WebSocket, where not even the library's filters run (R24, `websocket.md`).
@@ -77,11 +79,11 @@ order.save();
 Three greps that find most of it:
 
 ```bash
-# valor vindo do corpo da requisição
+# a value read from the request body (the Portuguese names catch legacy code)
 grep -rnE '"(price|preco|valor|total|amount|desconto|discount)"' --include="*.java" src/main/java
-# corpo inteiro virando entidade
+# the whole body parsed into a class: fine for a request record, a violation for an entity
 grep -rnE 'fromJson\(ctx\.body\(\),\s*[A-Z][A-Za-z]*\.class' --include="*.java" src/main/java
-# identificador usado sem conferir o dono
+# an identifier used without checking who owns it
 grep -rn 'pathParam("id")' --include="*.java" src/main/java
 ```
 
@@ -93,12 +95,12 @@ meaning rather than display state.
 ## 2. The session cookie (R23)
 
 ```java
-Cookie cookie = new Cookie(NOME, token);
+Cookie cookie = new Cookie(Guard.COOKIE_NAME, token);
 cookie.setPath("/");
-cookie.setHttpOnly(true);                  // JavaScript não lê: contém o XSS
-cookie.setSameSite(SameSite.LAX);          // contém o CSRF vindo de outros sites
-cookie.setSecure(!ehRequisicaoLocal(ctx)); // só HTTPS em produção; fixo em true quebra o login local
-cookie.setMaxAge((int) (VALIDADE_MS / 1000));
+cookie.setHttpOnly(true);                                  // unreadable by scripts: limits an XSS
+cookie.setSameSite(SameSite.LAX);                          // not sent cross-site: stops the common CSRF
+cookie.setSecure(!AngatuLib.getInstance().isLocalhost());  // a fixed true breaks the local login
+cookie.setMaxAge((int) SESSION_TTL.toSeconds());
 ctx.cookie(cookie);
 ```
 
@@ -114,15 +116,39 @@ ctx.cookie(cookie);
 
 ## 3. Token in the header, never in the URL
 
-Accept `Authorization: Bearer <token>` as well, for clients that do not send cookies:
+Accept `Authorization: Bearer <token>` as well, for clients that do not send cookies. Both live in the
+project's single gate, which every HTTP route calls first:
 
 ```java
-String cookie = ctx.cookie(NOME);
-if (cookie != null && !cookie.isBlank()) return cookie;
-String header = ctx.header("Authorization");
-if (header != null && header.startsWith("Bearer ")) return header.substring(7).trim();
-return null;
+/**
+ * The session gate of the HTTP routes: resolves the signed-in account or refuses with 401.
+ *
+ * @author Angatu Sistemas
+ */
+public final class Guard {
+
+    public static final String COOKIE_NAME = "session";
+
+    private Guard() {
+    }
+
+    public static Account requireAccount(Context ctx) {
+        return SessionService.findAccount(token(ctx)).orElseThrow(UnauthorizedResponse::new);
+    }
+
+    private static String token(Context ctx) {
+        String cookie = ctx.cookie(COOKIE_NAME);
+        if (cookie != null && !cookie.isBlank()) {
+            return cookie;
+        }
+        String header = ctx.header("Authorization");
+        return header != null && header.startsWith("Bearer ") ? header.substring(7).strip() : null;
+    }
+}
 ```
+
+`SessionService.findAccount` returns `Optional<Account>`: empty for a missing token, an unknown one or an
+expired session (section 4). The route never sees a `null` and never writes the refusal itself.
 
 **Never accept a token as a query parameter on an HTTP route.** A URL leaks into browser history,
 server logs, proxy logs and the `Referer` header when someone clicks an external link. The library's
@@ -149,7 +175,8 @@ no exception to make — check the cookie as you would anywhere else (`websocket
 
 ## 5. Passwords
 
-- `Password.criptography` to store, `Password.checkCriptography` to verify. Never store a reversible
+- `Password.hash` to store a new password, `Password.checkCriptography` to verify it. `criptography`
+  only re-saves a value that may already be a hash (`backend-utilities.md`). Never store a reversible
   password, never log one.
 - Initial passwords are random, with a **forced change** on first access.
 
@@ -164,8 +191,8 @@ no exception to make — check the cookie as you would anywhere else (`websocket
 
 ## 6. Authorization and account isolation
 
-- Centralise the check in a gate (`Guard.requireX(ctx)`) that returns `null` after already writing
-  the error — the route only has to return.
+- Centralise the check in one gate: `Guard.requireAccount(ctx)` (section 3) returns the account or
+  throws `UnauthorizedResponse`, which the library answers as a plain 401.
 - In a multi-tenant system, **filter by tenant on every query**. Never trust an identifier from the
   request without verifying which account owns it.
 - Denying access to another account's resource answers **404**, not 403.

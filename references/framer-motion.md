@@ -137,9 +137,9 @@ Vanilla:
 let x = 0;
 function onPointerMove(e) {
   x = e.clientX;
-  el.style.setProperty('--x', x + 'px');   // direto no DOM, sem estado
+  el.style.setProperty('--x', x + 'px');   // straight to the DOM, no state
 }
-// mola: use rAF + lerp, nunca setState dentro do laço
+// spring: use rAF + lerp, never setState inside the loop
 ```
 
 Scroll tracking in vanilla is `animation-timeline: scroll()` / `view()` — zero JavaScript

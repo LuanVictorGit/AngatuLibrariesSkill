@@ -54,14 +54,37 @@ The credential is always the **AngatuCRM token** with the `ai:chat` permission, 
 `Authorization: Bearer` or `x-api-key`. **Never in a query string.**
 
 ```java
-// Native — POST /api/v1/ai/chat
-JsonObject body = new JsonObject();
-body.addProperty("model", "openai/gpt-4o-mini");   // id do OpenRouter, liberado no CRM
-body.add("messages", messages);                     // [{role, content}]
-body.addProperty("max_tokens", 400);
-// Authorization: Bearer <token do CRM>
-// Resposta: content, finish_reason, usage{prompt_tokens, completion_tokens, cost}, latency_ms
+/**
+ * The native AngatuCRM chat contract, POST /api/v1/ai/chat with the CRM token as a Bearer credential.
+ *
+ * @author Angatu Sistemas
+ */
+public final class CrmChat {
+
+    private CrmChat() {
+    }
+
+    public record ChatRequest(String model, List<ChatMessage> messages, @SerializedName("max_tokens") int maxTokens) {
+    }
+
+    public record ChatMessage(String role, String content) {
+    }
+
+    public record ChatResponse(String content, @SerializedName("finish_reason") String finishReason, Usage usage,
+            @SerializedName("latency_ms") long latencyMs) {
+    }
+
+    public record Usage(@SerializedName("prompt_tokens") int promptTokens,
+            @SerializedName("completion_tokens") int completionTokens, BigDecimal cost) {
+    }
+}
 ```
+
+Send `GsonAPI.get().toJson(new ChatRequest("openai/gpt-4o-mini", messages, 400))` through `Request` —
+the model is an OpenRouter id enabled on the CRM — and read the answer with
+`GsonAPI.get().fromJson(response.getBody(), ChatResponse.class)`. `@SerializedName` keeps the wire's
+snake_case while the Java names stay camelCase (R12); confirm the fields against the CRM page before
+coding, as section 1 says.
 
 For **Claude Code**, two variables and it starts spending against the CRM ceiling:
 

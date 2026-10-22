@@ -73,7 +73,7 @@ itself, wrong for a project that has to build on Coolify from the repository.
 
 ## 3. What the runtime needs
 
-- **Java 17+** to consume it; this standard is on Java 21, so that is satisfied.
+- **Java 17+** to consume it; this standard is on Java 25, so that is satisfied.
 - **Node.js 20+ at runtime**, for the bridge. The SDK finds one already installed or downloads a
   managed one (SHA-256 checked against `nodejs.org`) on first run, into a cache directory.
 - Nothing extra at **build** time — the bridge ships compiled inside the jar.
@@ -108,14 +108,16 @@ the database lives.
 
 ```java
 WhatsAppClient client = WhatsAppClient.builder()
-        .instanceId("avisos")
-        .sessionDirectory("/data/whatsapp/avisos")
+        .instanceId("notices")
+        .sessionDirectory("/data/whatsapp/notices")
         .build();
 
-client.addQrCodeListener(qr -> /* mostrar a quem vai parear */);
-client.addConnectionStateListener((state, cause, detail) -> /* registrar */);
+client.addQrCodeListener(qr -> /* show it to whoever pairs the phone */);
+client.addConnectionStateListener((state, cause, detail) -> /* log the transition */);
 client.addMessageListener(message -> {
-    if (!message.isFromMe()) client.sendText(message.chatId(), "Recebi: " + message.text());
+    if (!message.isFromMe()) {
+        client.sendText(message.chatId(), "Recebi: " + message.text());
+    }
 });
 
 Runtime.getRuntime().addShutdownHook(new Thread(client::close));
@@ -171,7 +173,8 @@ gets the number banned at any cadence. Any change to pacing is the owner's decis
   templates are plain JUnit. Nothing in the automated suite pairs a number, spawns a bridge or
   reaches WhatsApp; a suite that needs a phone is a suite nobody runs.
   → `references/route-testing.md`
-- **R12** — Javadoc in PT-BR on every class you write around the SDK, `@author Angatu Sistemas`.
+- **R12** — the code around the SDK is English, with one Javadoc block per class ending in
+  `@author Angatu Sistemas`; the messages the bot sends are PT-BR (R16).
 - **R26 is untouched.** Payments and AI still go through AngatuCRM. This rule is about WhatsApp
   transport and nothing else — a bot that answers with a model still calls `ai:chat` on the CRM.
   → `references/crm-payments-ai.md`

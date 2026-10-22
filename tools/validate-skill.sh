@@ -78,8 +78,10 @@ done
 # ---------------------------------------------------------------------------
 secao 'SKILL.md'
 
-# O TETO SUBIU DE 400 PARA 430 QUANDO R36 ENTROU, E DE 430 PARA 450 QUANDO O
-# MODULO DE VIDEO ENTROU (R37 E G5) -- E O MOTIVO IMPORTA.
+# O TETO SUBIU DE 400 PARA 430 QUANDO R36 ENTROU, DE 430 PARA 450 QUANDO O
+# MODULO DE VIDEO ENTROU (R37 E G5), E DE 450 PARA 460 QUANDO O PADRAO JAVA
+# ENTROU (R38, R39 E R40: tres regras curtas aqui, java-standard.md inteiro
+# em references/) -- E O MOTIVO IMPORTA.
 # Ele nao mede tamanho por si: mede se o SKILL.md continua despachante. Uma
 # regra nova custa poucas linhas aqui e o detalhe dela desce para references/ --
 # foi o que R36 fez, com whatsapp.md levando coordenadas, API e armadilhas, e o
@@ -88,10 +90,10 @@ secao 'SKILL.md'
 # tem de barrar e conteudo que deveria estar num reference voltando para ca; se
 # subir de novo, a pergunta antes de mexer no numero e essa.
 LINHAS=$(wc -l < SKILL.md | tr -d ' ')
-if [ "$LINHAS" -gt 450 ]; then
-  falha "SKILL.md com $LINHAS linhas (teto 450) — conteudo deve descer para references/"
+if [ "$LINHAS" -gt 460 ]; then
+  falha "SKILL.md com $LINHAS linhas (teto 460) — conteudo deve descer para references/"
 else
-  ok "SKILL.md com $LINHAS linhas (teto 450)"
+  ok "SKILL.md com $LINHAS linhas (teto 460)"
 fi
 
 if grep -q 'AngatuLibrariesSkill:begin' SKILL.md && grep -q 'AngatuLibrariesSkill:end' SKILL.md; then
@@ -680,6 +682,185 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 7c. o padrao Java (R11, R12, R38, R39, R40)
+#
+# O padrao antigo pedia Javadoc em todo metodo publico e comentario em PT-BR, e
+# os proprios exemplos da skill ensinavam isso. O agente copia o exemplo, nao o
+# texto da regra -- entao o que se cobra aqui e o exemplo: um Javadoc por tipo de
+# topo, so no cabecalho, com @author Angatu Sistemas, e nenhum portugues em
+# comentario, Javadoc ou log de codigo Java. O texto do usuario final continua
+# livre: literal de string nao entra na conta.
+# ---------------------------------------------------------------------------
+secao 'padrao Java (R11, R12, R38, R39, R40)'
+
+JS_=references/java-standard.md
+exige SKILL.md 'java-standard\.md' 'SKILL.md roteia o codigo Java para java-standard.md' \
+               'SKILL.md sem rota para java-standard.md -- o padrao Java fica sem dono'
+for REGRA in R38 R39 R40; do
+  exige SKILL.md "^- \\*\\*$REGRA" "$REGRA definida no SKILL.md" "$REGRA ausente do SKILL.md"
+done
+exige SKILL.md 'Javadoc só no cabeçalho' 'bloco do CLAUDE.md resume o Javadoc so no cabecalho' \
+               'bloco do CLAUDE.md ainda descreve o Javadoc antigo'
+case "$DESCRICAO" in
+  *"Java 25"*) ok 'description anuncia Java 25' ;;
+  *)           falha 'description sem Java 25' ;;
+esac
+exige "$JS_" 'HttpResponseException' 'java-standard.md recusa por HttpResponseException' \
+             'java-standard.md sem a recusa por HttpResponseException -- volta o try/catch em toda rota'
+exige "$JS_" 'enable-preview' 'java-standard.md proibe recurso preview' \
+             'java-standard.md sem a proibicao de preview'
+exige "$JS_" 'annotationProcessorPaths' 'java-standard.md avisa do processador do Lombok no JDK 23+' \
+             'java-standard.md sem annotationProcessorPaths -- Lombok para de compilar'
+exige "$JS_" 'mapConcurrent' 'java-standard.md limita a concorrencia com virtual threads' \
+             'java-standard.md sem concorrencia limitada'
+exige "$JS_" 'one instance|instantiated once' 'java-standard.md avisa que a rota e compartilhada' \
+             'java-standard.md nao avisa que uma instancia de Route atende todas as requisicoes'
+exige references/backend-server.md 'Enable-Native-Access' 'backend-server.md libera o acesso nativo do sqlite-jdbc' \
+             'backend-server.md sem Enable-Native-Access -- o Java 24+ avisa a cada partida'
+exige references/deploy-coolify.md 'UseCompactObjectHeaders' 'deploy-coolify.md liga os cabecalhos compactos' \
+             'deploy-coolify.md sem UseCompactObjectHeaders'
+exige references/deploy-coolify.md 'UnsupportedClassVersionError' 'deploy-coolify.md cobre o JDK 21 da imagem do Playwright' \
+             'deploy-coolify.md sem o JDK 25 na imagem do Playwright -- o conteiner nao sobe'
+
+ANTIGO=$(grep -rnE 'eclipse-temurin[:-](1[0-9]|2[0-4])([^0-9]|$)|<maven\.compiler\.(release|source|target)>(1[0-9]|2[0-4])<' \
+           SKILL.md GEMINI.md references/ 2>/dev/null || true)
+if [ -n "$ANTIGO" ]; then
+  falha 'alvo de compilacao ou imagem anterior ao Java 25'
+  printf '%s\n' "$ANTIGO" | sed 's/^/        /'
+else
+  ok 'imagens e alvo de compilacao no Java 25'
+fi
+
+PREVIEW=$(grep -rln -- '--enable-preview' SKILL.md references/ 2>/dev/null \
+            | grep -vE '(SKILL|java-standard)\.md$' || true)
+if [ -n "$PREVIEW" ]; then
+  falha "--enable-preview fora da regra que o proibe: $PREVIEW"
+else
+  ok '--enable-preview so aparece para ser proibido'
+fi
+
+REGRA_VELHA=$(grep -rniE 'Javadoc (in|em) (PT-BR|Portuguese|portugu)|comments (always |in )?(PT-BR|Portuguese)|Javadoc on every public|every public class and method carries Javadoc' \
+                SKILL.md GEMINI.md references/ 2>/dev/null || true)
+if [ -n "$REGRA_VELHA" ]; then
+  falha 'regra antiga de Javadoc ou comentario em portugues sobrando'
+  printf '%s\n' "$REGRA_VELHA" | sed 's/^/        /'
+else
+  ok 'nenhum resto da regra antiga de Javadoc em PT-BR'
+fi
+
+if [ -n "$PYTHON" ]; then
+  if JAVA_PROBLEMAS=$("$PYTHON" - . <<'PY'
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+files = [root / "SKILL.md"] + sorted((root / "references").glob("*.md"))
+TYPE_DECL = re.compile(r"^(?:(?:public|protected|private|abstract|final|sealed|non-sealed|static|strictfp)\s+)*"
+                       r"(?:class|interface|enum|record|@interface)\s+[A-Z]\w*")
+ANNOTATION = re.compile(r"^@\w+(?:\(.*\))?\s*$")
+PORTUGUESE = re.compile(r"[áàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ]"
+                        r"|\b(?:nao|nunca|sempre|quando|isso|tambem|entao|porque|voce|aqui|depois|pedidos?"
+                        r"|usuarios?|servidor|iniciado|sucesso|erro|falha|senha|arquivo|invalid[oa]"
+                        r"|obrigatori[oa]|nenhum|nenhuma|ausente|recusando)\b", re.I)
+LOG_CALL = re.compile(r'Console\.(?:log|info|warn|error|debug)\(\s*"((?:[^"\\]|\\.)*)"')
+QUOTED = re.compile(r'"[^"\n]*"')
+
+
+def tokens(src):
+    found, i, n, line, line_start = [], 0, len(src), 1, 0
+    while i < n:
+        if src[i] == "\n":
+            line, line_start, i = line + 1, i + 1, i + 1
+        elif src.startswith("//", i):
+            end = src.find("\n", i)
+            end = n if end < 0 else end
+            found.append(("line", line, i - line_start, src[i + 2:end]))
+            i = end
+        elif src.startswith("/*", i) or src.startswith('"""', i):
+            block = src.startswith("/*", i)
+            end = src.find("*/" if block else '"""', i + 2 if block else i + 3)
+            end = n if end < 0 else end + (2 if block else 3)
+            kind = ("doc" if src.startswith("/**", i) and not src.startswith("/**/", i) else "block") if block else "string"
+            found.append((kind, line, i - line_start, src[i:end]))
+            if src.count("\n", i, end):
+                line += src.count("\n", i, end)
+                line_start = src.rfind("\n", i, end) + 1
+            i = end
+        elif src[i] in "\"'":
+            quote, end = src[i], i + 1
+            while end < n and src[end] not in (quote, "\n"):
+                end += 2 if src[end] == "\\" else 1
+            i = end + 1
+        else:
+            i += 1
+    return found
+
+
+problems = []
+for path in files:
+    rel = path.relative_to(root).as_posix()
+    lines = path.read_text(encoding="utf-8").splitlines()
+    blocks, inside = [], False
+    for number, text in enumerate(lines, 1):
+        if not inside and re.match(r"^\s*```java\s*$", text):
+            inside, body, first = True, [], number + 1
+        elif inside and re.match(r"^\s*```\s*$", text):
+            inside = False
+            blocks.append((first, body))
+        elif inside:
+            body.append(text)
+    for first, body in blocks:
+        src = "\n".join(body)
+        found = tokens(src)
+        where = lambda line: f"{rel}:{first + line - 1}"
+        header_ends = set()
+        for kind, line, column, text in found:
+            if kind == "doc":
+                end = line + text.count("\n")
+                if column != 0:
+                    problems.append(f"{where(line)} Javadoc fora do cabecalho da classe")
+                    continue
+                header_ends.add(end)
+                after = end + 1
+                while after <= len(body) and ANNOTATION.match(body[after - 1]):
+                    after += 1
+                if after > len(body) or not TYPE_DECL.match(body[after - 1]):
+                    problems.append(f"{where(line)} Javadoc que nao antecede um tipo de topo")
+                if "@author Angatu Sistemas" not in text:
+                    problems.append(f"{where(line)} Javadoc sem @author Angatu Sistemas")
+                tags = set(re.findall(r"(?m)^\s*\*?\s*(@\w+)", text)) - {"@author"}
+                if tags:
+                    problems.append(f"{where(line)} Javadoc com tag alem de @author: {', '.join(sorted(tags))}")
+                if PORTUGUESE.search(QUOTED.sub("", text)):
+                    problems.append(f"{where(line)} Javadoc em portugues")
+            elif kind in ("line", "block") and PORTUGUESE.search(QUOTED.sub("", text)):
+                problems.append(f"{where(line)} comentario em portugues")
+        for number, text in enumerate(body, 1):
+            if TYPE_DECL.match(text):
+                above = number - 1
+                while above >= 1 and ANNOTATION.match(body[above - 1]):
+                    above -= 1
+                if above not in header_ends:
+                    problems.append(f"{where(number)} tipo de topo sem Javadoc de cabecalho")
+        for match in LOG_CALL.finditer(src):
+            if PORTUGUESE.search(match.group(1)):
+                problems.append(f"{where(src.count(chr(10), 0, match.start()) + 1)} log em portugues")
+
+print("\n".join(problems))
+sys.exit(1 if problems else 0)
+PY
+  ); then
+    ok 'exemplos Java: um Javadoc por tipo de topo, so no cabecalho, sem portugues em comentario ou log'
+  else
+    falha 'exemplo Java fora do padrao de R12'
+    printf '%s\n' "$JAVA_PROBLEMAS" | sed 's/^/        /'
+  fi
+else
+  aviso 'python ausente: exemplos Java nao conferidos'
+fi
+
+# ---------------------------------------------------------------------------
 # 8. o historico deste repositorio nao aponta para uma IA (R31)
 #
 # A verificacao vive aqui, e nao so no texto da regra, porque foi aqui que a
@@ -712,7 +893,7 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
 
   if [ "$LOCAIS" -gt 0 ]; then
     falha "$LOCAIS commit(s) nao enviado(s) com vestigio de IA — reescrever antes do push"
-    printf '        ver conventions.md secao 5.1\n'
+    printf '        ver conventions.md secao 3.1\n'
   else
     ok 'nenhum commit pendente com vestigio de IA'
   fi

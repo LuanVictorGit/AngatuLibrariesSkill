@@ -31,13 +31,11 @@ every screen that follows, and the agent does not reopen the question for each n
 ## 2. How to implement it — the library already has this
 
 ```java
-// redimensiona mantendo proporção e grava com qualidade controlada
 BufferedImage original = ImageAPI.bytesToImage(uploadBytes);
 BufferedImage resized  = ImageAPI.resizeMaintainAspect(original, 1600, 1600);
 ImageAPI.saveImageWithQuality(resized, "/data/uploads/" + id + ".jpg", 0.8f);
 
-// miniatura para listagem
-ImageAPI.createThumbnail(origem, destino, 400, 400);
+ImageAPI.createThumbnail(source, thumbnailTarget, 400, 400);
 ```
 
 > **Careful:** `saveImageWithQuality` always writes **JPEG**, whatever the file extension says — use

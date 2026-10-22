@@ -40,23 +40,23 @@ HTML, CSS and JS, and receives a `<video>` tag. React lives in the studio, never
 ### 1.1 The mandatory cycle
 
 ```
-criar o estúdio fora do repositório (~/Videos/Angatu/<cliente>-hero/)  →  compor as cenas
-        →  renderizar desktop + mobile + pôster  →  copiar os arquivos para src/main/resources/public/assets/
-        →  validar na página, com o servidor rodando (R21, R29)
-        →  apagar SÓ o node_modules do estúdio: código e docs ficam para a próxima revisão
-        →  registrar no CLAUDE.md da aplicação onde o estúdio está, o que o vídeo comunica,
-           proporções, duração e material usado
+create the studio outside the repository (~/Videos/Angatu/<cliente>-hero/)  →  compose the scenes
+        →  render desktop + mobile + poster  →  copy the files to src/main/resources/public/assets/
+        →  validate on the page, with the server running (R21, R29)
+        →  delete ONLY the studio's node_modules: code and docs stay for the next revision
+        →  record in the application's CLAUDE.md where the studio is, what the video communicates,
+           aspect ratios, duration and material used
 ```
 
 The `CLAUDE.md` record is what makes the video **findable and revisable** later. Without it, months
 later nobody knows what that file showed, where the photos came from, or where its source is.
 
 ```bash
-# fora do repositório da aplicação — nunca dentro de src/
+# outside the application repository — never inside src/
 cd ~/Videos/Angatu && npx --yes create-video@latest --yes --blank --no-tailwind <cliente>-hero
-# ... compor e renderizar com as ferramentas de video-motion.md ...
-cp out/hero-*.mp4 out/hero-poster.jpg <projeto>/src/main/resources/public/assets/
-rm -rf ~/Videos/Angatu/<cliente>-hero/node_modules      # o estúdio fica; o peso vai embora
+# ... compose and render with the tools from video-motion.md ...
+cp out/hero-*.mp4 out/hero-poster.jpg <project>/src/main/resources/public/assets/
+rm -rf ~/Videos/Angatu/<cliente>-hero/node_modules      # the studio stays; the weight goes away
 ```
 
 Never inside the application's repository: Remotion in the application's `package.json` drags React
@@ -83,7 +83,7 @@ be the **only** carrier of any information. Everything the video communicates al
 page. The video reinforces; the text informs.
 
 ```html
-<!-- Hero: vídeo tipo GIF, mudo, com pôster e alternativa textual; a fonte é escolhida por script -->
+<!-- Hero: GIF-like video, muted, with a poster and a text alternative; the source is chosen by a script -->
 <div class="relative overflow-hidden rounded-2xl">
   <video
     class="hero-video h-full w-full object-cover"
@@ -97,29 +97,29 @@ page. The video reinforces; the text informs.
 ```
 
 ```js
-// Escolhe a fonte do vídeo do hero: formato pela largura, WebM só onde o navegador decodifica,
-// nada baixado com movimento reduzido, e o MP4 de reserva se o WebM falhar.
-// Caminhos literais e inteiros: o renome de arquivos do build (R19, frontend-build.md) só troca
-// o que consegue provar, e caminho montado em tempo de execução congela a pasta inteira.
-const FONTES = {
+// Picks the hero video source: format by width, WebM only where the browser decodes it,
+// nothing downloaded under reduced motion, and the MP4 as a fallback if the WebM fails.
+// Literal, whole paths: the build's file renaming (R19, frontend-build.md) only swaps
+// what it can prove, and a path assembled at runtime freezes the whole folder.
+const SOURCES = {
   mobile: { webm: '/assets/hero-mobile.webm', mp4: '/assets/hero-mobile.mp4' },
   desktop: { webm: '/assets/hero-desktop.webm', mp4: '/assets/hero-desktop.mp4' },
 };
 const video = document.querySelector('.hero-video');
-const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)');
-const estreito = window.matchMedia('(max-width: 767px)');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const narrow = window.matchMedia('(max-width: 767px)');
 
-function carregar() {
-  if (!video || reduzir.matches) return; // o pôster fica e nenhum byte de vídeo é baixado
-  const par = estreito.matches ? FONTES.mobile : FONTES.desktop;
-  const webm = par.webm && video.canPlayType('video/webm; codecs="vp9"') !== '';
-  video.onerror = webm ? () => { video.onerror = null; video.src = par.mp4; video.play().catch(() => {}); } : null;
-  video.src = webm ? par.webm : par.mp4;
-  video.play().catch(() => {}); // autoplay recusado: o pôster continua na tela
+function loadSource() {
+  if (!video || reduceMotion.matches) return; // the poster stays and no video byte is downloaded
+  const pair = narrow.matches ? SOURCES.mobile : SOURCES.desktop;
+  const webm = pair.webm && video.canPlayType('video/webm; codecs="vp9"') !== '';
+  video.onerror = webm ? () => { video.onerror = null; video.src = pair.mp4; video.play().catch(() => {}); } : null;
+  video.src = webm ? pair.webm : pair.mp4;
+  video.play().catch(() => {}); // autoplay refused: the poster stays on screen
 }
 
-carregar();
-estreito.addEventListener('change', carregar); // girou o celular ou mudou a janela: troca a fonte
+loadSource();
+narrow.addEventListener('change', loadSource); // the phone was rotated or the window changed: swap the source
 ```
 
 **Why a script and not `<source media>`** — tested in Chrome 153 on 2026-09-22: the browser honours the
@@ -150,7 +150,7 @@ Use separate compositions **when the result is significantly better** — not fo
 chart usually survives the crop; a video with people, machines or on-screen text almost never does.
 
 ```tsx
-// src/Root.tsx — cada proporção é uma composition própria, parametrizada
+// src/Root.tsx — each aspect ratio is its own composition, parameterised
 export const RemotionRoot: React.FC = () => (
   <>
     <Composition
@@ -249,7 +249,7 @@ it, never over text. If no: the video carries only the client's mark. Record the
 > the "Desenvolvido por Angatu Sistemas" credit stays in the page footer, as in every project.
 
 ```tsx
-// Marca d'água em área segura, com reposicionamento por cena
+// Watermark in a safe area, repositioned per scene
 const Watermark: React.FC<{corner: 'br' | 'bl'; safeArea: number; scale: number}> = ({corner, safeArea, scale}) => (
   <AbsoluteFill style={{padding: safeArea, alignItems: corner === 'br' ? 'flex-end' : 'flex-start', justifyContent: 'flex-end'}}>
     <Img src={staticFile('brand/logo-light.png')} style={{width: 220 * scale, opacity: 0.7}} />
@@ -265,13 +265,13 @@ The render configuration is the one of `video-motion.md`, section 1 — PNG fram
 `remotion.config.ts`, so every command below inherits it.
 
 ```bash
-# desktop — H.264 para compatibilidade universal, sem faixa de áudio
+# desktop — H.264 for universal compatibility, no audio track
 npx remotion render src/index.ts HeroDesktop out/hero-desktop.mp4 --codec=h264 --crf=23 --muted
-# mobile — composition própria, não recorte do desktop
+# mobile — its own composition, not a crop of the desktop
 npx remotion render src/index.ts HeroMobile  out/hero-mobile.mp4  --codec=h264 --crf=24 --muted
-# variante WebM/VP9 — só entra se sair pelo menos 15% menor que o MP4 da mesma composition
+# WebM/VP9 variant — only used if it comes out at least 15% smaller than the MP4 of the same composition
 npx remotion render src/index.ts HeroDesktop out/hero-desktop.webm --codec=vp9 --crf=32 --muted
-# pôster: o quadro vem do dado (POSTER_FRAME em src/data/timeline.ts), nunca digitado
+# poster: the frame comes from data (POSTER_FRAME in src/data/timeline.ts), never typed
 POSTER=$(node -e "import('./src/data/timeline.ts').then((m) => console.log(m.POSTER_FRAME))")
 npx remotion still  src/index.ts HeroDesktop out/hero-poster.jpg --frame="$POSTER"
 ```
@@ -339,16 +339,16 @@ its own surface, a brand-coloured veil (70–85%) or a darkening gradient — an
 body text. If the text is borderline, the background gives way, not the text.
 
 ```css
-/* Fundo temático + véu que garante contraste, sem custo de repaint no scroll */
+/* Themed background + veil that guarantees contrast, with no repaint cost on scroll */
 body {
   background-color: var(--surface);
-  background-image: url('/assets/bg-<segmento>.svg');
+  background-image: url('/assets/bg-<sector>.svg');
   background-size: cover;
-  background-attachment: fixed;         /* trocado por scroll no mobile, ver abaixo */
+  background-attachment: fixed;         /* swapped for scroll on mobile, see below */
   background-position: center top;
 }
 @media (max-width: 767px) {
-  body { background-attachment: scroll; background-image: url('/assets/bg-<segmento>-mobile.svg'); }
+  body { background-attachment: scroll; background-image: url('/assets/bg-<sector>-mobile.svg'); }
 }
 @media (prefers-reduced-motion: reduce) { body { background-attachment: scroll; } }
 .section-content { background: color-mix(in oklch, var(--surface) 82%, transparent); }
@@ -415,15 +415,15 @@ In the studio, kept outside the application:
 ```
 ~/Videos/Angatu/<cliente>-hero/
   src/
-    Root.tsx            # compositions (uma por proporção)
-    scenes/             # uma cena por arquivo, parametrizada por props
-    components/         # marca d'água, títulos, cartelas, transições
-    data/               # timeline.ts (POSTER_FRAME), copy.ts: textos, cores e caminhos — nunca no meio da cena
+    Root.tsx            # compositions (one per aspect ratio)
+    scenes/             # one scene per file, parameterised by props
+    components/         # watermark, titles, title cards, transitions
+    data/               # timeline.ts (POSTER_FRAME), copy.ts: texts, colours and paths — never in the middle of a scene
   public/
-    brand/              # logos oficiais do cliente
-    footage/            # fotos e vídeos reais, já tratados
-  tools/                # os instrumentos de tools/video/ da skill
-  out/                  # renderizações
+    brand/              # the client's official logos
+    footage/            # real photos and videos, already treated
+  tools/                # the skill's instruments from tools/video/
+  out/                  # renders
 ```
 
 What remains in the application is only this:
@@ -433,7 +433,7 @@ src/main/resources/public/assets/
   hero-desktop.mp4  hero-desktop.webm
   hero-mobile.mp4   hero-mobile.webm
   hero-poster.jpg
-  bg-<segmento>.svg  bg-<segmento>-mobile.svg
+  bg-<sector>.svg  bg-<sector>-mobile.svg
 ```
 
 Compositions stay parameterised and editable, and scene code stays readable (R18) — the studio is kept

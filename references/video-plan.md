@@ -43,11 +43,11 @@ palette, a font that does not fit, a logo that disappears on the background.
 Every video has one time axis, and every event is placed on it.
 
 - **Music** (types B1, B2, and any music-driven A): `python -X utf8 tools/analyze-music.py
-  public/music/<trilha>` → `src/data/music.ts` with `bpm`, `bpmCandidates`, `beats`, `beatFrames`,
+  public/music/<track>` → `src/data/music.ts` with `bpm`, `bpmCandidates`, `beats`, `beatFrames`,
   `downbeatsEstimate`, `attacks`, `kicks`, `highs`, `energyDbEvery100ms`, `drop`, `dropFrame`,
   `lastSoundSec`, and `out/analysis/music.png` to look at. When two tempo candidates score close (half and
   double), the user confirms by ear before scenes are anchored.
-- **Narration** (type A): `python -X utf8 tools/transcribe.py public/voice/<narracao>` →
+- **Narration** (type A): `python -X utf8 tools/transcribe.py public/voice/<narration>` →
   `src/data/narration.ts` with every word's start and end (`video-audio.md`).
 - **Voice over music**: the narration drives; the music is placed around it and ducked under it.
 
@@ -79,7 +79,7 @@ Duração: 19,0 s = 570 quadros a 30 fps · Formato: 1080×1920
 ## Eventos (cue sheet)
 | Evento | Quadro do som | Tipo | Efeito sonoro | Ganho |
 |---|---|---|---|---|
-| corte-4 | 60 | cut | whoosh-01 | −8 dB |
+| cut-4 | 60 | cut | whoosh-01 | −8 dB |
 
 ## Mapa
 Batidas e tempos fortes (music.ts) ou palavras-âncora (narration.ts) usadas pelas cenas.
@@ -121,8 +121,8 @@ Tested model (music clock):
 
 ```ts
 /**
- * Linha do tempo do video: a UNICA fonte de tempo. Cena, SFX, conferencia e
- * revisao leem daqui; nenhum quadro literal mora dentro de uma cena.
+ * The video's timeline: the SINGLE source of time. Scene, SFX, check and
+ * review read from here; no literal frame lives inside a scene.
  * @author Angatu Sistemas
  */
 import { MUSIC } from './music.ts';
@@ -132,7 +132,7 @@ export const FPS = 30;
 export const WIDTH = 1080;
 export const HEIGHT = 1920;
 export const MASTER_CLOCK = 'music';
-/** A imagem vem 1 quadro antes do som. */
+/** The picture comes 1 frame before the sound. */
 export const VISUAL_LEAD = 1;
 
 export const f = (sec: number): number => Math.round(sec * FPS);
@@ -140,7 +140,7 @@ export const beatFrame = (i: number): number => MUSIC.beatFrames[i];
 
 export type Scene = { id: string; from: number; durationInFrames: number; text: string; anchor: string };
 export type CueKind = 'cut' | 'hit' | 'text' | 'flash' | 'drop';
-/** frame = quadro do SOM; a imagem acontece em frame - VISUAL_LEAD. */
+/** frame = the frame of the SOUND; the picture happens at frame - VISUAL_LEAD. */
 export type Cue = { id: string; frame: number; kind: CueKind; sfx?: string; gainDb?: number };
 export type Span = { from: number; to: number; why: string };
 
@@ -153,16 +153,16 @@ const cutFrame = (beat: number): number => (beat === 0 ? 0 : beatFrame(beat) - V
 export const SCENES: Scene[] = SCENE_BEATS.map((beat, i) => {
   const from = cutFrame(beat);
   const to = i + 1 < SCENE_BEATS.length ? cutFrame(SCENE_BEATS[i + 1]) : DURATION_IN_FRAMES;
-  return { id: `cena-${i + 1}`, from, durationInFrames: to - from, text: SCENE_TEXTS[i], anchor: `batida ${beat}` };
+  return { id: `scene-${i + 1}`, from, durationInFrames: to - from, text: SCENE_TEXTS[i], anchor: `beat ${beat}` };
 });
 
 export const CUES: Cue[] = [
-  ...SCENE_BEATS.slice(1).map((b): Cue => ({ id: `corte-${b}`, frame: beatFrame(b), kind: 'cut', sfx: 'whoosh-01', gainDb: -8 })),
+  ...SCENE_BEATS.slice(1).map((b): Cue => ({ id: `cut-${b}`, frame: beatFrame(b), kind: 'cut', sfx: 'whoosh-01', gainDb: -8 })),
   { id: 'drop', frame: MUSIC.dropFrame ?? beatFrame(8), kind: 'drop', sfx: 'impact-01', gainDb: -2 },
 ];
 
 export const HOLDS: Span[] = [];
-export const SILENCES: Span[] = [{ from: f(MUSIC.lastSoundSec), to: DURATION_IN_FRAMES, why: 'fim da musica' }];
+export const SILENCES: Span[] = [{ from: f(MUSIC.lastSoundSec), to: DURATION_IN_FRAMES, why: 'end of the music' }];
 export const POSTER_FRAME = SCENES[2].from + 12;
 ```
 
@@ -172,16 +172,16 @@ Narration clock — the same contract, anchored on words:
 import { NARRATION } from './narration.ts';
 
 const WORDS = NARRATION.flatMap((s) => s.words);
-/** Primeiro quadro em que a palavra i e dita. */
+/** First frame at which word i is spoken. */
 export const wordFrame = (i: number): number => Math.round(WORDS[i].s * FPS);
-/** Indice da primeira ocorrencia de uma palavra (sem acento e sem pontuacao). */
+/** Index of the first occurrence of a word (ignoring accents and punctuation). */
 export const word = (w: string, from = 0): number => {
   const norm = (x: string) => x.normalize('NFD').replace(/[̀-ͯ.,!?;:]/g, '').toLowerCase();
   const i = WORDS.findIndex((x, k) => k >= from && norm(x.w) === norm(w));
-  if (i < 0) throw new Error(`palavra "${w}" nao esta na narracao`);
+  if (i < 0) throw new Error(`word "${w}" is not in the narration`);
   return i;
 };
-// A cena "criar pedido" entra na palavra "criar":
+// The "criar pedido" scene enters on the word "criar":
 // { id: 'criar', from: wordFrame(word('criar')) - VISUAL_LEAD, ... }
 ```
 

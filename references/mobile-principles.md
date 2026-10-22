@@ -48,11 +48,11 @@ Portrait use is mostly one-handed, with the thumb pivoting from the bottom corne
 
 ```
 +------+----+------+
-| HARD | OK | HARD |  ← topo: estica, só com duas mãos
+| HARD | OK | HARD |  ← top: a stretch, only with two hands
 +------+----+------+
-|  OK  | OK |  OK  |  ← meio: confortável
+|  OK  | OK |  OK  |  ← middle: comfortable
 +------+----+------+
-| EASY |EASY| EASY |  ← base: arco natural do polegar
+| EASY |EASY| EASY |  ← bottom: natural thumb arc
 +------+----+------+
 ```
 
@@ -150,13 +150,13 @@ The five gestures users already know — reusing them is free UX, reinventing th
 ### 1. Hover as the only reveal
 
 ```css
-/* ERRADO — no celular o botão nunca aparece */
+/* WRONG — on a phone the button never appears */
 .card .actions { opacity: 0; }
 .card:hover .actions { opacity: 1; }
 ```
 
 ```css
-/* CERTO — visível por padrão, hover só no desktop */
+/* RIGHT — visible by default, hover only on desktop */
 .card .actions { opacity: 1; }
 @media (hover: hover) and (pointer: fine) {
   .card .actions { opacity: 0; transition: opacity 150ms ease-out; }
@@ -167,12 +167,12 @@ The five gestures users already know — reusing them is free UX, reinventing th
 ### 2. A target below the minimum
 
 ```css
-/* ERRADO — 32px, errável */
+/* WRONG — 32px, easy to mis-tap */
 .icon-btn { width: 32px; height: 32px; }
 ```
 
 ```css
-/* CERTO — área de toque de 44px mesmo com ícone de 24px */
+/* RIGHT — 44px touch area even with a 24px icon */
 .icon-btn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; }
 .icon-btn svg { width: 24px; height: 24px; }
 ```
@@ -180,12 +180,12 @@ The five gestures users already know — reusing them is free UX, reinventing th
 ### 3. Ignoring the safe area
 
 ```css
-/* ERRADO — CTA sob o indicador de início */
+/* WRONG — CTA under the home indicator */
 .cta { position: fixed; bottom: 0; }
 ```
 
 ```css
-/* CERTO */
+/* RIGHT */
 .cta { position: fixed; bottom: calc(env(safe-area-inset-bottom) + 16px); }
 ```
 

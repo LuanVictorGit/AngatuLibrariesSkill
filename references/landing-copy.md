@@ -214,18 +214,18 @@ These commands **flag**, they do not condemn. Each hit needs a justification in 
 is rewritten. A plant nursery may legitimately talk about an ecosystem; a metalworking shop may not.
 
 ```bash
-LP=src/main/resources/public          # ajuste para os arquivos da landing
+LP=src/main/resources/public          # adjust to the landing's files
 
-# travessão usado como recurso de ritmo
+# em dash used as a rhythm device
 grep -o "—" $LP/index.html | wc -l
 
-# palavras de marketing vazias
+# empty marketing words
 grep -rniE "inovador|revolucion|potencialize|transforme seu|eleve (o|sua|seu)|solução completa|experiência única|jornada|ecossistema|estratégic|solução inteligente|totalmente personalizad" $LP --include="*.html"
 
-# estruturas típicas de texto gerado
+# typical structures of generated text
 grep -rniE "não é apenas .+\. é |mais do que .+, |de .+ a .+, (nós )?(fazemos|entregamos|oferecemos)" $LP --include="*.html"
 
-# CTAs genéricos
+# generic CTAs
 grep -rniE ">[[:space:]]*(saiba mais|comece agora|descubra mais|fale com um especialista|conheça nossas soluções)[[:space:]]*<" $LP --include="*.html"
 ```
 

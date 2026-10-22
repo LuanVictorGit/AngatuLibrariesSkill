@@ -42,7 +42,7 @@ The secret key **never** reaches the frontend. The build scans `dist/` for secre
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <form method="post" action="/api/login">
-  <!-- campos do formulário -->
+  <!-- form fields -->
   <div class="cf-turnstile" data-sitekey="{turnstile_site_key}" data-theme="light"></div>
   <button type="submit" class="btn-primary">Entrar</button>
 </form>
@@ -62,39 +62,52 @@ nothing (R22).
 
 ```java
 /**
- * Confere o token do Turnstile junto à Cloudflare.
- *
- * <p>Chamada antes de qualquer regra de negócio: token ausente, recusado ou já usado
- * encerra a requisição. Nunca confie no que a tela diz ter feito.</p>
+ * Verifies a Turnstile token with Cloudflare before any business rule runs, and fails closed.
  *
  * @author Angatu Sistemas
  */
 public final class TurnstileGuard {
 
-    private static final String VERIFY_URL =
-            "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+    private static final String VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
-    private TurnstileGuard() {}
+    private TurnstileGuard() {
+    }
 
-    /** @return true quando a Cloudflare confirma o token; false em qualquer outro caso. */
     public static boolean verify(String token, String remoteIp) {
-        if (token == null || token.isBlank()) return false;
-
+        if (token == null || token.isBlank()) {
+            return false;
+        }
         String secret = Env.get().get("TURNSTILE_SECRET_KEY");
         if (secret == null || secret.isBlank()) {
-            Console.error("TURNSTILE_SECRET_KEY ausente: recusando por segurança");
-            return false;   // sem chave, recusa — nunca libera
+            Console.error("TURNSTILE_SECRET_KEY is missing: refusing every token");
+            return false;
         }
 
         String form = "secret=" + URLEncoder.encode(secret, StandardCharsets.UTF_8)
-                    + "&response=" + URLEncoder.encode(token, StandardCharsets.UTF_8)
-                    + (remoteIp == null ? "" : "&remoteip=" + URLEncoder.encode(remoteIp, StandardCharsets.UTF_8));
+                + "&response=" + URLEncoder.encode(token, StandardCharsets.UTF_8)
+                + (remoteIp == null ? "" : "&remoteip=" + URLEncoder.encode(remoteIp, StandardCharsets.UTF_8));
+        Response response = Request.query("POST", VERIFY_URL, form, null);
+        if (!response.isSuccess()) {
+            Console.warn("Turnstile verification failed: %s",
+                    response.isNetworkError() ? response.getError() : "HTTP " + response.getCode());
+            return false;
+        }
 
-        Response r = Request.query("POST", VERIFY_URL, form, null);
-        if (!r.isSuccess()) return false;
+        Verification result;
+        try {
+            result = GsonAPI.get().fromJson(response.getBody(), Verification.class);
+        } catch (JsonParseException e) {
+            Console.error("Turnstile answered with malformed JSON", e);
+            return false;
+        }
+        if (result == null || !result.success()) {
+            Console.warn("Turnstile refused a token: %s", result == null ? "empty answer" : result.errorCodes());
+            return false;
+        }
+        return true;
+    }
 
-        JsonObject body = GsonAPI.get().fromJson(r.getBody(), JsonObject.class);
-        return body.has("success") && body.get("success").getAsBoolean();
+    private record Verification(boolean success, @SerializedName("error-codes") List<String> errorCodes) {
     }
 }
 ```
@@ -102,11 +115,13 @@ public final class TurnstileGuard {
 Use it at the top of the route, before anything else happens:
 
 ```java
-if (!TurnstileGuard.verify(body.get("cf-turnstile-response").getAsString(), IP.get(ctx))) {
-    ctx.status(StatusCode.FORBIDDEN.code()).result("Verificação de segurança falhou.");
-    return;
+if (!TurnstileGuard.verify(ctx.formParam("cf-turnstile-response"), IP.get(ctx))) {
+    throw new ForbiddenResponse("Verificação de segurança falhou.");
 }
 ```
+
+A JavaScript submit sends the token in the JSON body instead; the request record maps it with
+`@SerializedName("cf-turnstile-response") String turnstileToken`.
 
 **Four things that decide between protecting and pretending:**
 

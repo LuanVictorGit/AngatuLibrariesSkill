@@ -124,13 +124,13 @@ bounce on routine interactions, no playful overshoot on hover. Reserve expressiv
 moments (onboarding, success states), never for daily UI.
 
 ```css
-/* ERRADO — todo hover quica 600ms, exaustivo no terceiro uso */
+/* WRONG — every hover bounces for 600ms, exhausting by the third use */
 .card { transition: transform 600ms cubic-bezier(0.34,1.56,0.64,1); }
 .card:hover { transform: scale(1.05); }
 ```
 
 ```css
-/* CERTO — 100ms de opacidade, quase subliminar, nunca cansa */
+/* RIGHT — 100ms of opacity, almost subliminal, never tiring */
 .card { opacity: 0.92; transition: opacity 100ms ease-out; }
 .card:hover { opacity: 1; }
 ```
@@ -142,13 +142,13 @@ moments (onboarding, success states), never for daily UI.
 ### 1. Hiding navigation behind a hamburger on desktop
 
 ```html
-<!-- ERRADO — viewport de 1440px, espaço de sobra, e a navegação colapsada -->
+<!-- WRONG — 1440px viewport, plenty of room, and the navigation collapsed -->
 <header><button class="hamburger" aria-label="Menu">☰</button></header>
 <nav class="drawer hidden">...</nav>
 ```
 
 ```html
-<!-- CERTO — barra lateral persistente, que o usuário recolhe se quiser -->
+<!-- RIGHT — persistent sidebar, which the user collapses if they want -->
 <aside class="sidebar">
   <nav><a href="/inbox">Inbox</a><a href="/projects">Projetos</a><a href="/archive">Arquivo</a></nav>
   <button class="collapse-toggle" aria-label="Recolher barra lateral">⇤</button>
@@ -160,24 +160,24 @@ In Tailwind that is `hidden lg:block lg:w-64`, not a hamburger at 1440px.
 ### 2. No shortcuts for primary actions
 
 ```html
-<!-- ERRADO — "Novo" enterrado num menu, três cliques -->
+<!-- WRONG — "Novo" buried in a menu, three clicks -->
 <div class="toolbar"><div class="menu"><button onclick="newDoc()">Novo documento</button></div></div>
 ```
 
 ```html
-<!-- CERTO — visível na toolbar, com o atalho anunciado -->
+<!-- RIGHT — visible in the toolbar, with the shortcut announced -->
 <button onclick="newDoc()" title="Novo documento (⌘N)"><svg aria-hidden="true">＋</svg> Novo</button>
 ```
 
 ### 3. Removing the focus ring with no replacement
 
 ```css
-/* ERRADO — quem usa teclado não sabe onde está o foco */
+/* WRONG — keyboard users cannot tell where the focus is */
 button:focus { outline: none; }
 ```
 
 ```css
-/* CERTO — clique sem anel, teclado com anel */
+/* RIGHT — click without a ring, keyboard with a ring */
 button:focus { outline: none; }
 button:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; border-radius: 6px; }
 ```

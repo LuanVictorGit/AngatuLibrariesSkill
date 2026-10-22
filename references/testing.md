@@ -18,7 +18,7 @@
 2. **Start the server:** `java -jar target/<app>.jar`, or `mvn exec:java`. Confirm the banner: host,
    **HTTP mode**, environment, and `Javalin configurado`.
 3. **Validate for real:** `curl` or `httpie` against the routes you created (`GET /health`,
-   `POST /api/...`), open the HTML at `http://localhost:8080/<pagina>`, and read the `Console` output.
+   `POST /api/...`), open the HTML at `http://localhost:8080/<page>`, and read the `Console` output.
 > **Running through `java -jar`, copying into `target/classes/public/` has no effect** — the classpath
 > is the JAR itself. Changes to HTML/JS/CSS require another `mvn package`. Copying into
 > `target/classes` only works when running through `mvn exec:java`.
@@ -27,9 +27,9 @@
    one, then the one that ships:
 
 ```bash
-mvn package -DskipTests && java -jar target/<app>.jar                    # source legível
-node tools/frontend-build.mjs --level=protected                          # gera o dist
-mvn -Pfrontend-dist package -DskipTests && java -jar target/<app>.jar    # é isto que sobe
+mvn package -DskipTests && java -jar target/<app>.jar                    # readable source
+node tools/frontend-build.mjs --level=protected                          # builds the dist
+mvn -Pfrontend-dist package -DskipTests && java -jar target/<app>.jar    # this is what ships
 ```
 
 > A minification or obfuscation defect **does not appear** in the readable mode: that is exactly why
@@ -57,7 +57,7 @@ So `docker build` runs at exactly two moments, and neither is "while working":
 2. **When you touch what the image is made of** — the `Dockerfile` itself, dependencies, or startup.
 
 ```bash
-# antes de subir, nao durante o trabalho
+# before deploying, never while working
 docker build -t <app> . && docker run --rm -p 8080:8080 -v <app>-data:/data <app>
 ```
 
@@ -83,7 +83,7 @@ with the API answering perfectly and the whole interface dead in the browser.
 
 ```bash
 mvn package -DskipTests && java -jar target/<app>.jar
-# aguarde o banner, depois valide em http://localhost:8080/<pagina>
+# wait for the banner, then check http://localhost:8080/<page>
 ```
 
 Stop the process when you are finished, instead of leaving it holding the port and the database.
@@ -190,5 +190,8 @@ has one.
   `mvn test` too, or the suite you wrote is decoration (`route-testing.md`).
 - **The suite trips the rate limiter:** it is the real one, so a login test looping 20 times starts
   getting 429. Correct behaviour, bad failure — decide it once in the harness (`route-testing.md` 3.2).
+- **Jetty will not start on Windows: `SocketException: Invalid argument: connect`.** `TEMP` sits under a
+  short 8.3 name (`C:\Users\NAME~1\...`) and NIO cannot open its Unix-domain socket there. Pass
+  `-Djdk.net.unixdomain.tmpdir=<a long path>` to the JVM — Surefire already does (`route-testing.md` 3.1).
 - **Tests writing into the development database:** `ANGATU_DB_PATH` must point under `target/` for the
   test JVM, through Surefire. Getting this wrong corrupts the data you were about to demo.

@@ -14,11 +14,11 @@ command line. *Testado*:
 
 ```ts
 /**
- * Configuracao unica de render. Vale para o Studio, o render e o still.
+ * Single render configuration. Applies to the Studio, the render and the still.
  *
- * PNG + bt709 + yuv420p: quadro JPEG sai em faixa cheia (yuvj420p) e sem
- * marcacao de cor, e o Chrome ja recusou um WebM assim (PIPELINE_ERROR_DECODE).
- * angle: exigido por @remotion/effects, light leak e three.js no Remotion 4.
+ * PNG + bt709 + yuv420p: a JPEG frame comes out full-range (yuvj420p) and with no
+ * colour tagging, and Chrome has already refused a WebM like that (PIPELINE_ERROR_DECODE).
+ * angle: required by @remotion/effects, light leak and three.js in Remotion 4.
  *
  * @author Angatu Sistemas
  */
@@ -110,7 +110,7 @@ every text is the fastest way to look generic.
 ### 5.1 Easing and envelopes — *testado*
 
 ```ts
-/** Envelopes e easings nomeados: o vocabulario de movimento do projeto. @author Angatu Sistemas */
+/** Named envelopes and easings: the project's motion vocabulary. @author Angatu Sistemas */
 import { Easing } from 'remotion';
 
 export const EASE = {
@@ -118,13 +118,13 @@ export const EASE = {
   glide: Easing.bezier(0.4, 0, 0.2, 1),
 } as const;
 
-/** 1 no quadro do evento, decaindo em `decay` quadros; 0 antes dele. */
+/** 1 on the event frame, decaying over `decay` frames; 0 before it. */
 export const impulse = (frame: number, at: number, decay: number): number => {
   const k = frame - at;
   return k < 0 || k > decay * 5 ? 0 : Math.exp(-k / decay);
 };
 
-/** O impulso mais forte entre varios eventos. */
+/** The strongest impulse among several events. */
 export const impulses = (frame: number, ats: readonly number[], decay: number): number =>
   ats.reduce((acc, at) => Math.max(acc, impulse(frame, at, decay)), 0);
 ```
@@ -135,7 +135,7 @@ still when the eye must read.
 ### 5.2 Text — *testado*
 
 ```tsx
-/** Texto que bate na tela: escala, blur e opacidade em 4 quadros. @author Angatu Sistemas */
+/** Text that slams onto the screen: scale, blur and opacity over 4 frames. @author Angatu Sistemas */
 import { interpolate, useCurrentFrame } from 'remotion';
 import { fitText } from '@remotion/layout-utils';
 import { EASE } from '../lib/motion.ts';
@@ -145,9 +145,9 @@ const MIN_PX = 55;
 export const SlamText: React.FC<{ text: string; color: string; maxWidth: number; fontFamily: string }> = ({
   text, color, maxWidth, fontFamily,
 }) => {
-  const frame = useCurrentFrame(); // ja e relativo a Sequence: nao subtrair o inicio da cena
+  const frame = useCurrentFrame(); // already relative to the Sequence: do not subtract the scene start
   const { fontSize } = fitText({ text, withinWidth: maxWidth, fontFamily, fontWeight: '800' });
-  if (fontSize < MIN_PX) throw new Error(`texto "${text}" nao cabe em ${maxWidth}px acima de ${MIN_PX}px`);
+  if (fontSize < MIN_PX) throw new Error(`text "${text}" does not fit in ${maxWidth}px at ${MIN_PX}px or larger`);
   const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
   return (
     <div style={{
@@ -170,7 +170,7 @@ highlight sweep behind a keyword. Titles, labels, numbers and the CTA do not sha
 ### 5.3 Camera — *testado*
 
 ```tsx
-/** Camera do video: punch-in e tremor com decaimento a cada batida. @author Angatu Sistemas */
+/** The video's camera: punch-in and shake that decays on every beat. @author Angatu Sistemas */
 import { AbsoluteFill, useCurrentFrame } from 'remotion';
 import { noise2D } from '@remotion/noise';
 import { MUSIC } from '../data/music.ts';
@@ -184,8 +184,8 @@ export const Camera: React.FC<{ children: React.ReactNode; punch?: number; shake
 }) => {
   const frame = useCurrentFrame();
   const e = impulses(frame, HITS, 3);
-  const x = noise2D('tremor-x', frame * 0.35, 0) * shake * e;
-  const y = noise2D('tremor-y', 0, frame * 0.35) * shake * e;
+  const x = noise2D('shake-x', frame * 0.35, 0) * shake * e;
+  const y = noise2D('shake-y', 0, frame * 0.35) * shake * e;
   return <AbsoluteFill style={{ scale: String(1 + punch * e), translate: `${x}px ${y}px` }}>{children}</AbsoluteFill>;
 };
 ```
@@ -199,7 +199,7 @@ by giving each layer a depth factor and moving it `(1 - depth)` of the camera.
 ### 5.4 Transitions — *testado* (flash)
 
 ```tsx
-/** Flash branco curto sobre o corte. Limite: 3 flashes por segundo (fotossensibilidade). @author Angatu Sistemas */
+/** Short white flash over the cut. Limit: 3 flashes per second (photosensitivity). @author Angatu Sistemas */
 import { AbsoluteFill, interpolate, useCurrentFrame } from 'remotion';
 
 export const Flash: React.FC<{ at: readonly number[]; frames?: number; peak?: number }> = ({ at, frames = 4, peak = 0.85 }) => {
@@ -233,7 +233,7 @@ elements); `<Trail>` for one object. Slow motion does not need it.
 ### 5.7 Particles — stateless
 
 ```tsx
-/** Faiscas no acerto: posicao = f(semente, quadro), sem estado. @author Angatu Sistemas */
+/** Sparks on the hit: position = f(seed, frame), stateless. @author Angatu Sistemas */
 import { random, useCurrentFrame } from 'remotion';
 
 export const Sparks: React.FC<{ at: number; x: number; y: number; color: string; count?: number; life?: number }> = ({
@@ -244,8 +244,8 @@ export const Sparks: React.FC<{ at: number; x: number; y: number; color: string;
   return (
     <>
       {Array.from({ length: count }, (_, i) => {
-        const angle = random(`ang-${at}-${i}`) * Math.PI * 2;
-        const speed = 10 + random(`vel-${at}-${i}`) * 18;
+        const angle = random(`angle-${at}-${i}`) * Math.PI * 2;
+        const speed = 10 + random(`speed-${at}-${i}`) * 18;
         return (
           <div key={i} style={{
             position: 'absolute', left: x + Math.cos(angle) * speed * t, top: y + Math.sin(angle) * speed * t + 0.5 * t * t,
@@ -269,7 +269,7 @@ draw a line over time — the window frame drawn stroke by stroke in the glazier
 ### 5.9 Devices and screens
 
 ```tsx
-/** Celular desenhado em codigo, com a captura rolando e leve giro 3D. @author Angatu Sistemas */
+/** Phone drawn in code, with the capture scrolling and a slight 3D tilt. @author Angatu Sistemas */
 import { Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { EASE } from '../lib/motion.ts';
 
@@ -320,7 +320,7 @@ CSS perspective and `rotate: 'y 8deg'` first. `@remotion/three` only when the br
 - A guides layer shows the zone on review stills:
 
 ```tsx
-/** Guia da zona segura, so para revisao (prop `guides`). @author Angatu Sistemas */
+/** Safe-zone guide, for review only (the `guides` prop). @author Angatu Sistemas */
 import { AbsoluteFill } from 'remotion';
 
 export const Guides: React.FC<{ top: number; bottom: number; side: number }> = ({ top, bottom, side }) => (
@@ -328,8 +328,8 @@ export const Guides: React.FC<{ top: number; bottom: number; side: number }> = (
     <div style={{ position: 'absolute', inset: `${top}px ${side}px ${bottom}px`, outline: '4px dashed rgba(255,0,80,.85)' }} />
   </AbsoluteFill>
 );
-// Composition com defaultProps={{ guides: false }}; still com guias:
-// node tools/render.mjs still 120 --props=./props-guias.json   (arquivo: {"guides": true})
+// Composition with defaultProps={{ guides: false }}; still with guides:
+// node tools/render.mjs still 120 --props=./props-guides.json   (file: {"guides": true})
 ```
 
 - Over footage, a scrim keeps text at 4.5:1 — measure it, do not trust it.

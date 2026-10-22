@@ -18,48 +18,62 @@ import br.com.angatusistemas.lib.javalin.routes.Route;
 import br.com.angatusistemas.lib.javalin.routes.RouteType;
 
 /**
- * Rota de verificação de saúde, usada pelo HEALTHCHECK do contêiner.
+ * GET /health: tells the container's HEALTHCHECK that the server is answering.
  *
  * @author Angatu Sistemas
  */
-public class HealthRoute extends Route {
-    public HealthRoute() { super("/health", RouteType.GET, ctx -> ctx.json("{\"status\":\"ok\"}")); }
+public final class HealthRoute extends Route {
+
+    public HealthRoute() {
+        super("/health", RouteType.GET, ctx -> ctx.json("{\"status\":\"ok\"}"));
+    }
 }
 ```
 
 ```java
 /**
- * Rota de criação de usuário.
+ * POST /api/users: creates a user in the signed-in account's tenant.
  *
  * @author Angatu Sistemas
  */
-public class CreateUserRoute extends Route {
+public final class CreateUserRoute extends Route {
 
-    public CreateUserRoute() { super("/api/users", RouteType.POST, CreateUserRoute::handle); }
+    public CreateUserRoute() {
+        super("/api/users", RouteType.POST, CreateUserRoute::handle);
+    }
 
-    private static void handle(io.javalin.http.Context ctx) {
-        try {
-            var account = Guard.requireAccount(ctx);   // porteiro central — R23
-            if (account == null) return;               // o porteiro já escreveu a resposta
-
-            var body = GsonAPI.get().fromJson(ctx.body(), com.google.gson.JsonObject.class);
-
-            // Campos aceitos são listados um a um: nunca vincule o corpo inteiro na entidade — R22.
-            var user = new User();
-            user.setName(body.get("name").getAsString());
-            user.setTenantId(account.getTenantId());   // vem da sessão, nunca da requisição
-            user.save();
-
-            ctx.result(GsonAPI.get().toJson(java.util.Map.of("id", user.getId())))
-               .contentType("application/json")
-               .status(StatusCode.CREATED.code());
-        } catch (Exception e) {
-            Console.error("CreateUserRoute", e);
-            ctx.result("Error").status(StatusCode.INTERNAL_SERVER_ERROR.code());
+    private static void handle(Context ctx) {
+        Account account = Guard.requireAccount(ctx);
+        Body body = JsonBody.read(ctx, Body.class);
+        if (body.name() == null || body.name().isBlank()) {
+            throw new BadRequestResponse("Informe o nome.");
         }
+
+        User user = new User();
+        user.setName(body.name().strip());
+        user.setTenantId(account.getTenantId());
+        user.save();
+
+        ctx.status(StatusCode.CREATED.code()).json(GsonAPI.get().toJson(new Created(user.getId())));
+    }
+
+    private record Body(String name) {
+    }
+
+    private record Created(String id) {
     }
 }
 ```
+
+- **The `Body` record is the allow-list of accepted fields (R22).** Gson ignores everything else the
+  client sends; the tenant comes from the session, never from the request.
+- **No try/catch.** `Guard.requireAccount` throws `UnauthorizedResponse` (`security.md` 3), and a
+  refusal is a thrown `BadRequestResponse`, `NotFoundResponse` or `ConflictResponse`: the request log
+  passes these through as ordinary statuses. Anything else is a defect — Javalin answers 500 and logs
+  the stack trace, and the request log marks `ERROR=<Type>` (`java-standard.md` 5.1).
+- **JSON goes through `GsonAPI`**: `ctx.json(GsonAPI.get().toJson(...))` to write and `JsonBody.read`
+  to parse (`java-standard.md` 7). `ctx.json(object)` and `ctx.bodyAsClass(...)` need Jackson, which
+  this stack does not ship.
 
 `RouteType`: `GET, POST, PUT, DELETE, PATCH, WS`.
 
@@ -78,8 +92,9 @@ and never call `register()` before setup.
 
 A route is HTTP plumbing. It parses input, calls the gate, delegates to a service and writes a
 status. Pricing, stock, permission and any other business rule live in `services/`
-(`conventions.md`). A route that computes a total is a route that will disagree with another route
-that computes the same total.
+(`java-standard.md` 3.1). A route that computes a total is a route that will disagree with another
+route that computes the same total. A route is instantiated once and serves every request at the same
+time, so it holds no mutable field (R40).
 
 Every route validates authorization in the backend (R23) and treats every incoming value as hostile
 (R22) — including identifiers, which are authorised against the session before use.
@@ -97,7 +112,7 @@ keeping the query string; `/index.html` goes to `/`.
 
 ```java
 HtmlRouteAPI.registerAllRoutes(javalin); // uses /index.html as the base shell
-HtmlRouteAPI.registerAllRoutes(javalin, "/index.html", () -> java.util.List.of("/sobre.html"));
+HtmlRouteAPI.registerAllRoutes(javalin, "/index.html", () -> List.of("/sobre.html"));
 HtmlRouteAPI.addIgnoredPath("admin");
 HtmlRouteAPI.isPage("/sobre");               // true when /sobre is a registered page
 HtmlRouteAPI.extractPageName("/a/Meu.html"); // "meu"

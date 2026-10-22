@@ -13,7 +13,7 @@ of `AngatuWhatsappSDK`. So there is no "latest release" to take: the newest vers
 
 ```bash
 curl -s https://api.github.com/repos/LuanVictorGit/AngatuLibraries/commits/main | grep -m1 '"sha"'
-# ou, sem a API:  git ls-remote https://github.com/LuanVictorGit/AngatuLibraries.git HEAD
+# or, without the API:  git ls-remote https://github.com/LuanVictorGit/AngatuLibraries.git HEAD
 ```
 
 Then:
@@ -52,13 +52,86 @@ repositories { maven { url 'https://jitpack.io' } }
 dependencies { implementation 'com.github.LuanVictorGit:AngatuLibraries:VERSION' }
 ```
 
+### 1.1 The build: Java 25 (R38)
+
+What makes the project a Java 25 build — the dependencies themselves are section 3:
+
+```xml
+<properties>
+  <maven.compiler.release>25</maven.compiler.release>
+  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.13.0</version>
+      <configuration>
+        <annotationProcessorPaths>
+          <path>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.44</version>
+          </path>
+        </annotationProcessorPaths>
+      </configuration>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-shade-plugin</artifactId>
+      <version>3.6.2</version>
+      <executions>
+        <execution>
+          <phase>package</phase>
+          <goals><goal>shade</goal></goals>
+          <configuration>
+            <filters>
+              <filter>
+                <artifact>*:*</artifact>
+                <excludes>
+                  <exclude>META-INF/*.SF</exclude>
+                  <exclude>META-INF/*.DSA</exclude>
+                  <exclude>META-INF/*.RSA</exclude>
+                </excludes>
+              </filter>
+            </filters>
+            <transformers>
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <mainClass>com.company.store.Main</mainClass>
+                <manifestEntries>
+                  <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+                </manifestEntries>
+              </transformer>
+            </transformers>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins>
+</build>
+```
+
+- **`release` 25**, never `source`/`target`: it compiles against the Java 25 API itself.
+- **Lombok in `annotationProcessorPaths`.** Since JDK 23, javac no longer runs a processor it merely
+  finds on the classpath; without the declaration every `@Getter` is a compile error. A project
+  without Lombok drops the block.
+- **`Enable-Native-Access` in the manifest.** `sqlite-jdbc` loads native code, which Java 24+ reports
+  with a warning on every start and a future release will refuse. `java -jar` reads it from the
+  manifest; `mvn exec:java` takes `--enable-native-access=ALL-UNNAMED` from a `.mvn/jvm.config` file,
+  and the tests from Surefire's `argLine` (`route-testing.md` 3.1).
+- **Signature files excluded.** BouncyCastle (Web Push) ships a signed JAR, and a shaded JAR that keeps
+  its `.SF`/`.RSA` files refuses to start.
+
 ## 2. `.env` and debug
 
 `.env` at the project root, never committed — `ignoreIfMissing` / `ignoreIfMalformed`:
 
 ```env
-EMAIL_KEY=voce@gmail.com
-EMAIL_PASSWORD=senha_de_app
+EMAIL_KEY=you@gmail.com
+EMAIL_PASSWORD=app_password
 DISCORD_BOT_TOKEN=xxx
 TURNSTILE_SITE_KEY=xxx
 TURNSTILE_SECRET_KEY=xxx
@@ -88,7 +161,7 @@ Declare only what the project actually uses.
 | Browser | `com.microsoft.playwright:playwright:1.58.0` (plus `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chromium"` once) | — |
 | Images | `net.coobird:thumbnailator:0.4.21`, `com.twelvemonkeys.imageio:imageio-webp:3.12.0` / `imageio-tiff:3.12.0` | — |
 | QR Code | `com.google.zxing:core:3.5.3`, `com.google.zxing:javase:3.5.3` | — |
-| Lombok | `org.projectlombok:lombok:1.18.44` (`provided`) | — |
+| Lombok | `org.projectlombok:lombok:1.18.44` (`provided`), also declared as an annotation processor (1.1); only `@Getter`/`@Setter` on entities (`java-standard.md` 2) | — |
 
 Guard: `Dependencies.require("io.javalin.Javalin", "io.javalin:javalin:7.2.3", "Web Server (Javalin)")`
 prints Maven/Gradle instructions and throws `MissingDependencyException`. Every class links without
@@ -121,27 +194,37 @@ import br.com.angatusistemas.lib.AngatuLib;
 import br.com.angatusistemas.lib.javalin.JavalinAPI;
 
 /**
- * Ponto de entrada da aplicação.
+ * Starts the store: applies the server configuration and opens it on the port Coolify assigns.
  *
  * @author Angatu Sistemas
  */
-public class Main {
-    public static void main(String[] args) {
-        // A porta vem do ambiente: o Coolify publica o contêiner nela.
-        int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+public final class Main {
 
-        // Tudo antes do new AngatuLib: vale desde a primeira requisição
-        JavalinAPI.setTrustedProxyHops(1);                // proxy do Coolify na frente (2 com Cloudflare)
-        JavalinAPI.addIgnoredPath("/health");             // usada pelo HEALTHCHECK
+    private Main() {
+    }
+
+    public static void main(String[] args) {
+        configure();
+        int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+        new AngatuLib("loja.angatusistemas.com.br", port, true);
+    }
+
+    public static void configure() {
+        JavalinAPI.setTrustedProxyHops(1);                // Coolify's proxy; 2 with Cloudflare in front
+        JavalinAPI.addIgnoredPath("/health");
         JavalinAPI.configureApiRateLimit("/api/*");
         JavalinAPI.configureLoginRateLimit("/api/login");
-
-        new AngatuLib("loja.angatusistemas.com.br", port, true);
+        JavalinAPI.setSecurityHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        JavalinAPI.setSecurityHeader("Pragma", "no-cache");
+        JavalinAPI.setSecurityHeader("Expires", "0");
     }
 }
 ```
 
-Configuration called after the constructor still works, but only from that moment on — requests
+Everything the server needs before its first request — proxy hops, limits, the no-cache headers of
+R25 (`cache.md`), the tightened CSP — goes in `configure()`, called before `new AngatuLib`. The route
+tests call the same method (`route-testing.md` 3), so the suite runs the configuration production
+runs. Configuration called after the constructor still works, but only from that moment on — requests
 that arrive in between see the defaults. And `bloqByMaxRequisitions` from the constructor overrides an
 earlier `setRateLimitingEnabled`.
 
@@ -202,16 +285,16 @@ Never instantiate `AngatuLib` twice in the same process. Everything that does no
 
 ### 5.3 Recommended layout
 
-Packages and classes always in English (R12).
+Packages, layers and names follow `java-standard.md` 3 (R11, R12).
 
 ```
 project-root/
 ├── src/main/java/com/company/store/
 │   ├── Main.java                 // new AngatuLib(...)
-│   ├── routes/                   // extends Route (auto-discovered) — e.g. CreateUserRoute.java
+│   ├── routes/                   // extends Route (auto-discovered), plus Guard and JsonBody — e.g. CreateUserRoute.java
 │   ├── entities/                 // extends Saveable — e.g. User.java, Order.java
-│   ├── services/                 // business rules — e.g. CreateOrderService.java
-│   └── utils/                    // utilities — e.g. Validators.java, MoneyUtils.java
+│   ├── services/                 // business rules — e.g. OrderService.java
+│   └── utils/                    // pure utilities — e.g. Validators.java, Money.java
 ├── src/main/resources/
 │   └── public/                   // HTML served automatically
 │       ├── index.html            // base shell {content} {page} {%nome_active}
@@ -319,10 +402,10 @@ the full HTML for a browser, built from the project's own template:
 
 ```java
 JavalinAPI.setDenyPage(notice -> DenyPageTemplate.render(
-        notice.status(),            // 429 ou 403
+        notice.status(),            // 429 or 403
         notice.title(),             // "Muitos acessos seguidos", "Acesso bloqueado", "Pedido recusado"
-        notice.message(),           // uma frase em PT-BR, texto puro — escape ao pôr no HTML
-        notice.retryAfterSeconds()  // tempo real até liberar; 0 quando não há prazo exato
+        notice.message(),           // one PT-BR sentence, plain text: escape it into the HTML
+        notice.retryAfterSeconds()  // real time until release; 0 when there is no exact deadline
 ));
 ```
 
@@ -371,10 +454,10 @@ Every request that reaches the server prints one line — route, page, static fi
 the security filter, an error, a WebSocket upgrade — with **no per-route code**:
 
 ```text
-[25/09 22:14:03] GET     /api/pedidos/42          IP=189.40.12.7 STATUS=200 TIME=14ms
-[25/09 22:14:04] GET     /api/produtos            IP=189.40.12.7 STATUS=200 TIME=3ms PARAMS=pagina=2&token=***
+[25/09 22:14:03] GET     /api/orders/42           IP=189.40.12.7 STATUS=200 TIME=14ms
+[25/09 22:14:04] GET     /api/products            IP=189.40.12.7 STATUS=200 TIME=3ms PARAMS=page=2&token=***
 [25/09 22:14:05] POST    /api/login               IP=189.40.12.7 STATUS=429 TIME=<1ms DENIED=too_many_requests
-[25/09 22:15:21] POST    /api/usuarios            IP=189.40.12.7 STATUS=500 TIME=142ms ERROR=NullPointerException
+[25/09 22:15:21] POST    /api/users               IP=189.40.12.7 STATUS=500 TIME=142ms ERROR=NullPointerException
 ```
 
 - **Never write an access log in a route.** A `Console.log("GET /x")` in a handler duplicates the

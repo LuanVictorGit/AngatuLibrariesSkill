@@ -17,18 +17,19 @@ stays reachable through `getOriginalOut()`. Colour codes `&0..&f`, `&l` bold, `&
 `&o` italic, `&r` reset.
 
 ```java
-Console.log("Servidor iniciado");
-Console.info("Usuário %s", nome);
-Console.warn("Quase cheio %d%%", p);
-Console.error("Falha", ex);     // the exception is always the last argument
-Console.debug("detalhe %s", v); // only with -Dangatu.debug=true
+Console.log("Server started");
+Console.info("User %s signed in", userId);
+Console.warn("Upload volume at %d%%", usage);
+Console.error("Invoice sync failed", ex);  // the exception is always the last argument
+Console.debug("Payload size %d", size);    // only with -Dangatu.debug=true
 Console.isDebugEnabled();
 DataTime.getData();             // "dd/MM/yyyy - HH:mm"
 ```
 
 Never log a secret, a token or a password (`security.md`). **Pass data as an argument** —
-`Console.info("Busca: %s", termo)`: a `&` inside an argument is printed as it is, while in the format
-string it is a colour code. One logical line is one log line.
+`Console.info("Search: %s", term)`: a `&` inside an argument is printed as it is, while in the format
+string it is a colour code. One logical line is one log line, written in English (R12): the log is read
+by whoever maintains the system, not by the people who use it.
 
 ### GsonAPI
 
@@ -42,7 +43,7 @@ the wrong format is `JsonSyntaxException`: catch `JsonParseException` and answer
 
 ```java
 Env.get().get("TURNSTILE_SECRET_KEY");
-Env.get().get("CHAVE", "default");
+Env.get().get("APP_NAME", "default");
 Env.reload();
 ```
 
@@ -55,8 +56,8 @@ the warning names the line and the key, never the value.
 ### Password
 
 ```java
-String hash = Password.hash(senhaDigitada);                 // sign-up / password change
-boolean ok  = Password.checkCriptography(senhaDigitada, hash); // login
+String hash  = Password.hash(typedPassword);                     // sign-up / password change
+boolean ok   = Password.checkCriptography(typedPassword, hash);  // login
 ```
 
 `hash` always hashes (BCrypt, salt included). `criptography(value)` is for re-saving a value that may
@@ -116,8 +117,8 @@ A scheduled task and a route touching the same record is the classic contested w
 ### Request / Response / StatusCode
 
 ```java
-Response r  = Request.query("GET", "https://api.exemplo.com/users");
-Response r2 = Request.query("POST", "https://api.exemplo.com/users", "{\"nome\":\"João\"}", "token");
+Response r  = Request.query("GET", "https://api.example.com/users");
+Response r2 = Request.query("POST", "https://api.example.com/users", "{\"name\":\"João\"}", "token");
 r.isSuccess(); r.ok(); r.getBody(); r.getStatusCode(); r.getCode();
 r.isNetworkError(); r.getError();   // no response at all: DNS, refused, timeout, too large
 StatusCode.fromCode(404); // → NOT_FOUND
@@ -153,11 +154,11 @@ EmailAPI.sendSimple("a@x.com", "Bem-vindo", "Olá").join();
 EmailAPI.sendHtml("a@x.com", "Bem-vindo", html).join();
 EmailAPI.sendSimpleToMultiple(List.of("a@x.com", "b@x.com"), "Assunto", "corpo");
 EmailAPI.sendHtmlToMultiple(...);
-EmailAPI.sendSimple(List.of(to), cc, bcc, assunto, corpo);
-EmailAPI.sendWithAttachments("a@x.com", "Assunto", "corpo", List.of(new File("rel.pdf")), true);
-String html = EmailAPI.loadHtmlTemplate("/emails/welcome.html", Map.of("nome", "João")); // {{nome}}, escaped
-String page = EmailAPI.loadHtmlTemplateWithTrustedHtml("/emails/pedido.html", textos, htmlDoSistema);
-EmailAPI.escapeHtml(valor);
+EmailAPI.sendSimple(List.of(to), cc, bcc, subject, body);
+EmailAPI.sendWithAttachments("a@x.com", "Assunto", "corpo", List.of(new File("report.pdf")), true);
+String html = EmailAPI.loadHtmlTemplate("/emails/welcome.html", Map.of("name", "João")); // {{name}}, escaped
+String page = EmailAPI.loadHtmlTemplateWithTrustedHtml("/emails/order.html", values, trustedHtml);
+EmailAPI.escapeHtml(value);
 ```
 
 - **The future always completes**: `true` when the SMTP server accepted the message, `false` for
@@ -183,7 +184,7 @@ WebPushAPI.getVapidPublicKey();
 WebPushAPI.parseSubscriptionFromJson(ctx.body());       // IllegalArgumentException → answer 400
 WebPushAPI.createSubscription(endpoint, p256dh, auth);  // same
 WebPushAPI.isAllowedEndpoint(endpoint);                 // the same check, without throwing
-WebPushAPI.allowPushServiceHost("push.exemplo.com");    // at startup, for a push service off the list
+WebPushAPI.allowPushServiceHost("push.example.com");    // at startup, for a push service off the list
 WebPushAPI.sendNotification(sub, "Título", "Corpo", iconUrl);
 WebPushAPI.sendNotificationAsync(sub, title, body, iconUrl);
 WebPushAPI.sendBatchNotifications(list, title, body, iconUrl);
@@ -264,7 +265,7 @@ knows the id.
 
 ```java
 ImageAPI.imageToBase64(img, "png"); ImageAPI.base64ToImage(b64);
-ImageAPI.createThumbnail("foto.png", "mini.png", 200, 200);
+ImageAPI.createThumbnail("photo.png", "thumb.png", 200, 200);
 ImageAPI.resize(img, 200, 200); ImageAPI.cropCenter(img, 200, 200);
 ImageAPI.extractToImageObject("id", bufferedImage);
 ImageAPI.extractToImageObject("id", uploadBytes); // type from the bytes; IllegalArgumentException if not an image

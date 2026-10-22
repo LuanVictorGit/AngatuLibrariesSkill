@@ -15,7 +15,7 @@
 The one that started this file:
 
 ```html
-<!-- ERRADO — o traço é o vício -->
+<!-- WRONG — the dash is the bad habit -->
 <p class="eyebrow"><span class="dash"></span> COMANDA ABERTA</p>
 ```
 
@@ -32,7 +32,7 @@ fourth immediately.
 legitimate typographic device and it stays. What goes is the decorative rule bolted to its left:
 
 ```html
-<!-- CERTO — o rótulo continua, o enfeite sai -->
+<!-- RIGHT — the label stays, the ornament goes -->
 <p class="eyebrow">Comanda aberta</p>
 ```
 
@@ -93,7 +93,7 @@ remains that belongs to this client, the decoration was doing no work.
 Greps help only for the crudest ones:
 
 ```bash
-# emoji em título e botão, gradiente roxo-rosa, blobs de fundo
+# emoji in headings and buttons, violet-pink gradient, background blobs
 grep -rnE '✨|🚀|🔥|💡|⚡' --include='*.html' src/main/resources/public
 grep -rnE 'from-(purple|violet|fuchsia|indigo)-[0-9]+.*to-(pink|rose|cyan)-[0-9]+' \
   --include='*.html' --include='*.css' src/main/resources/public

@@ -173,17 +173,17 @@ positive rounds suggest shipping; after five, focus on the single most important
 
 ```
 {project-name}-landing-page/
-  index.html              # HTML final desktop
-  mobile.html             # mobile (se gerado)
+  index.html              # final desktop HTML
+  mobile.html             # mobile (if generated)
   design/
     DESIGN.md
     color-tokens.json
   assets/
-    {imagens do usuário}
+    {user images}
   public/assets/
-    og/<slug>.jpg         # capa editorial por página
-    hero-desktop.mp4      # hero em motion graphics, se houver
-    bg-<segmento>.svg     # background temático exclusivo
+    og/<slug>.jpg         # editorial cover per page
+    hero-desktop.mp4      # motion graphics hero, if any
+    bg-<sector>.svg       # exclusive themed background
   DEPLOY.md
 ```
 

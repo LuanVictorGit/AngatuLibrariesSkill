@@ -28,7 +28,7 @@ never silent (one of the reference reels ends in 3.7 s of silence; do not copy t
 ## 2. The music — `tools/analyze-music.py`
 
 ```bash
-python -X utf8 tools/analyze-music.py public/music/<trilha>.mp3 --fps 30
+python -X utf8 tools/analyze-music.py public/music/<track>.mp3 --fps 30
 ```
 
 It converts to WAV (librosa 1.0 does not read AAC), then measures:
@@ -62,7 +62,7 @@ be an AI call, and R26 sends AI through AngatuCRM, which generates text only tod
 generated, and a local speech model installed on the machine is not a way around that.
 
 ```bash
-python -X utf8 tools/transcribe.py public/voice/<narracao>.wav --model small
+python -X utf8 tools/transcribe.py public/voice/<narration>.wav --model small
 ```
 
 `faster-whisper`, local, with the model already cached (`HF_HUB_OFFLINE=1`): nothing leaves the machine
@@ -144,14 +144,14 @@ and is deprecated. Volume is a callback, and **its frame starts at 0 when that a
 composition's frame. Ducking the music under the narration:
 
 ```tsx
-/** Musica abaixada durante a fala: -12 dB, ataque de 6 quadros, soltura de 12. @author Angatu Sistemas */
+/** Music ducked during speech: -12 dB, 6-frame attack, 12-frame release. @author Angatu Sistemas */
 import { Audio } from '@remotion/media';
 import { interpolate, staticFile } from 'remotion';
 import { NARRATION } from '../data/narration.ts';
 import { FPS } from '../data/timeline.ts';
 
 const DUCK = 10 ** (-12 / 20);
-// Fim no minimo 1 quadro depois do inicio: o interpolate exige faixa estritamente crescente.
+// End at least 1 frame after the start: interpolate requires a strictly increasing range.
 const SPEECH = NARRATION.map((s) => {
   const a = Math.round(s.start * FPS);
   return [a, Math.max(a + 1, Math.round(s.end * FPS))] as const;
@@ -161,8 +161,8 @@ const duck = (frame: number): number =>
   SPEECH.reduce((gain, [a, b]) => Math.min(gain,
     interpolate(frame, [a - 6, a, b, b + 12], [1, DUCK, DUCK, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })), 1);
 
-// A musica comeca no quadro 0 da composicao, entao o quadro do callback e o mesmo da composicao.
-export const Music: React.FC = () => <Audio src={staticFile('music/trilha.mp3')} volume={(f) => 0.8 * duck(f)} />;
+// The music starts at frame 0 of the composition, so the callback frame is the composition's frame.
+export const Music: React.FC = () => <Audio src={staticFile('music/track.mp3')} volume={(f) => 0.8 * duck(f)} />;
 ```
 
 Music fades in and out on the grid; the final card keeps the music (fading), never silence.

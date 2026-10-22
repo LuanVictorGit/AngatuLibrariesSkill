@@ -70,23 +70,24 @@ served by a dedicated route.
 
 ```java
 /**
- * Serve a landing de um serviço com o <head> específico da página.
+ * GET /servicos/{slug}: serves a service landing as a complete page, with its own head section.
  *
  * @author Angatu Sistemas
  */
-public class ServiceLandingRoute extends Route {
-    public ServiceLandingRoute() { super("/servicos/{slug}", RouteType.GET, ServiceLandingRoute::handle); }
+public final class ServiceLandingRoute extends Route {
 
-    /** Aceita apenas slug em minúsculas com hífen: qualquer outra coisa vira 404. */
-    private static final java.util.regex.Pattern SLUG = java.util.regex.Pattern.compile("[a-z0-9-]{1,60}");
+    private static final Pattern SLUG = Pattern.compile("[a-z0-9-]{1,60}");
+
+    public ServiceLandingRoute() {
+        super("/servicos/{slug}", RouteType.GET, ServiceLandingRoute::handle);
+    }
 
     private static void handle(Context ctx) {
         String slug = ctx.pathParam("slug");
-        if (!SLUG.matcher(slug).matches()) { ctx.status(404); return; }
-
         String asset = "others/landing-" + slug + ".html";
-        if (!AssetsAPI.assetExists(asset)) { ctx.status(404); return; }
-
+        if (!SLUG.matcher(slug).matches() || !AssetsAPI.assetExists(asset)) {
+            throw new NotFoundResponse();
+        }
         ctx.html(AssetsAPI.readAssetAsString(asset));
     }
 }
@@ -181,7 +182,7 @@ Three routes, in order of preference:
 
 ```bash
 npx remotion still src/index.ts OgCover out/og/instalacao.jpg --props=./og/instalacao.json
-# og/instalacao.json: {"titulo": "Instalação de ar-condicionado em Porangatu", "foto": "footage/instalacao-01.jpg"}
+# og/instalacao.json: {"title": "Instalação de ar-condicionado em Porangatu", "photo": "footage/instalacao-01.jpg"}
 ```
 
 2. **Canvas 2D** with the same engine as `canvas-generative.md`: a local generator page draws the
@@ -264,16 +265,16 @@ together.
 ```bash
 LP=src/main/resources/public
 
-# páginas sem canonical, sem og:image ou sem description
+# pages without a canonical, an og:image or a description
 grep -L "rel=\"canonical\"" $LP/*.html
 grep -L "og:image"          $LP/*.html
 grep -L "name=\"description\"" $LP/*.html
 
-# og:image apontando para caminho local ou relativo
+# og:image pointing at a local or relative path
 grep -rn "og:image\" content=\"\(\.\|/\)" $LP --include="*.html"
 grep -rn "og:image.*localhost" $LP --include="*.html"
 
-# a mesma capa repetida em todas as páginas
+# the same cover repeated on every page
 grep -rhoE "og:image\" content=\"[^\"]+" $LP --include="*.html" | sort | uniq -c | sort -rn
 
 # capas geradas e seus pesos

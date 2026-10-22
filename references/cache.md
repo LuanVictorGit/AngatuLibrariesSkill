@@ -17,8 +17,7 @@
 ## 2. What to do at bootstrap, before serving traffic
 
 ```java
-// Nada de conteúdo guardado no navegador. ANTES do new AngatuLib: é na criação do servidor que
-// estes cabeçalhos também passam a valer para os arquivos estáticos de public/.
+// Before new AngatuLib: only headers declared at server creation also reach the static files of public/.
 JavalinAPI.setSecurityHeader("Cache-Control", "no-store, no-cache, must-revalidate");
 JavalinAPI.setSecurityHeader("Pragma", "no-cache");
 JavalinAPI.setSecurityHeader("Expires", "0");
@@ -26,7 +25,8 @@ JavalinAPI.setSecurityHeader("Expires", "0");
 new AngatuLib(host, port, true);
 ```
 
-The order is the part that matters. The static-file server writes its own headers **after** the
+These are the last three lines of `Main.configure()` (`backend-server.md` 5.1), which the route tests
+call too. The order is the part that matters. The static-file server writes its own headers **after** the
 security filter — `Cache-Control: max-age=0`, which means "revalidate", not "discard". The library
 hands the cache headers declared before startup to the static-file server as well, so CSS, JS and
 images carry the same `no-store` as the pages. Declared after startup, they reach pages and routes
@@ -44,14 +44,14 @@ network:
 ```js
 self.addEventListener('install', () => self.skipWaiting());
 
-self.addEventListener('activate', (evento) => evento.waitUntil(
-  // Apaga o que versões anteriores tenham guardado.
+self.addEventListener('activate', (event) => event.waitUntil(
+  // Deletes whatever earlier versions stored.
   caches.keys()
-    .then((chaves) => Promise.all(chaves.map((c) => caches.delete(c))))
+    .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
     .then(() => self.clients.claim())
 ));
 
-// Sem respondWith: o navegador segue o caminho normal até o servidor.
+// No respondWith: the browser takes its normal path to the server.
 self.addEventListener('fetch', () => {});
 ```
 
@@ -59,10 +59,10 @@ And on registration, force a version check and reload once when a new service wo
 otherwise the device stays pinned to the previous version indefinitely:
 
 ```js
-const registro = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-registro.update();
+const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+registration.update();
 navigator.serviceWorker.addEventListener('controllerchange', () => {
-  if (!window.__recarregando) { window.__recarregando = true; location.reload(); }
+  if (!window.__reloading) { window.__reloading = true; location.reload(); }
 });
 ```
 

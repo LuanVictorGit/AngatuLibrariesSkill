@@ -17,7 +17,7 @@
 | Protocol | HTTP on `PORT` (`8080`) | terminates TLS and forwards; issues and renews the certificate |
 | Client IP | `JavalinAPI.setTrustedProxyHops(1)` | injects `X-Forwarded-For` |
 | Data | `ANGATU_DB_PATH=/data/database.db`, uploads under `/data/...` | persistent volume mounted at `/data` |
-| Secrets | `Env.get().get("CHAVE")` | *Environment Variables* in the panel |
+| Secrets | `Env.get().get("EMAIL_PASSWORD")` | *Environment Variables* in the panel |
 | Health | `GET /health` (200, outside the rate limit) | uses the image's `HEALTHCHECK` |
 | Environment | `isLocalhost()` reads `ANGATU_ENV` | `ANGATU_ENV=production` already set in the `Dockerfile` |
 
@@ -29,10 +29,10 @@ Copy it to the project root, next to `pom.xml`. Adjust only the port, if the pro
 # syntax=docker/dockerfile:1
 
 # ---------------------------------------------------------------- build ------
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-25 AS build
 WORKDIR /build
 
-# Dependências primeiro: enquanto o pom.xml não mudar, esta camada é reaproveitada
+# Dependencies first: this layer is reused for as long as pom.xml does not change
 COPY pom.xml .
 RUN mvn -B -q dependency:go-offline
 
@@ -42,13 +42,13 @@ RUN mvn -B -q clean package -DskipTests \
  && cp "$(ls -S target/*.jar | head -n1)" /out/app.jar
 
 # -------------------------------------------------------------- runtime ------
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 
 ENV TZ=America/Sao_Paulo \
     ANGATU_ENV=production \
     ANGATU_DB_PATH=/data/database.db \
     PORT=8080 \
-    JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true"
+    JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError -XX:+UseCompactObjectHeaders -Djava.awt.headless=true"
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl tzdata \
@@ -80,6 +80,8 @@ ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /opt/app/app.jar"]
 | `exec java` in the ENTRYPOINT | Java becomes PID 1 and receives Coolify's `SIGTERM` — without it the shutdown hook never runs and the WAL is left without a checkpoint |
 | `MaxRAMPercentage=75` | the JVM sizes itself against the **container** limit (without it the default is 25%) |
 | `ExitOnOutOfMemoryError` | without it a JVM out of memory does not die — it enters continuous collection and starts answering in minutes, which `HEALTHCHECK` reads as "alive" |
+| `UseCompactObjectHeaders` | a product feature since Java 25 (R38): smaller object headers, so the same data takes less heap and triggers fewer collections — R39 at no cost in code |
+| no `--enable-native-access` here | it lives in the JAR manifest (`backend-server.md` 1.1), so overriding `JAVA_OPTS` in the panel cannot bring the warning back |
 
 ### 2.1 Memory: no fixed heap ceiling (R8)
 
@@ -144,40 +146,13 @@ docs/
 
 ## 4. Application startup
 
-```java
-/**
- * Ponto de entrada da aplicação.
- *
- * @author Angatu Sistemas
- */
-public class Main {
-    public static void main(String[] args) {
-        int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+Two things in `Main` exist because of Coolify, and the full class is `backend-server.md` 5.1: the port
+comes from `PORT`, and `setTrustedProxyHops(1)` plus `addIgnoredPath("/health")` are declared before
+`new AngatuLib(...)`. `AngatuLib` registers its own shutdown hook — server, queued tasks, database —
+so `Main` registers none.
 
-        // Tudo antes do construtor: vale desde a primeira requisição
-        JavalinAPI.setTrustedProxyHops(1);
-        JavalinAPI.addIgnoredPath("/health");
-        JavalinAPI.configureApiRateLimit("/api/*");
-        JavalinAPI.configureLoginRateLimit("/api/login");
-
-        // O AngatuLib registra o próprio gancho de desligamento (servidor, tarefas, banco)
-        new AngatuLib("meusite.com.br", port, true);
-    }
-}
-```
-
-The health route is mandatory — it is what `HEALTHCHECK` queries:
-
-```java
-/**
- * Rota de verificação de saúde usada pelo contêiner.
- *
- * @author Angatu Sistemas
- */
-public class HealthRoute extends Route {
-    public HealthRoute() { super("/health", RouteType.GET, ctx -> ctx.json("{\"status\":\"ok\"}")); }
-}
-```
+The health route is mandatory: it is what `HEALTHCHECK` queries. `HealthRoute` is in
+`backend-routes-html.md` 1, ready to copy.
 
 ## 5. Configuration in the Coolify panel
 
@@ -188,8 +163,8 @@ public class HealthRoute extends Route {
 4. **Persistent Storage**: a named volume mounted at `/data` — one per project. Each application has
    its own `database.db`; nothing is shared between projects.
 5. **Environment Variables**: the keys that used to live in `.env` (`EMAIL_KEY`, `EMAIL_PASSWORD`,
-   `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, the AngatuCRM token…). `Env.get().get("CHAVE")` reads
-   an environment variable exactly as it read the file.
+   `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, the AngatuCRM token…). `Env.get().get("EMAIL_PASSWORD")`
+   reads an environment variable exactly as it read the file.
 6. **Health Check**: the one in the `Dockerfile` is enough.
 
 > Use a **named** volume rather than a host path: the named volume inherits the owner of `/data` from
@@ -207,13 +182,21 @@ Without that stage Coolify packages the readable source: it works, but it is not
 
 ## 7. Projects with Playwright (BrowserAPI)
 
-The `eclipse-temurin:21-jre` image does not carry the Chromium libraries. Replace only the runtime
-stage:
+The `eclipse-temurin:25-jre` image does not carry the Chromium libraries. Replace only the runtime
+stage — with the Playwright image whose tag matches the library's Playwright version
+(`backend-server.md` 3), plus the Java 25 runtime on top of it:
 
 ```dockerfile
 FROM mcr.microsoft.com/playwright/java:v1.58.0-jammy
+# This tag ships JDK 21 and the JAR is compiled for 25: copy the Temurin 25 runtime over it
+COPY --from=eclipse-temurin:25-jre /opt/java/openjdk /opt/java/openjdk
+ENV JAVA_HOME=/opt/java/openjdk \
+    PATH=/opt/java/openjdk/bin:$PATH
 # ... same ENV, same user, same WORKDIR /data, same ENTRYPOINT
 ```
+
+Without the copy the container dies on start with `UnsupportedClassVersionError`. When the Playwright
+version moves, check `java -version` inside the new image: once it reports 25, the copy can go.
 
 Give the container more memory in the panel, because Chromium runs in a separate process and does not
 count against the heap.
@@ -221,9 +204,9 @@ count against the heap.
 ## 8. Test locally before publishing
 
 ```bash
-docker build -t meuprojeto .
-docker run --rm -p 8080:8080 -v meuprojeto-data:/data meuprojeto
-# valide http://localhost:8080/ e http://localhost:8080/health
+docker build -t myproject .
+docker run --rm -p 8080:8080 -v myproject-data:/data myproject
+# check http://localhost:8080/ and http://localhost:8080/health
 ```
 
 If the image builds and answers locally, Coolify will run it the same way. This is the test that catches
@@ -249,7 +232,7 @@ uncommitted CSS, the wrong JAR and a missing health route.
 
 ## 10. Migrating an old project (VPS + Let's Encrypt)
 
-1. `Main`: remove the fixed port and the certificates — `new AngatuLib(dominio, port, true)` with `port`
+1. `Main`: remove the fixed port and the certificates — `new AngatuLib(domain, port, true)` with `port`
    from `PORT`.
 2. Add `JavalinAPI.setTrustedProxyHops(1)` and the `/health` route.
 3. Copy `Dockerfile` and `.dockerignore`.

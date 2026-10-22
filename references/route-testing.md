@@ -14,8 +14,8 @@
 
 | Layer | What it boots | Cost per run | What it proves |
 |---|---|---|---|
-| **1. Service** | nothing | milliseconds | pricing, totals, stock, validation, permission decisions |
-| **2. Route** | the real `AngatuLib`, in-process | ~1–3 s once per suite | status codes, JSON shape, cookies, filters, headers, rate limiting |
+| **1. Service** | nothing | milliseconds | pricing, totals, validation, permission decisions |
+| **2. Route** | the real `AngatuLib`, in-process | ~1–3 s once per suite | status codes, JSON shape, cookies, filters, headers, rate limiting, stock and ownership against the real database |
 | **3. JAR and container** | `mvn package`, `docker build` | tens of seconds | classpath, bundled resources, the image that actually deploys |
 
 Run layer 1 constantly, layer 2 on every change to a route, and layer 3 **before delivering and before
@@ -35,41 +35,38 @@ cannot be tested without a server, and a route that delegates can be tested in a
 
 ```java
 /**
- * Testes da regra de preço do pedido.
- *
- * <p>Nenhum servidor sobe aqui. O que se testa é a decisão — total, desconto,
- * frete e estoque —, que é exatamente onde o erro caro acontece (R22).</p>
+ * Layer-1 tests of the order price rule: no server and no database, only the decision (R22).
  *
  * @author Angatu Sistemas
  */
-class OrderCalculatorTest {
+class OrderServiceTest {
 
     @Test
-    void deveIgnorarOPrecoQueVeioDoCliente() {
-        var produto = new Product("SKU-1", new BigDecimal("10.00"));
-        var pedido  = new OrderRequest("SKU-1", 3, new BigDecimal("0.01")); // preço forjado
-
-        var total = new OrderCalculator().calcular(pedido, produto);
-
-        // O preço do corpo da requisição não participa do cálculo (R22).
-        assertEquals(new BigDecimal("30.00"), total);
+    void pricesFromTheStoredProduct() {
+        assertEquals(new BigDecimal("30.00"), OrderService.total(product("10.00"), 3));
     }
 
     @Test
-    void naoDeveAceitarQuantidadeMaiorQueOEstoque() {
-        var produto = new Product("SKU-1", new BigDecimal("10.00"), 2);
-        var pedido  = new OrderRequest("SKU-1", 5, null);
+    void keepsTheCentsOfTheStoredPrice() {
+        assertEquals(new BigDecimal("29.97"), OrderService.total(product("9.99"), 3));
+    }
 
-        assertThrows(EstoqueInsuficienteException.class,
-            () -> new OrderCalculator().calcular(pedido, produto));
+    private static Product product(String price) {
+        Product product = new Product();
+        product.setPrice(new BigDecimal(price));
+        return product;
     }
 }
 ```
 
-**Every R22 rule is a layer-1 test.** Price recalculated server-side, quantity checked against stock,
-identifiers authorised against the session, no mass assignment — each of those is a decision, each
-decision belongs to a service, and each service test runs in a millisecond. This is the cheapest place
-to prove the security rules, and the only place where proving them is fast enough to do it always.
+The request record has no price field (`java-standard.md` 7), so a forged price cannot even reach
+this method: the type already enforces what a test used to check.
+
+**Every pure R22 decision is a layer-1 test** — price, discount, totals, what a role may do. Each is a
+decision, each decision belongs to a service, and each service test runs in a millisecond: the cheapest
+place to prove the security rules, and the only one fast enough to do it always. What is decided
+against the database or the session — stock inside the transaction, another account's record answering
+404 — is proved at layer 2, one route call each.
 
 ---
 
@@ -77,7 +74,8 @@ to prove the security rules, and the only place where proving them is fast enoug
 
 The server boots **once for the whole suite** on an ephemeral port, backed by a throwaway database.
 It is the same `AngatuLib` that runs in production: same before-handler chain, same SQLi/XSS screen,
-same security headers, same rate limiting, same `Saveable`.
+same security headers, same rate limiting, same `Saveable` — and the same configuration, because the
+harness calls `Main.configure()` (`backend-server.md` 5.1) instead of repeating it.
 
 > **`AngatuLib` is never instantiated twice in the same process** (`backend-server.md`). So the harness
 > is a singleton booted on first use, not a `@BeforeEach`, and not one per test class. Surefire runs
@@ -85,33 +83,27 @@ same security headers, same rate limiting, same `Saveable`.
 
 ```java
 /**
- * Servidor real, compartilhado por toda a suíte de testes.
- *
- * <p>Sobe uma única vez, em porta efêmera, com o banco apontando para um
- * arquivo descartável em target/. É o AngatuLib de produção — os filtros, os
- * cabeçalhos e o rate limiting são os mesmos, e é por isso que o teste vale.</p>
+ * The production server, started once for the whole suite on an ephemeral port, with the database
+ * in a throwaway file under target/.
  *
  * @author Angatu Sistemas
  */
-public final class ServidorDeTeste {
+public final class TestServer {
 
-    private static AngatuLib instancia;
-    private static String origem;
+    private static String origin;
 
-    private ServidorDeTeste() {
+    private TestServer() {
     }
 
-    /** Sobe o servidor na primeira chamada e reaproveita nas seguintes. */
-    public static synchronized String garantirNoAr() {
-        if (instancia == null) {
-            // Porta 0: o sistema escolhe uma livre e nenhum teste colide com
-            // um servidor de desenvolvimento já aberto em 8080.
-            // O AngatuLib registra o próprio gancho de desligamento: para o servidor, espera as
-            // tarefas e fecha o banco. Nada a registrar aqui.
-            instancia = new AngatuLib("localhost", 0, true);
-            origem = "http://127.0.0.1:" + JavalinAPI.get().port();
+    public static synchronized String ensureRunning() {
+        if (origin == null) {
+            Main.configure();
+            // Port 0 lets the OS pick a free port, so the suite never collides with a dev server on 8080.
+            // AngatuLib registers its own shutdown hook (server, tasks, database): nothing to add here.
+            new AngatuLib("localhost", 0, true);
+            origin = "http://127.0.0.1:" + JavalinAPI.get().port();
         }
-        return origem;
+        return origin;
     }
 }
 ```
@@ -121,34 +113,41 @@ request after it share the session exactly as a browser would:
 
 ```java
 /**
- * Base dos testes de rota: servidor no ar e cliente que guarda o cookie de sessão.
+ * Base of the route tests: the shared server and an HTTP client that keeps the session cookie.
  *
  * @author Angatu Sistemas
  */
-public abstract class RotaTestBase {
+public abstract class RouteTestBase {
 
-    protected static String origem;
+    protected static String origin;
     protected static HttpClient http;
 
     @BeforeAll
-    static void prepararCliente() {
-        origem = ServidorDeTeste.garantirNoAr();
+    static void openClient() {
+        origin = TestServer.ensureRunning();
         http = HttpClient.newBuilder()
-            .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
-            .connectTimeout(Duration.ofSeconds(5))
-            .build();
+                .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
     }
 
-    protected HttpResponse<String> get(String caminho) throws Exception {
-        return http.send(HttpRequest.newBuilder(URI.create(origem + caminho)).GET().build(),
-            HttpResponse.BodyHandlers.ofString());
+    @AfterAll
+    static void closeClient() {
+        if (http != null) {
+            http.close();
+        }
     }
 
-    protected HttpResponse<String> post(String caminho, String json) throws Exception {
-        return http.send(HttpRequest.newBuilder(URI.create(origem + caminho))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(json))
-            .build(), HttpResponse.BodyHandlers.ofString());
+    protected HttpResponse<String> get(String path) throws IOException, InterruptedException {
+        return http.send(HttpRequest.newBuilder(URI.create(origin + path)).GET().build(),
+                HttpResponse.BodyHandlers.ofString());
+    }
+
+    protected HttpResponse<String> post(String path, String json) throws IOException, InterruptedException {
+        return http.send(HttpRequest.newBuilder(URI.create(origin + path))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build(), HttpResponse.BodyHandlers.ofString());
     }
 }
 ```
@@ -156,39 +155,50 @@ public abstract class RotaTestBase {
 And the tests themselves:
 
 ```java
-class CreateOrderRouteTest extends RotaTestBase {
+/**
+ * Layer-2 tests of POST /api/orders and its neighbours, against the real server.
+ *
+ * @author Angatu Sistemas
+ */
+class CreateOrderRouteTest extends RouteTestBase {
 
     @Test
-    void healthDeveResponderSemAutenticacao() throws Exception {
-        var resposta = get("/health");
-
-        assertEquals(200, resposta.statusCode());
+    void healthAnswersWithoutSession() throws Exception {
+        assertEquals(200, get("/health").statusCode());
     }
 
     @Test
-    void rotaProtegidaDeveRecusarSemSessao() throws Exception {
-        var resposta = post("/api/orders", "{\"sku\":\"SKU-1\",\"quantidade\":1}");
+    void refusesWithoutSession() throws Exception {
+        var response = post("/api/orders", "{\"productId\":\"SKU-1\",\"quantity\":1}");
 
-        // Sem sessão a requisição morre antes da regra de negócio (R22, R23).
-        assertEquals(401, resposta.statusCode());
+        assertEquals(401, response.statusCode());
     }
 
     @Test
-    void recursoDeOutraContaDeveResponder404() throws Exception {
-        autenticarComo("cliente-a");
+    void refusesQuantityAboveStock() throws Exception {
+        signInAs("customer-a");
 
-        var resposta = get("/api/orders/" + pedidoDoClienteB);
+        var response = post("/api/orders", "{\"productId\":\"" + productWithTwoInStock + "\",\"quantity\":5}");
 
-        // 404, não 403: 403 confirma que o recurso existe (security.md).
-        assertEquals(404, resposta.statusCode());
+        assertEquals(409, response.statusCode());
     }
 
     @Test
-    void deveEnviarOsCabecalhosDeSeguranca() throws Exception {
-        var resposta = get("/health");
+    void anotherAccountsOrderIsNotFound() throws Exception {
+        signInAs("customer-a");
 
-        assertTrue(resposta.headers().firstValue("X-Content-Type-Options").isPresent());
-        assertEquals("no-store", resposta.headers().firstValue("Cache-Control").orElse(""));
+        var response = get("/api/orders/" + orderOfCustomerB);
+
+        // 404, not 403: a 403 would confirm that the order exists (security.md).
+        assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    void sendsTheSecurityHeaders() throws Exception {
+        var response = get("/health");
+
+        assertTrue(response.headers().firstValue("X-Content-Type-Options").isPresent());
+        assertTrue(response.headers().firstValue("Cache-Control").orElse("").contains("no-store"));
     }
 }
 ```
@@ -206,18 +216,25 @@ through a system property, and never by pointing at the development database:
 <plugin>
   <groupId>org.apache.maven.plugins</groupId>
   <artifactId>maven-surefire-plugin</artifactId>
-  <version>3.2.5</version>
+  <version>3.5.4</version>
   <configuration>
+    <argLine>--enable-native-access=ALL-UNNAMED "-Djdk.net.unixdomain.tmpdir=${project.build.directory}"</argLine>
     <environmentVariables>
-      <ANGATU_DB_PATH>${project.build.directory}/test-data/database.db</ANGATU_DB_PATH>
+      <ANGATU_DB_PATH>${project.build.directory}/test-database.db</ANGATU_DB_PATH>
       <ANGATU_ENV>development</ANGATU_ENV>
     </environmentVariables>
   </configuration>
 </plugin>
 ```
 
-Under `target/`, `mvn clean` wipes it and `.gitignore` already covers it. A suite that writes into the
-development database corrupts the data you were about to demo.
+Directly under `target/`, never in a subfolder: SQLite does not create a missing folder, and `target/`
+is the one that always exists by the time tests run. `mvn clean` wipes it and `.gitignore` already
+covers it. A suite that writes into the
+development database corrupts the data you were about to demo. The `argLine` lets `sqlite-jdbc` load
+its native library without the Java 24+ warning (`backend-server.md` 1.1), and moves the socket that
+Java's NIO selector opens out of `TEMP`: on Windows with `TEMP` under a short 8.3 name
+(`C:\Users\NAME~1\...`) Jetty fails with `SocketException: Invalid argument: connect` and no server
+starts — the same fix the library's own suite carries.
 
 ### 3.2 Rate limiting will bite
 
@@ -250,7 +267,7 @@ this.
 <dependency>
   <groupId>org.junit.jupiter</groupId>
   <artifactId>junit-jupiter</artifactId>
-  <version>5.10.2</version>
+  <version>5.14.4</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -258,8 +275,8 @@ this.
 That is the whole addition. The HTTP client is `java.net.http`, in the JDK since 11.
 
 ```bash
-mvn test                      # as duas primeiras camadas
-mvn test -Dtest=OrderCalculatorTest   # só a camada 1, em milissegundos
+mvn test                            # the first two layers
+mvn test -Dtest=OrderServiceTest    # layer 1 only, in milliseconds
 ```
 
 Note that `mvn package -DskipTests`, used everywhere in this skill for speed, **skips all of this**.

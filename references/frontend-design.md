@@ -76,8 +76,8 @@ you already tried.
   names; in the published `dist` the files, folders, classes and design-system custom properties all
   carry generated names (R19, `frontend-build.md`). Write against the source names and never against
   what the browser shows in production.
-- Follow `routes/` / `entities/` / `services/` / `utils/` in English with Javadoc in Portuguese and
-  `@author Angatu Sistemas` (R12).
+- On the backend, follow `java-standard.md`: `routes/` / `entities/` / `services/` / `utils/`, all code
+  in English, one Javadoc block per class ending in `@author Angatu Sistemas` (R11, R12).
 - Design **every** state: empty, loading, error and populated — not just the happy path.
 - Remember R13: the same care applies to error pages, blocked pages, e-mails and print views. They are
   not leftovers.

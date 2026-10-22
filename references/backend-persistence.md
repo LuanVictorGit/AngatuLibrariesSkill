@@ -22,25 +22,30 @@ pool — the library's `SaveableConcurrencyTest` is that contract.
 
 ```java
 import br.com.angatusistemas.lib.database.Saveable;
-import lombok.Getter; import lombok.Setter;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * Entidade de usuário persistida via Saveable.
+ * A person who signs in to the system, stored as JSON in SQLite through Saveable.
  *
  * @author Angatu Sistemas
  */
-@Getter @Setter
-public class User extends Saveable {
+@Getter
+@Setter
+public final class User extends Saveable {
+
     private String id;
+    private String tenantId;
     private String name;
     private String email;
-    public User() {}
-    @Override public String getId() { return id; }
 }
 ```
 
-Class names in English, Javadoc in PT-BR, `@author Angatu Sistemas` on every class (R12). Never
-`Usuario` or `Produto`.
+Names in English, one Javadoc block on the class ending in `@author Angatu Sistemas`, `final`, and
+Lombok limited to `@Getter`/`@Setter` (R11, R12, `java-standard.md`). Never `Usuario` or `Produto`.
+The generated `getId()` implements `Saveable`'s abstract one. Keep the no-argument constructor —
+implicit, or written out when another constructor exists: Gson builds the entity through it, and
+without it the field initialisers do not run when a record is loaded.
 
 The table name comes from `Saveable.tableName(User.class)`: the simple name in lower case, plus `s`
 only when it does not already end in `s` (`User→users`, `Address→address`, `Category→categorys` —
@@ -55,7 +60,9 @@ and the class is `abstract` — R10.
 
 ```java
 // create / store (atomic; last write wins)
-User user = new User(); user.setName("João"); user.save(); // UUID when id == null
+User user = new User();
+user.setName("João");
+user.save(); // a null id gets a UUID
 
 // read — always from the database, always a new instance
 User found   = Saveable.findById(User.class, user.getId());
@@ -107,10 +114,12 @@ Routes, scheduled tasks and workers touch the same records at the same time. Cho
 
 ```java
 // WRONG on a contested record: between findById and save, another component writes and its change vanishes
-User u = Saveable.findById(User.class, id); u.setCredits(u.getCredits() + 10); u.save();
+User user = Saveable.findById(User.class, id);
+user.setCredits(user.getCredits() + 10);
+user.save();
 
 // RIGHT
-Saveable.mutate(User.class, id, x -> x.setCredits(x.getCredits() + 10));
+Saveable.mutate(User.class, id, stored -> stored.setCredits(stored.getCredits() + 10));
 
 // RIGHT: two writes that must hold together
 Saveable.transaction(() -> { stock.save(); new Order(userId, productId).save(); });
@@ -129,7 +138,8 @@ default) gets `PersistenceException`. Call the network first, then write the res
 **What the library guarantees, so the project does not work around it:**
 
 - A failure is `PersistenceException`, never `null` or an empty list: `findById` returning `null`
-  means the record does not exist.
+  means the record does not exist — a service turns that into `Optional` once, at its boundary
+  (`java-standard.md` 5.4).
 - A table touched for the first time inside a transaction only exists after the commit; a rollback
   discards it, and a table that disappeared is recreated on the next call.
 - `mutate` refuses a block that changes the record's id (`IllegalStateException`) — create the new
@@ -205,9 +215,12 @@ route. A record touched by a single flow can stay on `save()`.
 
 ```java
 // WRONG — writes the copy read earlier over what another component wrote in between
-Invoice f = Saveable.findById(Invoice.class, id); f.setStatus(PAID); f.save();
+Invoice invoice = Saveable.findById(Invoice.class, id);
+invoice.setStatus(PAID);
+invoice.save();
+
 // RIGHT
-Saveable.mutate(Invoice.class, id, f -> f.setStatus(PAID));
+Saveable.mutate(Invoice.class, id, stored -> stored.setStatus(PAID));
 ```
 
 **2. Do not rewrite the whole entity to change one field.** `save()` persists the complete object: a

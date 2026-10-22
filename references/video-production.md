@@ -121,22 +121,22 @@ the escalation live in `video-review.md`.
 ## 6. Where a video lives
 
 ```
-~/Videos/Angatu/                     raiz do estudio
-  CLAUDE.md                          fatos compartilhados: licenca do Remotion, caminhos, equipe
-  _marca/                            logos oficiais da Angatu, retratos autorizados da equipe
-  <cliente>-<peca>/                  um video: slug ASCII curto, sem espaco nem acento
-    CLAUDE.md                        bloco R1 + ate 15 linhas apontando para docs/
+~/Videos/Angatu/                     studio root
+  CLAUDE.md                          shared facts: Remotion licence, paths, team
+  _marca/                            Angatu's official logos, authorised team portraits
+  <cliente>-<peca>/                  one video: short ASCII slug, no spaces or accents
+    CLAUDE.md                        R1 block + up to 15 lines pointing to docs/
     docs/                            BRIEFING.md  PLANO.md  REVISAO.md  LICENCAS.md  REFERENCIAS.md
     public/                          brand/ screens/ footage/ music/ voice/ sfx/ fonts/ audio/
     src/
       data/                          timeline.ts brand.ts music.ts narration.ts sfx.ts
       lib/                           motion.ts (easings, envelopes)
       components/                    Camera, SlamText, Flash, DeviceFrame, SafeArea, Guides...
-      scenes/                        uma cena por arquivo
+      scenes/                        one scene per file
       Root.tsx  Main.tsx  index.ts
-    tools/                           copiados de tools/video/ da skill
+    tools/                           copied from the skill's tools/video/
     out/                             renders, review/, site/, analysis/
-    entrega/                         os arquivos finais
+    entrega/                         the final files
 ```
 
 - **Never inside an application repository.** React, `node_modules` and renders do not belong in a
@@ -167,10 +167,10 @@ cd ~/Videos/Angatu
 npx --yes create-video@latest --yes --blank --no-tailwind <cliente>-<peca>
 cd <cliente>-<peca>
 npm install
-npm install-scripts approve esbuild        # o npm 12 bloqueia o postinstall do esbuild
+npm install-scripts approve esbuild        # npm 12 blocks esbuild's postinstall
 V=$(node -p "require('remotion/package.json').version")
-npm install -E "@remotion/media@$V" "@remotion/noise@$V" "@remotion/layout-utils@$V"   # so o que o video usa
-npx remotion skills add                    # skills oficiais do Remotion (download: pedir ok)
+npm install -E "@remotion/media@$V" "@remotion/noise@$V" "@remotion/layout-utils@$V"   # only what the video uses
+npx remotion skills add                    # official Remotion skills (download: ask for the OK)
 mkdir -p tools && cp ~/.claude/skills/AngatuLibrariesSkill/tools/video/* tools/
 ```
 
@@ -199,10 +199,10 @@ faster_whisper, PIL"`; for Instagram references, Claude in Chrome connected to t
 
 ## 8. The house rules on a video
 
-**Apply**: R1 and R2 (the folder's `CLAUDE.md`), R11 and R12 (identifiers in English, comments in
-PT-BR, `@author Angatu Sistemas` in file headers), R16, R26, R31 (the local history), R32 at delivery
-(no leftovers), R35 — and the spirit of R4 and R5: the newest Remotion at creation, pinned exact, and
-only the packages the video uses.
+**Apply**: R1 and R2 (the folder's `CLAUDE.md`), R11 and R12 (all code in English, identifiers and
+comments alike, with `@author Angatu Sistemas` in the file header), R16 (the text on screen is PT-BR
+and reviewed), R26, R31 (the local history), R32 at delivery (no leftovers), R35 — and the spirit of R4
+and R5: the newest Remotion at creation, pinned exact, and only the packages the video uses.
 
 **Replaced**: R17 by the G5 question about the Angatu mark; R21 and R29 by the review loop; R13 by the
 client's identity in `src/data/brand.ts`, taken from the URL research.
