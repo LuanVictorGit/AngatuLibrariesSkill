@@ -1,20 +1,21 @@
 #!/usr/bin/env node
 /**
- * Porta que impede o mesmo codigo de produzir dois videos diferentes.
+ * Gate that stops the same code from producing two different videos.
  *
- * O Remotion renderiza por CAPTURA: o Chrome pinta o quadro N, fotografa,
- * avanca o relogio, pinta o N+1 -- e com concorrencia, quadros vizinhos saem
- * de abas diferentes. Duas coisas quebram isso sem erro e sem log:
- *   - CSS animado (transition, animation, @keyframes) roda no relogio de
- *     PAREDE: no Studio fica lindo, no MP4 tudo acontece no primeiro quadro.
- *   - Math.random, Date.now, timers e requestAnimationFrame mudam a cada
- *     captura: o resultado e cintilacao que muda de um render para outro.
+ * Remotion renders by CAPTURE: Chrome paints frame N, takes a picture,
+ * advances the clock, paints N+1 -- and with concurrency, neighbouring frames
+ * come from different tabs. Two things break this with no error and no log:
+ *   - Animated CSS (transition, animation, @keyframes) runs on the WALL
+ *     clock: in the Studio it looks right, in the MP4 everything happens on
+ *     the first frame.
+ *   - Math.random, Date.now, timers and requestAnimationFrame change on every
+ *     capture: the result is a flicker that differs from one render to the next.
  *
- * Aleatoriedade permitida: random('semente') do remotion e noise2D/3D/4D do
- * @remotion/noise. Excecao legitima e rara: comentario
- * "// determinismo-ok: <motivo>" na linha ou na linha anterior.
+ * Allowed randomness: random('seed') from remotion and noise2D/3D/4D from
+ * @remotion/noise. A legitimate and rare exception: the comment
+ * "// determinism-ok: <reason>" on the line or on the line above.
  *
- * Uso: node tools/check-determinism.mjs      (sai com 1 se achar quebra)
+ * Usage: node tools/check-determinism.mjs      (exits with 1 when it finds a violation)
  *
  * @author Angatu Sistemas
  */
@@ -23,24 +24,24 @@ import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const ESCAPE = 'determinismo-ok';
+const ESCAPE = 'determinism-ok';
 
 const RULES = [
-  { name: 'sem-random', pattern: /\bMath\s*\.\s*random\s*\(/,
-    why: "use random('semente') do remotion ou noise2D do @remotion/noise" },
-  { name: 'sem-relogio', pattern: /\b(Date\s*\.\s*now\s*\(|new\s+Date\s*\(\s*\)|performance\s*\.\s*now\s*\()/,
-    why: 'o tempo do video e useCurrentFrame(), nao o relogio da maquina' },
-  { name: 'sem-css-animado',
-    // So valor em string e CSS animado; `transition: Tipo` e anotacao de tipo.
+  { name: 'no-random', pattern: /\bMath\s*\.\s*random\s*\(/,
+    why: "use random('seed') from remotion or noise2D from @remotion/noise" },
+  { name: 'no-clock', pattern: /\b(Date\s*\.\s*now\s*\(|new\s+Date\s*\(\s*\)|performance\s*\.\s*now\s*\()/,
+    why: "the video's time is useCurrentFrame(), not the machine's clock" },
+  { name: 'no-animated-css',
+    // Only a string value is animated CSS; `transition: Type` is a type annotation.
     pattern: /(^|[^a-zA-Z-])(transition|animation|animationName|animationDuration|transitionDuration)\s*:\s*['"`]/,
-    why: 'CSS animado roda no relogio de parede; calcule o valor a partir do quadro' },
-  { name: 'sem-keyframes', pattern: /@keyframes\b/, why: 'mesma armadilha do CSS animado' },
-  { name: 'sem-classe-animada', pattern: /className=["'`][^"'`]*\b(animate-|transition)/,
-    why: 'classe de animacao (Tailwind ou nao) nao renderiza no Remotion' },
-  { name: 'sem-temporizador', pattern: /\b(setTimeout|setInterval)\s*\(/,
-    why: 'temporizador nao existe no tempo do video' },
-  { name: 'sem-raf', pattern: /\brequestAnimationFrame\s*\(/,
-    why: 'animar por rAF ignora o relogio do render' },
+    why: 'animated CSS runs on the wall clock; compute the value from the frame' },
+  { name: 'no-keyframes', pattern: /@keyframes\b/, why: 'the same trap as animated CSS' },
+  { name: 'no-animated-class', pattern: /className=["'`][^"'`]*\b(animate-|transition)/,
+    why: 'an animation class (Tailwind or not) does not render in Remotion' },
+  { name: 'no-timer', pattern: /\b(setTimeout|setInterval)\s*\(/,
+    why: "a timer does not exist in the video's time" },
+  { name: 'no-raf', pattern: /\brequestAnimationFrame\s*\(/,
+    why: "animating with rAF ignores the render's clock" },
 ];
 
 function walk(dir, out) {
@@ -72,7 +73,7 @@ for (const file of files) {
 }
 
 if (violations.length) {
-  console.error(`[determinismo] ${violations.length} quebra(s):\n\n${violations.join('\n\n')}\n`);
+  console.error(`[determinism] ${violations.length} violation(s):\n\n${violations.join('\n\n')}\n`);
   process.exit(1);
 }
-console.log(`[determinismo] ok -- ${files.length} arquivos, nenhuma quebra`);
+console.log(`[determinism] ok -- ${files.length} files, no violations`);

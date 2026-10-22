@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-Mede o ponto de impacto de cada efeito sonoro da pasta public/sfx.
+Measures the impact point of each sound effect in the public/sfx folder.
 
-Efeito sonoro alinhado pelo INICIO do arquivo chega atrasado: um whoosh leva
-centenas de ms subindo ate o pico, e e o pico que tem de cair no corte. Este
-script mede, para cada arquivo, onde esta a ancora -- o instante que deve
-coincidir com o evento na tela -- e grava src/data/sfx.ts.
+An effect aligned by the START of its file arrives late: a whoosh takes hundreds
+of ms rising to its peak, and it is the peak that has to land on the cut. This
+script measures, for each file, where the anchor is -- the instant that must
+coincide with the event on screen -- and writes src/data/sfx.ts.
 
-  impacto, pop, click, hit, boom, stamp, glitch -> inicio do ataque
-  whoosh, swoosh, swipe, whip                   -> pico de energia
-  riser, reverse                                -> fim (o som morre no drop)
+  impact, pop, click, hit, boom, stamp, glitch  -> start of the attack
+  whoosh, swoosh, swipe, whip                   -> energy peak
+  riser, reverse                                -> end (the sound dies on the drop)
 
-A categoria vem do prefixo do nome do arquivo (whoosh-01.wav, riser-02.wav).
-Posicao do efeito na linha do tempo = quadro do evento - ancora.
+The category comes from the file-name prefix (whoosh-01.wav, riser-02.wav).
+Position of the effect on the timeline = event frame - anchor.
 
-Uso:  python -X utf8 tools/analyze-sfx.py [public/sfx] [--out src/data/sfx.ts]
+Usage:  python -X utf8 tools/analyze-sfx.py [public/sfx] [--out src/data/sfx.ts]
 
 @author Angatu Sistemas
 """
@@ -30,7 +30,7 @@ import librosa
 import numpy as np
 
 SR = 22050
-HOP = 64  # 2,9 ms
+HOP = 64  # 2.9 ms
 EXTS = {".wav", ".mp3", ".ogg", ".flac", ".m4a", ".aac"}
 BY_ONSET = {"impact", "hit", "pop", "click", "boom", "stamp", "glitch", "punch", "thud", "tap"}
 BY_PEAK = {"whoosh", "swoosh", "swipe", "whip", "transition", "sweep"}
@@ -49,19 +49,19 @@ def measure(path: Path) -> dict:
     rms = librosa.feature.rms(y=y, frame_length=256, hop_length=HOP)[0]
     db = 20 * np.log10(rms + 1e-9)
     peak_i = int(np.argmax(db))
-    loud = np.where(db >= db[peak_i] - 20.0)[0]   # ate 20 dB abaixo do pico
-    tail = np.where(db >= db[peak_i] - 30.0)[0]   # ate 30 dB abaixo do pico
+    loud = np.where(db >= db[peak_i] - 20.0)[0]   # up to 20 dB below the peak
+    tail = np.where(db >= db[peak_i] - 30.0)[0]   # up to 30 dB below the peak
     ms = lambda i: int(round(i * HOP / SR * 1000))
     category = path.stem.split("-")[0].lower()
     onset_ms, peak_ms, end_ms = ms(loud[0]), ms(peak_i), ms(tail[-1])
     if category in BY_END:
-        anchor, rule = end_ms, "fim"
+        anchor, rule = end_ms, "end"
     elif category in BY_PEAK:
-        anchor, rule = peak_ms, "pico"
+        anchor, rule = peak_ms, "peak"
     elif category in BY_ONSET:
-        anchor, rule = onset_ms, "ataque"
+        anchor, rule = onset_ms, "onset"
     else:
-        anchor, rule = peak_ms, "pico (categoria desconhecida: conferir)"
+        anchor, rule = peak_ms, "peak (unknown category: check it)"
     return {
         "file": path.as_posix(),
         "category": category,
@@ -83,20 +83,20 @@ def main() -> None:
 
     files = sorted(p for p in Path(args.folder).iterdir() if p.suffix.lower() in EXTS)
     if not files:
-        raise SystemExit(f"nenhum efeito em {args.folder}")
+        raise SystemExit(f"no effect in {args.folder}")
     table = {p.stem: measure(p) for p in files}
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     body = json.dumps(table, ensure_ascii=False, indent=2)
     out.write_text(
-        "// Saida de tools/analyze-sfx.py -- ancora de cada efeito, em ms desde o inicio do arquivo.\n"
+        "// Output of tools/analyze-sfx.py -- the anchor of each effect, in ms from the start of the file.\n"
         f"export const SFX = {body} as const;\n"
         "export type SfxName = keyof typeof SFX;\n",
         encoding="utf-8",
     )
     for name, m in table.items():
-        print(f"{name:40s} {m['durationMs']:5d}ms  ancora={m['anchorMs']:5d}ms ({m['rule']})  pico={m['peakDb']}dB")
+        print(f"{name:40s} {m['durationMs']:5d}ms  anchor={m['anchorMs']:5d}ms ({m['rule']})  peak={m['peakDb']}dB")
     print(f"-> {out}")
 
 

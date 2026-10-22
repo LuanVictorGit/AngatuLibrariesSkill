@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 /**
- * Masterizacao do audio do video renderizado: -14 LUFS integrado e pico real
- * de no maximo -1 dBTP, sem mexer na imagem (-c:v copy) e com +faststart.
+ * Mastering of the rendered video's audio: -14 LUFS integrated and a true peak
+ * of at most -1 dBTP, without touching the picture (-c:v copy) and with +faststart.
  *
- * -14 LUFS / -1 dBTP e convencao de mercado para redes sociais, nao
- * especificacao publicada por Instagram, TikTok ou YouTube.
+ * -14 LUFS / -1 dBTP is a market convention for social video, not a
+ * specification published by Instagram, TikTok or YouTube.
  *
- * Cadeia: mede -> limitador so nos picos -> ganho estatico -> mede de novo.
- * Nada de compressao "automatica": o equilibrio entre voz, musica e efeitos foi
- * decidido na composicao e aqui so se sobe o todo sem estourar.
+ * Chain: measure -> limiter on the peaks only -> static gain -> measure again.
+ * No "automatic" compression: the balance between voice, music and effects was
+ * decided in the composition, and here the whole is only raised without clipping.
  *
- * Armadilha: o alimiter do FFmpeg olha adiante (attack) e ATRASA o audio desse
- * tanto se latency=1 nao estiver ligado -- um video sincronizado quadro a
- * quadro sairia fora de sincronia no master. level=0 desliga o ganho automatico.
+ * Trap: FFmpeg's alimiter looks ahead (attack) and DELAYS the audio by that
+ * much unless latency=1 is on -- a video synchronised to the frame would come
+ * out of the master out of sync. level=0 turns off the automatic gain.
  *
- * Uso: node tools/master.mjs [out/final.mp4] [out/final-master.mp4]
+ * Usage: node tools/master.mjs [out/final.mp4] [out/final-master.mp4]
  *
  * @author Angatu Sistemas
  */
@@ -25,13 +25,13 @@ import { fileURLToPath } from 'node:url';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const TARGET_LUFS = -14;
 const TARGET_TP = -1.0;
-const MARGIN_DB = 0.8; // o AAC sobe o pico real alguns decimos de dB
+const MARGIN_DB = 0.8; // AAC raises the true peak by a few tenths of a dB
 const input = process.argv[2] ?? 'out/final.mp4';
 const output = process.argv[3] ?? input.replace(/\.mp4$/, '-master.mp4');
 
 function ffmpeg(args) {
   const r = spawnSync('ffmpeg', ['-hide_banner', '-nostats', ...args], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 });
-  if (r.status !== 0) throw new Error(`ffmpeg falhou:\n${r.stderr}`);
+  if (r.status !== 0) throw new Error(`ffmpeg failed:\n${r.stderr}`);
   return r.stderr;
 }
 
@@ -57,8 +57,8 @@ let gain = TARGET_LUFS - before.lufs;
 let margin = MARGIN_DB;
 let chain;
 let after;
-// Ate 5 tentativas: o pico real manda (se passou, mais margem no limitador);
-// depois o loudness (se desviou, corrige o ganho). O limitador so toca picos.
+// Up to 5 tries: the true peak decides first (if it went over, more margin on the
+// limiter); then the loudness (if it drifted, correct the gain). The limiter only touches peaks.
 for (let attempt = 0; attempt < 5; attempt++) {
   chain = apply(gain, TARGET_TP - margin - gain);
   after = measure(join(ROOT, output));
@@ -69,13 +69,13 @@ for (let attempt = 0; attempt < 5; attempt++) {
   if (!loudOk) gain += TARGET_LUFS - after.lufs;
 }
 
-console.log(`antes : ${before.lufs} LUFS, pico real ${before.tp} dBTP`);
-console.log(`cadeia: ${chain}`);
-console.log(`depois: ${after.lufs} LUFS, pico real ${after.tp} dBTP -> ${output}`);
+console.log(`before: ${before.lufs} LUFS, true peak ${before.tp} dBTP`);
+console.log(`chain : ${chain}`);
+console.log(`after : ${after.lufs} LUFS, true peak ${after.tp} dBTP -> ${output}`);
 const depth = before.tp + gain - (TARGET_TP - margin);
 if (depth > 6) {
-  console.log(`aviso: o limitador corta ~${depth.toFixed(1)} dB de pico -- a mix esta esmagada; baixe os picos na composicao (gainDb dos efeitos, volume da musica) e renderize de novo`);
+  console.log(`warning: the limiter cuts ~${depth.toFixed(1)} dB of peak -- the mix is crushed; lower the peaks in the composition (the effects' gainDb, the music volume) and render again`);
 }
 const ok = Math.abs(after.lufs - TARGET_LUFS) <= 1 && after.tp <= TARGET_TP;
-console.log(ok ? 'master ok' : 'master FORA do alvo: revise a mix na composicao (ganhos dos efeitos e da musica)');
+console.log(ok ? 'master ok' : 'master OFF target: review the mix in the composition (effect and music gains)');
 process.exit(ok ? 0 : 1);

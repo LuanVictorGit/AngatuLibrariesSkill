@@ -1,40 +1,40 @@
 /**
- * Analise de reel de referencia DENTRO da aba do Chrome logado -- sem baixar
- * arquivo, sem interagir com o post, sem sair da pagina.
+ * Analysis of a reference reel INSIDE the signed-in Chrome tab -- no file
+ * downloaded, no interaction with the post, without leaving the page.
  *
- * Como funciona: o player do Instagram ja carregou as representacoes DASH do
- * video e do audio (entradas de `performance`, dominio fbcdn). O parametro
- * `efg` de cada URL e um JSON em base64 com resolucao, duracao e o id do video.
- * O script busca a melhor versao de imagem e o audio NA MEMORIA da aba, varre
- * quadro a quadro (1/30 s) medindo diferenca de luminancia -> cortes, monta
- * folhas de contato num canvas por cima da pagina (para fotografar) e
- * decodifica o audio (OfflineAudioContext + filtros) -> ataques, BPM, energia.
+ * How it works: Instagram's player has already loaded the DASH representations
+ * of the video and the audio (`performance` entries, fbcdn domain). The `efg`
+ * parameter of each URL is a base64 JSON with the resolution, the duration and
+ * the video id. The script fetches the best image version and the audio INTO the
+ * tab's MEMORY, sweeps frame by frame (1/30 s) measuring the luminance difference
+ * -> cuts, builds contact sheets on a canvas over the page (to screenshot) and
+ * decodes the audio (OfflineAudioContext + filters) -> attacks, BPM, energy.
  *
- * Tempo: o <video> respeita a lista de edicao (elst) do MP4; o decodeAudioData
- * NAO -- o audio decodificado chega atrasado pelo priming do AAC (no Instagram,
- * HE-AAC: ~105 ms). O script le o elst e desconta, e desconta tambem o atraso
- * do proprio detector (19 ms, calibrado). Com isso, um video conhecido com
- * corte 1 quadro antes da batida mede -33 ms. Ataque de musica real e menos
- * nitido que o do teste: tratar a relacao corte x batida como +-1 quadro.
+ * Timing: the <video> honours the MP4 edit list (elst); decodeAudioData does
+ * NOT -- the decoded audio arrives late by the AAC priming (on Instagram,
+ * HE-AAC: ~105 ms). The script reads the elst and subtracts it, and also
+ * subtracts the detector's own lag (19 ms, calibrated). With that, a known video
+ * that cuts 1 frame before the beat measures -33 ms. A real music attack is less
+ * sharp than the test's: read cut against beat as +-1 frame.
  *
- * Uso (ferramenta javascript do Claude in Chrome, na pagina do reel; cada
- * chamada da ferramenta tem limite de ~45 s, por isso o trabalho roda solto):
- *   1. colar este arquivo inteiro; ele define window.__reel
- *   2. __reel.start()        -> comeca load + scan + audio em segundo plano
- *   3. __reel.status()       -> repetir ate done: true (ou error)
- *   4. __reel.report()       -> cortes, pausas, BPM, energia, corte x ataque
- *   5. await __reel.sheet(0.25, 8.25, 0.5, 8) -> folha de contato; fotografar; __reel.clear()
- * load() parado em readyState 0: o Chrome adia midia em aba que nunca ficou
- * visivel. Pedir ao usuario para trazer a aba para frente uma vez.
+ * Usage (javascript tool of Claude in Chrome, on the reel's page; each call of
+ * the tool is limited to ~45 s, so the work runs detached):
+ *   1. paste this whole file; it defines window.__reel
+ *   2. __reel.start()        -> starts load + scan + audio in the background
+ *   3. __reel.status()       -> repeat until done: true (or error)
+ *   4. __reel.report()       -> cuts, holds, BPM, energy, cut vs attack
+ *   5. await __reel.sheet(0.25, 8.25, 0.5, 8) -> contact sheet; screenshot it; __reel.clear()
+ * load() stuck at readyState 0: Chrome defers media in a tab that has never been
+ * visible. Ask the user to bring the tab to the front once.
  *
  * @author Angatu Sistemas
  */
 window.__reel = (() => {
   const state = { video: null, sheetVideo: null, audioBuffer: null, audioOffset: 0, diffs: [], cuts: [],
-    onsets: [], info: null, scanResult: null, audioResult: null, done: false, error: null, phase: 'parado' };
+    onsets: [], info: null, scanResult: null, audioResult: null, done: false, error: null, phase: 'idle' };
   const STEP = 1 / 30;
-  // Atraso do detector de ataque, calibrado no teste de resposta conhecida
-  // (pulso de ataque instantaneo): descontado para o tempo sair verdadeiro.
+  // Lag of the attack detector, calibrated on a known-response test (an
+  // instantaneous attack pulse): subtracted so that the time comes out true.
   const DETECTOR_LAG_S = 0.019;
 
   const decodeEfg = (u) => {
@@ -46,7 +46,7 @@ window.__reel = (() => {
     }
   };
 
-  /** Deslocamento da lista de edicao (elst) do primeiro trak, em segundos. */
+  /** Offset of the edit list (elst) of the first trak, in seconds. */
   function editOffset(arrayBuffer) {
     const b = new DataView(arrayBuffer);
     let timescale = null;
@@ -88,8 +88,8 @@ window.__reel = (() => {
 
   async function load() {
     const all = media();
-    if (!all.length) throw new Error('nenhuma midia carregada: de play no reel e tente de novo');
-    // O reel da pagina e o asset com mais representacoes; os outros sao pre-carga.
+    if (!all.length) throw new Error('no media loaded: press play on the reel and try again');
+    // The page's reel is the asset with the most representations; the others are preloads.
     const count = {};
     all.forEach((m) => { count[m.asset] = (count[m.asset] || 0) + 1; });
     const asset = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
@@ -102,7 +102,7 @@ window.__reel = (() => {
     state.sheetVideo = mk();
     await new Promise((res, rej) => {
       state.video.onloadedmetadata = res;
-      state.video.onerror = () => rej(new Error('o video nao decodificou'));
+      state.video.onerror = () => rej(new Error('the video did not decode'));
     });
     if (audio) {
       const ab = await fetch(audio.url).then((r) => r.arrayBuffer());
@@ -118,7 +118,7 @@ window.__reel = (() => {
 
   async function scan() {
     const v = state.video;
-    if (!v) throw new Error('rode load() antes');
+    if (!v) throw new Error('run load() first');
     const c = Object.assign(document.createElement('canvas'), { width: 36, height: 64 });
     const ctx = c.getContext('2d', { willReadFrequently: true });
     let prev = null;
@@ -137,14 +137,14 @@ window.__reel = (() => {
       state.diffs.push([t, diff]);
       prev = g;
     }
-    // Corte = pico 3x acima da mediana da vizinhanca (limiar local: um flash
-    // forte nao esconde as trocas de cena comuns, como faria um limiar global).
+    // Cut = a spike 3x above the median of its neighbourhood (a local threshold: a
+    // strong flash does not hide the ordinary scene changes, as a global one would).
     const d = state.diffs.map((x) => x[1]);
     state.cuts = [];
     for (let i = 1; i < d.length - 1; i++) {
       const around = [...d.slice(Math.max(1, i - 10), Math.max(1, i - 2)), ...d.slice(i + 3, i + 11)];
       if (d[i] >= Math.max(2, 3 * median(around)) && d[i] >= d[i - 1] && d[i] >= d[i + 1]) {
-        // A troca acontece na fronteira entre o quadro anterior e este.
+        // The change happens on the boundary between the previous frame and this one.
         state.cuts.push({ t: +(state.diffs[i][0] - STEP / 2).toFixed(3), strength: +d[i].toFixed(1) });
       }
     }
@@ -176,7 +176,7 @@ window.__reel = (() => {
 
   async function audio() {
     const a = state.audioBuffer;
-    if (!a) throw new Error('sem audio: rode load() antes');
+    if (!a) throw new Error('no audio: run load() first');
     const hop = Math.round(a.sampleRate / 100); // 10 ms
     const hs = hop / a.sampleRate;
     const env = (x) => {
@@ -200,7 +200,7 @@ window.__reel = (() => {
       for (let i = 1; i < o.length - 1; i++) {
         const around = [...o.slice(Math.max(0, i - 50), Math.max(0, i - 3)), ...o.slice(i + 4, i + 51)];
         if (o[i] >= Math.max(0.05, 3 * median(around)) && o[i] >= o[i - 1] && o[i] >= o[i + 1] && (i - last) * hs >= gap) {
-          out.push(+(i * hs - state.audioOffset - DETECTOR_LAG_S).toFixed(3)); // tempo de apresentacao
+          out.push(+(i * hs - state.audioOffset - DETECTOR_LAG_S).toFixed(3)); // presentation time
           last = i;
         }
       }
@@ -237,23 +237,23 @@ window.__reel = (() => {
   }
 
   function sync() {
-    if (!state.onsets.length) throw new Error('rode audio() antes');
+    if (!state.onsets.length) throw new Error('run audio() first');
     const near = (t) => state.onsets.reduce((b, o) => (Math.abs(o - t) < Math.abs(b - t) ? o : b), Infinity);
     return state.cuts.map((c) => ({ t: c.t, strength: c.strength, fromOnsetMs: Math.round((c.t - near(c.t)) * 1000) }));
   }
 
   function start() {
-    Object.assign(state, { done: false, error: null, phase: 'carregando' });
+    Object.assign(state, { done: false, error: null, phase: 'loading' });
     (async () => {
       state.info = await load();
-      state.phase = 'varrendo quadros';
+      state.phase = 'scanning frames';
       state.scanResult = await scan();
-      state.phase = 'analisando audio';
+      state.phase = 'analysing audio';
       state.audioResult = state.audioBuffer ? await audio() : null;
-      state.phase = 'pronto';
+      state.phase = 'ready';
       state.done = true;
-    })().catch((e) => { state.error = e.message; state.phase = 'erro'; });
-    return 'iniciado: consulte __reel.status()';
+    })().catch((e) => { state.error = e.message; state.phase = 'error'; });
+    return 'started: poll __reel.status()';
   }
 
   function status() {
@@ -269,7 +269,7 @@ window.__reel = (() => {
 
   async function sheet(from, to, step = 0.5, cols = 8) {
     const v = state.sheetVideo;
-    if (!v) throw new Error('rode load() antes');
+    if (!v) throw new Error('run load() first');
     if (v.readyState < 1) await new Promise((r) => { v.onloadedmetadata = r; });
     const times = [];
     for (let t = from; t < Math.min(to, v.duration); t += step) times.push(+t.toFixed(2));
@@ -307,4 +307,4 @@ window.__reel = (() => {
 
   return { media, editOffset, load, scan, audio, sync, start, status, report, sheet, clear, state };
 })();
-'__reel pronto: start(), status(), report(), sheet(), clear()';
+'__reel ready: start(), status(), report(), sheet(), clear()';

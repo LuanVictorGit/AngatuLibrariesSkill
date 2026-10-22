@@ -34,7 +34,7 @@ It opens the site with real device emulation (phone 390×844 at 3x, desktop 1440
   computed colours of body, header, button and link, the fonts, the `:root` custom properties, the
   headings (the client's own words), WhatsApp, phone, Instagram and e-mail links, and whether the footer
   credits Angatu;
-- `public/screens/<slug>-celular.png`, `-desktop.png` and `-inteira` versions of each — the whole page,
+- `public/screens/<slug>-mobile.png`, `-desktop.png` and `-full` versions of each — the whole page,
   for scroll shots.
 
 Before running it, tell the user what it will save inside the video folder. Then read the JSON, look at

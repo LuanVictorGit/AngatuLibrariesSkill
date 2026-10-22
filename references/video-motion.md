@@ -64,13 +64,13 @@ Remotion renders by capture: Chrome paints frame N, takes a picture, advances th
 and with concurrency, neighbouring frames are painted by different tabs. So:
 
 - motion comes only from `useCurrentFrame()` and `interpolate`/`spring` over it;
-- randomness only from `random('semente')` (remotion) or `noise2D`/`noise3D` (`@remotion/noise`);
+- randomness only from `random('seed')` (remotion) or `noise2D`/`noise3D` (`@remotion/noise`);
 - never `Math.random`, `Date.now`, `performance.now`, timers, `requestAnimationFrame`, CSS
   `transition`/`animation`, `@keyframes`, or animation classes — in the Studio they look right, in the
   MP4 everything happens on the first frame or flickers differently on every render.
 
 `node tools/check-determinism.mjs` rejects all of those (tested: it passes a clean project and fails on
-a temporary `Math.random()`). A rare legitimate exception carries `// determinismo-ok: <motivo>` on the
+a temporary `Math.random()`). A rare legitimate exception carries `// determinism-ok: <reason>` on the
 line or the line above. `tools/render.mjs` runs it before every render.
 
 ---
@@ -292,7 +292,7 @@ export const PhoneScroll: React.FC<{ src: string; scrollPx: number; width?: numb
 };
 ```
 
-The screen is a capture from `tools/site-research.mjs` (`-celular-inteira.png` for scrolls), or a system
+The screen is a capture from `tools/site-research.mjs` (`-mobile-full.png` for scrolls), or a system
 screenshot with fictitious data. A tap is a drawn circle that scales and fades on the cue frame.
 
 ### 5.10 Speed ramps
@@ -368,7 +368,7 @@ not in the video yet.
 ## 9. Performance
 
 `scale`, `translate`, `rotate` and `opacity` are cheap; `blur`, `@remotion/effects` and motion blur are
-not. Iterate with `node tools/render.mjs rascunho` (half scale, JPEG — nine seconds for two seconds of
+not. Iterate with `node tools/render.mjs draft` (half scale, JPEG — nine seconds for two seconds of
 1080×1920 in the smoke test) and leave the full render for the review.
 
 ---

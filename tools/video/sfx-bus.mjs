@@ -1,25 +1,26 @@
 #!/usr/bin/env node
 /**
- * Mixa todos os efeitos sonoros da linha do tempo num unico arquivo:
- * public/audio/sfx-bus.wav, que a composicao toca com UM <Audio>.
+ * Mixes every sound effect of the timeline into a single file:
+ * public/audio/sfx-bus.wav, which the composition plays with ONE <Audio>.
  *
- * Por que um barramento e nao um <Audio> por efeito: no Windows, cada camada
- * de audio alonga a linha de comando que o Remotion passa ao FFmpeg, e uma
- * edicao com dezenas de acertos estoura o limite (ENAMETOOLONG). Aqui o grafo
- * de filtros vai num arquivo, e cada arquivo de efeito entra uma vez so,
- * dividido com asplit quando e usado varias vezes.
+ * Why a bus and not one <Audio> per effect: on Windows, every audio layer
+ * lengthens the command line Remotion hands to FFmpeg, and an edit with dozens
+ * of hits overflows the limit (ENAMETOOLONG). Here the filter graph goes in a
+ * file, and each effect file is read only once, split with asplit when it is
+ * used several times.
  *
- * Sincronia por construcao: o instante de cada efeito vem do MESMO evento que
- * move a imagem (CUES em timeline.ts), menos a ancora medida do arquivo
- * (sfx.ts, de tools/analyze-sfx.py) -- o pico do whoosh cai no corte, nao o
- * comeco do arquivo. Mudou a linha do tempo, rode de novo; a revisao compara
- * o carimbo gravado ao lado do WAV com os eventos atuais.
+ * Synchronised by construction: the instant of each effect comes from the SAME
+ * cue that moves the picture (CUES in timeline.ts), minus the measured anchor
+ * of the file (sfx.ts, from tools/analyze-sfx.py) -- the peak of the whoosh
+ * lands on the cut, not the start of the file. When the timeline changes, run
+ * it again; the review compares the stamp written next to the WAV with the
+ * current cues.
  *
- * Cada efeito e aparado em MAX_MS (padrao 2,5 s; o evento pode pedir outro em
- * maxMs) com fade de 80 ms: impacto de biblioteca costuma trazer segundos de
- * cauda, que embolam a mix e escondem o proximo acerto.
+ * Each effect is trimmed to MAX_MS (2.5 s by default; the cue may ask for
+ * another in maxMs) with an 80 ms fade: a library impact often carries seconds
+ * of tail, which muddy the mix and hide the next hit.
  *
- * Uso: node tools/sfx-bus.mjs
+ * Usage: node tools/sfx-bus.mjs
  *
  * @author Angatu Sistemas
  */
@@ -32,7 +33,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CUES, DURATION_IN_FRAMES, FPS } from '../src/data/timeline.ts';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-// Video sem efeitos nao tem sfx.ts: o barramento sai em silencio, do tamanho do video.
+// A video with no effects has no sfx.ts: the bus comes out silent, as long as the video.
 const SFX_FILE = join(ROOT, 'src', 'data', 'sfx.ts');
 const { SFX } = existsSync(SFX_FILE) ? await import(pathToFileURL(SFX_FILE).href) : { SFX: {} };
 const OUT_DIR = join(ROOT, 'public', 'audio');
@@ -43,9 +44,9 @@ const FADE_S = 0.08;
 
 const uses = CUES.filter((c) => c.sfx).map((c) => {
   const s = SFX[c.sfx];
-  if (!s) throw new Error(`evento ${c.id}: efeito "${c.sfx}" sem ancora em sfx.ts`);
+  if (!s) throw new Error(`cue ${c.id}: effect "${c.sfx}" has no anchor in sfx.ts`);
   const delayMs = Math.round((c.frame / FPS) * 1000 - s.anchorMs);
-  if (delayMs < 0) throw new Error(`evento ${c.id}: comecaria ${-delayMs} ms antes do video`);
+  if (delayMs < 0) throw new Error(`cue ${c.id}: would start ${-delayMs} ms before the video`);
   const maxSec = Math.min(c.maxMs ?? MAX_MS, s.durationMs) / 1000;
   return { id: c.id, name: c.sfx, file: join(ROOT, s.file), delayMs, gainDb: c.gainDb ?? 0, maxSec };
 });
@@ -78,12 +79,12 @@ if (!uses.length) {
 
 const graphFile = join(tmpdir(), `sfx-bus-${process.pid}.txt`);
 writeFileSync(graphFile, graph);
-// -t fecha a duracao exata do video: o apad acima preenche silencio ate la.
+// -t closes the exact duration of the video: the apad above fills silence up to it.
 args.push('-/filter_complex', graphFile, '-map', '[out]', '-t', String(totalSec), '-c:a', 'pcm_s16le', OUT);
 const r = spawnSync('ffmpeg', args, { stdio: 'inherit' });
 if (r.status !== 0) process.exit(r.status ?? 1);
 
 const stamp = createHash('sha1').update(JSON.stringify(uses.map((u) => [u.name, u.delayMs, u.gainDb, u.maxSec]))).digest('hex');
 writeFileSync(join(OUT_DIR, 'sfx-bus.json'), JSON.stringify({ stamp, fps: FPS, uses }, null, 2));
-console.log(`${uses.length} efeitos, ${new Set(uses.map((u) => u.file)).size} arquivos -> public/audio/sfx-bus.wav (${totalSec.toFixed(2)} s)`);
-for (const u of uses) console.log(`  ${u.id.padEnd(14)} ${u.name.padEnd(28)} entra em ${String(u.delayMs).padStart(6)} ms  ${u.gainDb} dB`);
+console.log(`${uses.length} effects, ${new Set(uses.map((u) => u.file)).size} files -> public/audio/sfx-bus.wav (${totalSec.toFixed(2)} s)`);
+for (const u of uses) console.log(`  ${u.id.padEnd(14)} ${u.name.padEnd(28)} starts at ${String(u.delayMs).padStart(6)} ms  ${u.gainDb} dB`);

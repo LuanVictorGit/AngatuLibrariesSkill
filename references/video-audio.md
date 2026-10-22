@@ -72,7 +72,7 @@ writes `src/data/narration.ts`: segments, and every word with its start and end 
 difference of 11 ms, in 22 s.
 
 - **Spelling comes from the approved script**, timing from the transcript. Proper nouns the model
-  mishears ("Angato Systemas") go into `GLOSSARIO` in `tools/transcribe.py`, which then flags them.
+  mishears ("Angato Systemas") go into `GLOSSARY` in `tools/transcribe.py`, which then flags them.
 - **Burned-in captions by default**: most social video plays without sound. One line at a time, the
   spoken word highlighted, inside the safe zone, at least 55 px.
 

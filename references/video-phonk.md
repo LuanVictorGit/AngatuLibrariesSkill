@@ -89,10 +89,10 @@ The account restricts age: signed out, the reels do not open. The analysis runs 
 in the user's own session**, with `tools/reel-analysis.js` pasted into the reel's page:
 
 ```
-__reel.start()     -> carrega, varre os quadros e analisa o audio em segundo plano
-__reel.status()    -> repetir ate done: true (cada chamada da ferramenta tem ~45 s de limite)
-__reel.report()    -> cortes, pausas, BPM, energia, corte x ataque
-await __reel.sheet(0.25, 8.25, 0.5, 8)  -> folha de contato; fotografar; __reel.clear()
+__reel.start()     -> loads, scans the frames and analyses the audio in the background
+__reel.status()    -> repeat until done: true (each call of the tool is limited to ~45 s)
+__reel.report()    -> cuts, holds, BPM, energy, cut vs attack
+await __reel.sheet(0.25, 8.25, 0.5, 8)  -> contact sheet; screenshot it; __reel.clear()
 ```
 
 - Read-only: nothing is saved to disk, nothing is liked, commented or followed, and the agent never logs

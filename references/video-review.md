@@ -30,8 +30,8 @@ Every iteration is judged against this paragraph and nothing else.
 
 | Mode | Command | For |
 |---|---|---|
-| still | `node tools/render.mjs still <quadro>` | layout, one frame, seconds |
-| draft | `node tools/render.mjs rascunho [--frames=a-b]` | motion and timing at half scale, JPEG |
+| still | `node tools/render.mjs still <frame>` | layout, one frame, seconds |
+| draft | `node tools/render.mjs draft [--frames=a-b]` | motion and timing at half scale, JPEG |
 | final | `node tools/render.mjs final` | the review render (PNG, bt709, CRF 18, AAC 320k) |
 | master | `node tools/master.mjs out/final.mp4` | loudness and peak, picture untouched |
 | web | `node tools/render.mjs webm` | VP9 for a page — only if at least 15 % smaller than the MP4 |
@@ -52,7 +52,7 @@ scrub and listen:
 ## 3. The measured half — `tools/review.mjs`
 
 ```bash
-node tools/review.mjs out/final-master.mp4     # -> out/review/NN/RESUMO.md, sheets/, strips/
+node tools/review.mjs out/final-master.mp4     # -> out/review/NN/SUMMARY.md, sheets/, strips/
 ```
 
 | Item | Target |

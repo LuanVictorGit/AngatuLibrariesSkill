@@ -33,7 +33,7 @@ silence goes.
 > conduz, whoosh e impacto só em troca de cena, −14 LUFS, o cartão final nunca em silêncio."*
 
 **Styleframes** — two or three stills of the key moments (hook, product, final card), rendered from a
-throwaway composition with `node tools/render.mjs still <quadro>`. The cheapest place to catch a wrong
+throwaway composition with `node tools/render.mjs still <frame>`. The cheapest place to catch a wrong
 palette, a font that does not fit, a logo that disappears on the background.
 
 ---
