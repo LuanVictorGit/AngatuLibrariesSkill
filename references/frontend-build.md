@@ -514,6 +514,16 @@ document.querySelector('.product-card')  →  document.querySelector('.a81Kx')
 detail: the validation in section 14 looks for the old name in the dist and fails if it finds any
 remnant of a mapped class.
 
+**A name spelled inside a URL or a file path is not a reference, and the pass leaves it alone.** The
+default names collide by construction: the global `net` lives in `scripts/net.js`, so a whole-word swap
+turns `<script src="/scripts/net.js">` into a request for `/scripts/x3m9p.js`, a file that never
+existed, while step 9 moves the real one elsewhere. The same swap aims `@keyframes spin` at
+`/images/spin.svg` and the global `net` at the canonical `https://sistema.net.br/`. So the pass skips
+every URL up to its query and every path that ends in the name of a file of the tree — bare
+(`'net.js'`), absolute or relative — and the path keeps its spelling until step 9 gives it the file's
+new name. Checks 2 and 11 skip the same ground, so a kept or hashed `net.8f91c2ad.js` is not mistaken
+for a stale `net`. The query stays in reach on purpose: `?callback=initMap` names a global.
+
 The new name is an initial letter plus base36 of `sha256(class + build salt)`, checked against every
 existing class name in the project (including those in `tailwind.css`) so it cannot collide. The salt
 lives in `dist/.build-info.json` alongside the map — that is how you discover, months later, that
@@ -554,6 +564,10 @@ has to reach along with the JavaScript:
 - **`onclick="novoDoc()"` in the HTML**, which is a live pattern in this skill and already the cause of
   one catalogued error;
 - **nothing in `src/main/java/**`** — proof 3 freezes any global the server writes into markup.
+
+And one it must not reach: the file named after it. `net` is declared in `scripts/net.js`, and the `net`
+inside `/scripts/net.js` is a file name for step 9 to rewrite, not a use of the global — the pass skips
+it (9.4), and so does the test that decides whether the project uses a global at all.
 
 Proof 7 is what stops `fetch` or `JSON` from being renamed, and `keepGlobals` is the manual escape.
 
@@ -709,7 +723,7 @@ Every check below runs over `dist/` and **fails the build with `exit 1`**:
 | # | Check | Fails when |
 |---|---|---|
 | 1 | Referential integrity | a `src=` / `href=` / `url()` starting with `/` that does not exist in the dist |
-| 2 | Class synchronisation | the old name of a mapped class still appears in any dist file |
+| 2 | Class synchronisation | the old name of a mapped class still appears in a dist file, outside a URL or a file path (9.4) |
 | 3 | JS syntax | `new Function(code)` fails on any generated `.js` |
 | 4 | Secrets | a key, token or password pattern found in the dist |
 | 5 | Forbidden CDN | `cdn.tailwindcss` or `unpkg.com/tailwindcss` present (R14) |
@@ -718,7 +732,7 @@ Every check below runs over `dist/` and **fails the build with `exit 1`**:
 | 8 | Stray source map | a `.map` inside `dist/public/` without `sourceMaps: true` |
 | 9 | Inline script | a `<script>` without `src` in a page, except `application/ld+json` |
 | 10 | Unrequested cache | `caches.put` / `caches.match` in the dist with `cacheAllowed: false` (R25) |
-| 11 | Name synchronisation | the old spelling of a renamed file, folder, custom property, global or `data-*` still appears anywhere in the dist |
+| 11 | Name synchronisation | the old path of a renamed file or folder still appears anywhere in the dist, or the old spelling of a renamed custom property, global or `data-*` appears outside a URL or a file path (9.4) |
 | 12 | Comment in the dist | `/*` in a `.css` or `.js`, or `<!--` in an `.html` or `.svg`, outside `emails/**` and `vendor/**` |
 
 Checks 6 and 7 are R20 enforced mechanically: they make it impossible for obfuscation to quietly cost
@@ -727,10 +741,10 @@ remain 100% intact, readable and indexable by search engines. Check 11 is the co
 half-applied rename produces a page that loads and does nothing, which is the failure mode this whole
 document exists to prevent.
 
-**Check 11 searches the whole dist for the old spelling, so only map a name the project actually uses.**
-A global listed in `reservedGlobals` but absent from the source has nothing to rename, and mapping it
-anyway turns the check into a search for a common word — `net` matches inside `exemplo.net` and fails an
-honest build.
+**Check 11 searches the whole dist for the old spelling — URLs and file paths aside (9.4) — so only map
+a name the project actually uses.** A global listed in `reservedGlobals` but absent from the source has
+nothing to rename, and mapping it anyway turns the check into a search for a common word — `net` matches
+inside the e-mail `contato@exemplo.net` and fails an honest build.
 
 **Check 12 must not look for `//`.** `https://` appears in every canonical, every Open Graph tag and
 every `fetch` URL, so a bare search for `//` would reject every honest build and the fix would be to
@@ -939,6 +953,16 @@ function freshName(name) {
 }
 /** Matches the whole word, so it never hits a piece of another name. */
 const wholeWord = n => new RegExp(`(?<![\\w-])${escapeRegExp(n)}(?![\\w-])`, 'g');
+/**
+ * Matches a URL up to its query or a ${...}, and any path ending in the name of a file of the tree:
+ * 'net.js', '/scripts/net.js', '../scripts/net.js'. A name spelled inside one is not a reference to
+ * it, so renaming the global net leaves the file net.js to step 9 (9.4). The query stays out because
+ * ?callback=initMap does name a global. One capturing group: split() keeps the matches.
+ */
+const pathsAndUrls = list => new RegExp(`(\\b[a-zA-Z][\\w+.-]*:\\/\\/[^\\s'"\`<>(){}$?#\\\\]*` +
+  `|(?<![\\w-])(?:[\\w.-]+\\/)*(?:${[...new Set(list.map(f => path.posix.basename(f)))]
+    .map(escapeRegExp).join('|')})(?![\\w-]))`, 'g');
+const sourcePaths = pathsAndUrls(files);
 /** Freezes a path assembled at runtime: '/assets/' + name freezes the whole assets/ folder. */
 const assembled = target => [...fragments].some(fr => fr.includes(target) || target.includes(fr));
 /** The proof from 9.3. Returns the REASON not to rename, or null when it is safe. */
@@ -1009,10 +1033,11 @@ if (opt.renameVars) {
 // 4.3) shared globals: one name, one swap, the whole program (9.6)
 if (opt.renameGlobals) {
   const srcText = (await Promise.all(textFiles
-    .map(f => readFile(path.join(SRC, f), 'utf8')))).join('\n');
+    .map(f => readFile(path.join(SRC, f), 'utf8')))).join('\n').replace(sourcePaths, ' ');
   for (const g of (cfg.reservedGlobals ?? [])) {
     // a name the project does not use stays out of the map: once mapped, validation 11
-    // would start looking for it across the whole dist and fail on 'example.net'
+    // would start looking for it across the whole dist and fail on 'example.net'. A file
+    // name is not a use: '/scripts/net.js' alone does not make net a global
     if (!wholeWord(g).test(srcText)) continue;
     const reason = blockReason(g, cfg.keepGlobals);
     if (reason) { console.log(`  kept  ${g}  (${reason})`); continue; }
@@ -1040,12 +1065,14 @@ if (opt.renameData) {
   }
 }
 
-// 4.5) a single pass, with the four maps together
+// 4.5) a single pass, with the four maps together, and never inside a URL or a file path:
+// '/scripts/net.js' keeps its spelling here, and step 9 gives it the file's new name (9.4)
 if (nameMap.size) for (const f of textFiles) {
   const p = path.join(OUT, f);
-  let txt = await readFile(p, 'utf8');
-  for (const [oldName, newName] of nameMap) txt = txt.replace(wholeWord(oldName), newName);
-  await writeFile(p, txt);
+  const parts = (await readFile(p, 'utf8')).split(sourcePaths);   // odd indices: the paths
+  for (let i = 0; i < parts.length; i += 2)
+    for (const [oldName, newName] of nameMap) parts[i] = parts[i].replace(wholeWord(oldName), newName);
+  await writeFile(p, parts.join(''));
 }
 console.log(`  ${classMap.size} classes, ${varMap.size} variables, ${globalMap.size} globals ` +
             `and ${dataMap.size} data-* renamed`);
@@ -1164,6 +1191,9 @@ await writeFile('dist/.build-info.json', JSON.stringify({
 // 11) post-build validation -----------------------------------------------------
 const generated = await walk(OUT);
 const exists = new Set(generated.map(f => '/' + f));
+// the dist's own names join the source's: a kept or hashed file still spells its stem
+// (net.8f91c2ad.js), and that is a path for check 1, not a stale name for check 11
+const distPaths = pathsAndUrls([...files, ...generated]);
 for (const f of generated.filter(isText)) {
   const txt = await readFile(path.join(OUT, f), 'utf8');
   for (const m of txt.matchAll(/(?:src|href)=["'](\/[^"'#?]+)|url\((\/[^)"']+)\)/g)) {
@@ -1186,8 +1216,9 @@ for (const f of generated.filter(isText)) {
     failures.push(`cache not allowed in ${f} (R25)`);
 
   if (!matchGlob(f, cfg.neverTransform)) {
+    const outsidePaths = txt.replace(distPaths, ' ');   // the same ground 4.5 covered
     for (const oldName of nameMap.keys())          // 2 and 11) out-of-sync name
-      if (wholeWord(oldName).test(txt)) failures.push(`name out of sync in ${f}: ${oldName}`);
+      if (wholeWord(oldName).test(outsidePaths)) failures.push(`name out of sync in ${f}: ${oldName}`);
     for (const oldPath of fileMap.keys())
       if (txt.includes(oldPath)) failures.push(`old path in ${f}: ${oldPath}`);
     // 12) comment in the dist. NEVER search for '//': https:// is in every URL.
@@ -1294,6 +1325,10 @@ classes written by hand.
   `style="--i: 3"` inline in the HTML. The rewrite of 9.5 has to reach the attribute (9.5).
 - **A button works in `development` and not in `protected`:** a global was renamed but the `onclick=`
   in the HTML kept the old name — the rename was not program-wide (9.6).
+- **`broken reference` to a script that never existed, with `renameGlobals` on:** the name pass swapped
+  the global `net` inside `/scripts/net.js`, the file that shares its name, and the page asked for
+  `/scripts/x3m9p.js`. The pass must skip URLs and file paths (9.4); a script adapted from an older
+  copy of section 16 does not.
 - **A Java-served page loses its styling after `renameFiles`:** a handler serves the file by name
   (`AssetsAPI.serveAsset(ctx, "scripts/ui.js")`). Proof 3 freezes it; if it did not, the string is built
   in Java rather than written literally, and the file belongs in `neverRename`.
