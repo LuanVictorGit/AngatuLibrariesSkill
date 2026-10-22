@@ -1,0 +1,1489 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Orçamento técnico · [[Cliente]] · Angatu Sistemas</title>
+<style>
+/* Static instances of OFL fonts (Inter, Bricolage Grotesque, Archivo), so the PDF embeds real TrueType */
+@font-face { font-family: "Inter Doc"; font-weight: 400; src: url("fonts/inter-400.ttf"); }
+@font-face { font-family: "Inter Doc"; font-weight: 500; src: url("fonts/inter-500.ttf"); }
+@font-face { font-family: "Inter Doc"; font-weight: 600; src: url("fonts/inter-600.ttf"); }
+@font-face { font-family: "Inter Doc"; font-weight: 700; src: url("fonts/inter-700.ttf"); }
+@font-face { font-family: "Bricolage Doc"; font-weight: 700; src: url("fonts/bricolage-32-700.ttf"); }
+@font-face { font-family: "Bricolage Doc"; font-weight: 800; src: url("fonts/bricolage-32-800.ttf"); }
+@font-face { font-family: "Bricolage Text"; font-weight: 600; src: url("fonts/bricolage-16-600.ttf"); }
+@font-face { font-family: "Bricolage Text"; font-weight: 700; src: url("fonts/bricolage-16-700.ttf"); }
+@font-face { font-family: "Archivo Expanded"; font-weight: 800; src: url("fonts/archivo-110-800.ttf"); }
+@font-face { font-family: "Archivo Condensed"; font-weight: 700; src: url("fonts/archivo-72-700.ttf"); }
+
+/* Tokens. Document: Angatu's design system, values mirrored from angatusistemas.com.br ds.css
+   (tinta -> --ink, marinho -> --navy, papel -> --paper...). Mockups: the client's palette,
+   sampled from their logo; only --client-* changes per proposal. */
+:root {
+  --ink: #051D38;
+  --ink-2: #082B54;
+  --navy-deep: #09305D;
+  --navy: #0C407C;
+  --navy-light: #115BB1;
+  --sky: #9FBEE4;
+  --paper: #F1F4F8;
+  --white: #FFFFFF;
+  --graphite: #11233B;
+  --muted: #4A607A;
+  --silver: #D9D7D5;
+  --whatsapp: #0E7C66;
+  --line: #DCE4EE;
+  --radius-sm: 6px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow-1: 0 1px 2px rgba(5, 29, 56, .06), 0 2px 8px rgba(5, 29, 56, .05);
+  --shadow-2: 0 2px 4px rgba(5, 29, 56, .07), 0 8px 20px rgba(5, 29, 56, .08);
+  --shadow-3: 0 12px 32px -8px rgba(5, 29, 56, .16);
+  --font: "Inter Doc", system-ui, Arial, sans-serif;
+  --font-display: "Bricolage Doc", "Inter Doc", Arial, sans-serif;
+  --font-display-text: "Bricolage Text", "Inter Doc", Arial, sans-serif;
+
+  --client-accent: #8C1D2E;
+  --client-accent-dark: #64121F;
+  --client-ink: #17141A;
+  --client-graphite: #2A252D;
+  --client-light: #F2F0F3;
+  --client-line: #E3DFE5;
+  --client-muted: #5F5866;
+  --client-display: "Archivo Expanded", "Inter Doc", Arial, sans-serif;
+  --font-plate: "Archivo Condensed", "Inter Doc", Arial, sans-serif;
+}
+
+@page { size: A4; margin: 0; }
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body {
+  margin: 0;
+  background: #4B5563;
+  font-family: var(--font);
+  font-size: 11pt;
+  line-height: 1.45;
+  color: var(--graphite);
+  -webkit-font-smoothing: antialiased;
+}
+@media screen { .page { margin: 8mm auto; box-shadow: 0 6px 24px rgba(0, 0, 0, .35); } }
+img { display: block; max-width: 100%; }
+p, h1, h2, h3, figure, ul { margin: 0; padding: 0; }
+ul { list-style: none; }
+.ic { width: 1em; height: 1em; flex: none; display: inline-block; }
+.nowrap { white-space: nowrap; }
+.qr { display: block; width: 100%; height: auto; }
+
+/* ---------- page frame ---------- */
+.page {
+  width: 210mm;
+  height: 297mm;
+  position: relative;
+  overflow: hidden;
+  background: var(--paper);
+  padding: 15mm 16mm 0;
+  break-after: page;
+}
+.page:last-child { break-after: auto; }
+.eyebrow {
+  font: 600 8.5pt/1.2 var(--font);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--navy-light);
+  margin-bottom: 3mm;
+}
+.eyebrow b { font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: none; }
+.title {
+  font: 700 25pt/1.08 var(--font-display);
+  letter-spacing: -.012em;
+  color: var(--ink);
+  max-width: 165mm;
+  text-wrap: balance;
+}
+.lead {
+  font-size: 12.5pt;
+  color: var(--muted);
+  margin-top: 3.5mm;
+  max-width: 150mm;
+  text-wrap: pretty;
+}
+.footer {
+  position: absolute;
+  left: 16mm;
+  right: 16mm;
+  bottom: 8.5mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8pt;
+  color: var(--muted);
+}
+.footer__brand { display: flex; align-items: center; gap: 4mm; }
+.footer__brand img { height: 6.2mm; width: auto; }
+.footer__num { font: 700 9.5pt var(--font-display-text); color: var(--ink); }
+
+/* numbered markers placed on the mockups */
+.marker {
+  position: absolute;
+  z-index: 20;
+  width: 8.4mm;
+  height: 8.4mm;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font: 700 11.5pt/8.4mm var(--font-display-text);
+  text-align: center;
+  box-shadow: 0 0 0 1.1mm #fff, var(--shadow-2);
+}
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7mm; }
+.step { display: flex; gap: 3.2mm; align-items: flex-start; }
+.step__num {
+  flex: none;
+  width: 7.6mm;
+  height: 7.6mm;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font: 700 10.5pt/7.6mm var(--font-display-text);
+  text-align: center;
+}
+.step p { font-size: 11.5pt; line-height: 1.38; padding-top: .5mm; text-wrap: pretty; }
+.step strong { display: block; font: 700 12.5pt/1.25 var(--font-display-text); color: var(--ink); margin-bottom: .8mm; }
+.note {
+  display: flex;
+  gap: 3mm;
+  align-items: center;
+  font-size: 10pt;
+  color: var(--muted);
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 3.4mm 4.5mm;
+  box-shadow: var(--shadow-1);
+}
+.note .ic { width: 5mm; height: 5mm; color: var(--navy-light); }
+.points { display: grid; gap: 4.2mm; }
+.point { display: flex; gap: 3.4mm; align-items: flex-start; font-size: 11.5pt; line-height: 1.38; }
+.point__icon {
+  flex: none;
+  width: 9mm;
+  height: 9mm;
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--navy);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-1);
+}
+.point__icon .ic { width: 4.8mm; height: 4.8mm; }
+.point p { padding-top: 1.4mm; }
+
+/* ---------- phone mockup ---------- */
+.phone {
+  --w: 250px;
+  width: var(--w);
+  height: calc(var(--w) * 2.06);
+  padding: 7px;
+  background: #0D0E11;
+  border-radius: calc(var(--w) * .155);
+  position: relative;
+  flex: none;
+  box-shadow: inset 0 0 0 1.5px #2C3038, 0 18px 36px -12px rgba(5, 29, 56, .42), 0 4px 10px rgba(5, 29, 56, .12);
+}
+.phone__frame { width: 100%; height: 100%; border-radius: calc(var(--w) * .13); overflow: hidden; position: relative; background: #fff; }
+.phone__island {
+  position: absolute;
+  z-index: 5;
+  top: calc(var(--w) * .034);
+  left: 50%;
+  width: 29%;
+  height: calc(var(--w) * .074);
+  transform: translateX(-50%);
+  background: #0D0E11;
+  border-radius: 99px;
+}
+.screen {
+  width: 390px;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--client-ink);
+  background: #fff;
+}
+.statusbar {
+  height: 54px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 30px 0 36px;
+  font: 600 16px var(--font);
+}
+.statusbar span:last-child { display: flex; gap: 5px; }
+.statusbar .ic { width: 17px; height: 17px; stroke-width: 2.4; }
+
+/* ---------- browser mockup ---------- */
+.browser { border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: 0 22px 44px -16px rgba(5, 29, 56, .35), 0 4px 10px rgba(5, 29, 56, .08); }
+.browser__bar { height: 9mm; background: #E7EBF0; display: flex; align-items: center; gap: 1.6mm; padding: 0 4mm; }
+.browser__bar i { width: 2.6mm; height: 2.6mm; border-radius: 50%; background: #C5CDD7; }
+.browser__url {
+  margin-left: 4mm;
+  flex: 1;
+  height: 5.6mm;
+  border-radius: 99px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 1.6mm;
+  padding: 0 3mm;
+  font-size: 8.5pt;
+  color: #3B4756;
+}
+.browser__url .ic { width: 3mm; height: 3mm; color: var(--whatsapp); }
+.browser__frame { position: relative; overflow: hidden; }
+.site { width: 1280px; font-family: var(--font); color: var(--client-ink); }
+
+/* ---------- Mercosul plate ---------- */
+.plate {
+  display: inline-flex;
+  flex-direction: column;
+  border: 3px solid #1E1E22;
+  border-radius: 9px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .12);
+}
+.plate__band {
+  height: 22px;
+  background: #0A3A9E;
+  color: #fff;
+  font: 700 11px/22px var(--font);
+  letter-spacing: .32em;
+  text-align: center;
+  position: relative;
+}
+.plate__band svg { position: absolute; right: 7px; top: 5px; width: 18px; height: 12px; }
+.plate__number {
+  font: 700 46px/1 var(--font-plate);
+  letter-spacing: .05em;
+  color: #141414;
+  text-align: center;
+  padding: 7px 18px 9px;
+}
+
+/* ---------- client app UI (inside the mockups, in the client palette) ---------- */
+.app-head { display: flex; align-items: center; gap: 12px; padding: 10px 22px 14px; border-bottom: 1px solid var(--client-line); }
+.app-head img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.app-head b { font: 800 17px/1.1 var(--client-display); }
+.app-head small { display: block; font-size: 13px; color: var(--client-muted); }
+.app-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 56px;
+  border-radius: 14px;
+  font: 700 17px var(--font);
+  color: #fff;
+  background: var(--client-accent);
+}
+.app-btn .ic { width: 22px; height: 22px; }
+.app-btn--whatsapp { background: var(--whatsapp); }
+.app-btn--light { background: #fff; color: var(--client-ink); box-shadow: inset 0 0 0 1.5px var(--client-line); }
+.app-field { margin-bottom: 16px; }
+.app-field label { display: block; font: 600 14px var(--font); color: var(--client-muted); margin-bottom: 6px; }
+.app-field div {
+  height: 52px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1.5px var(--client-line);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 17px;
+}
+.app-field div.empty { color: #A39CA8; }
+.stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 99px;
+  font: 600 14px var(--font);
+  background: var(--client-light);
+  color: var(--client-muted);
+}
+.stage .ic { width: 16px; height: 16px; stroke-width: 3; }
+.stage--done { background: #E5F2EE; color: #0B6553; }
+.stage--current { background: var(--client-accent); color: #fff; }
+.stage--ready { background: #0E7C66; color: #fff; }
+
+/* ---------- cover ---------- */
+.cover { background: var(--ink); color: #fff; padding: 0; }
+.bg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+
+.cover__top { position: absolute; top: 15mm; left: 16mm; right: 16mm; display: flex; justify-content: space-between; align-items: center; }
+.cover__top img { height: 13mm; width: auto; }
+.cover__doc { text-align: right; font-size: 9pt; color: var(--sky); line-height: 1.5; }
+.cover__doc b { display: block; font: 700 12pt var(--font-display-text); color: #fff; letter-spacing: .01em; }
+.cover__title { position: absolute; top: 56mm; left: 16mm; right: 16mm; }
+.cover__title .eyebrow { color: var(--sky); }
+.cover__title h1 { font: 700 43pt/1 var(--font-display); letter-spacing: -.02em; color: #fff; }
+.cover__sub { margin-top: 5mm; font-size: 14pt; line-height: 1.4; color: #D5E2F2; max-width: 150mm; text-wrap: pretty; }
+.cover__index { position: absolute; left: 16mm; right: 16mm; top: 122mm; }
+.cover__index .eyebrow { color: var(--sky); margin-bottom: 2mm; }
+.cover__index ol { margin: 0; padding: 0; list-style: none; display: grid; grid-auto-flow: column; grid-template-rows: repeat(5, auto); grid-template-columns: 1fr 1fr; column-gap: 12mm; }
+.cover__index li { display: flex; gap: 4mm; align-items: baseline; padding: 3.6mm 0; border-top: 1px solid rgba(159, 190, 228, .2); font-size: 12pt; line-height: 1.3; color: #fff; }
+.cover__index li span { flex: none; min-width: 7mm; font: 700 11pt var(--font-display-text); color: var(--sky); }
+.cover__client {
+  position: absolute;
+  left: 16mm;
+  right: 16mm;
+  top: 218mm;
+  background: #fff;
+  color: var(--graphite);
+  border-radius: var(--radius-lg);
+  padding: 6mm;
+  display: flex;
+  align-items: center;
+  gap: 6mm;
+}
+.cover__client > img { width: 25mm; height: 25mm; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1px var(--line); }
+.cover__client-name { flex: 1; }
+.cover__client-name small { display: block; font: 600 8pt var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--navy-light); margin-bottom: 1.5mm; }
+.cover__client-name b { display: block; font: 700 19pt/1.1 var(--font-display); color: var(--ink); }
+.cover__client-name span { display: block; margin-top: 1.4mm; font-size: 10pt; color: var(--muted); }
+.cover__dates { border-left: 1px solid var(--line); padding-left: 6mm; display: grid; gap: 3mm; min-width: 46mm; }
+.cover__dates small { display: block; font-size: 8.5pt; color: var(--muted); }
+.cover__dates b { font: 700 11.5pt var(--font-display-text); color: var(--ink); }
+.cover__footer { position: absolute; left: 16mm; right: 16mm; bottom: 10mm; display: flex; justify-content: space-between; font-size: 8.5pt; color: var(--sky); }
+
+/* ---------- block: map ---------- */
+.map { position: absolute; left: 16mm; top: 62mm; width: 178mm; height: 215mm; }
+.map__links { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map__label { position: absolute; left: 0; font: 600 8pt var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.entry {
+  position: absolute;
+  width: 56mm;
+  height: 24mm;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  display: flex;
+  align-items: center;
+  gap: 3.4mm;
+  padding: 0 4.4mm;
+  font: 600 11pt/1.25 var(--font);
+  color: var(--ink);
+}
+.entry__icon { flex: none; width: 10mm; height: 10mm; border-radius: 9px; display: grid; place-items: center; color: #fff; }
+.entry__icon .ic { width: 5.4mm; height: 5.4mm; }
+.address {
+  position: absolute;
+  left: 34mm;
+  width: 110mm;
+  height: 18mm;
+  border-radius: 99px;
+  background: var(--navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3.4mm;
+  font: 700 19pt var(--font-display);
+  letter-spacing: -.01em;
+  box-shadow: 0 10px 24px -8px rgba(12, 64, 124, .55);
+}
+.address .ic { width: 6mm; height: 6mm; color: var(--sky); }
+.destination {
+  position: absolute;
+  width: 41.5mm;
+  height: 58mm;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  padding: 4.2mm;
+}
+.destination code, .panel code { font: 600 9pt var(--font); letter-spacing: .02em; color: var(--navy-light); }
+.destination__icon { width: 10mm; height: 10mm; border-radius: 9px; background: #F3E6E8; color: var(--client-accent); display: grid; place-items: center; margin: 3mm 0 3.2mm; }
+.destination__icon .ic { width: 5.4mm; height: 5.4mm; }
+.destination b { display: block; font: 700 12pt/1.15 var(--font-display-text); color: var(--ink); margin-bottom: 1.4mm; }
+.destination p { font-size: 10.4pt; line-height: 1.38; color: var(--muted); }
+.panel {
+  position: absolute;
+  left: 0;
+  width: 178mm;
+  height: 56mm;
+  background: var(--ink);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  padding: 5.4mm 6mm;
+  display: grid;
+  grid-template-columns: 54mm 1fr;
+  gap: 6mm;
+  align-items: center;
+}
+.panel code { color: var(--sky); }
+.panel b { display: block; font: 700 14pt/1.15 var(--font-display-text); margin: 1.6mm 0 1.4mm; }
+.panel p { font-size: 9.8pt; color: #C9D8EA; line-height: 1.38; }
+.panel__actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.action { background: var(--ink-2); border-radius: var(--radius); padding: 3.2mm 3.4mm; font-size: 9.6pt; line-height: 1.3; color: #E3ECF7; }
+.action .ic { width: 5mm; height: 5mm; color: var(--sky); margin-bottom: 1.8mm; display: block; }
+.action--auto { grid-column: 1 / -1; display: flex; align-items: center; gap: 3mm; background: rgba(14, 124, 102, .22); color: #fff; padding: 2.6mm 3.4mm; }
+.action--auto .ic { margin: 0; color: #7FD8C3; }
+
+/* ---------- block: contact ---------- */
+.pair { position: absolute; top: 54mm; left: 16mm; right: 16mm; height: 154mm; display: flex; justify-content: space-between; align-items: flex-start; }
+.arrow-between { position: absolute; left: 50%; top: 40mm; transform: translateX(-50%); width: 26mm; text-align: center; font-size: 9pt; color: var(--muted); line-height: 1.3; }
+.arrow-between svg { width: 26mm; height: 12mm; color: var(--navy-light); margin-bottom: 1mm; }
+
+.ig-top { display: flex; align-items: center; justify-content: space-between; padding: 6px 22px 12px; font: 700 18px var(--font); }
+.ig-top .ic { width: 24px; height: 24px; }
+.ig-profile { display: flex; gap: 18px; align-items: center; padding: 6px 22px 0; }
+.ig-profile img { width: 92px; height: 92px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #fff, 0 0 0 5px #C9C2CC; }
+.ig-profile b { font: 700 17px/1.2 var(--font); display: block; }
+.ig-profile span { font-size: 14px; color: var(--client-muted); }
+.ig-bio { padding: 14px 22px 0; font-size: 15px; line-height: 1.42; }
+.ig-link { display: inline-flex; align-items: center; gap: 6px; color: #2B4C9B; font-weight: 600; margin-top: 2px; }
+.ig-link .ic { width: 15px; height: 15px; }
+.ig-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 16px 22px 0; }
+.ig-buttons span { height: 38px; border-radius: 10px; background: #EFEFF1; display: grid; place-items: center; font: 600 15px var(--font); }
+.ig-buttons span:first-child { background: #2E6BE6; color: #fff; }
+.ig-highlights { display: flex; gap: 14px; padding: 18px 22px 16px; }
+.ig-highlights div { text-align: center; font-size: 12px; color: var(--client-ink); width: 64px; }
+.ig-highlights i { display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%; background: var(--client-ink); color: #fff; box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px #D2CCD5; margin-bottom: 6px; }
+.ig-highlights i .ic { width: 24px; height: 24px; }
+.ig-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+.ig-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+
+.contact-screen { background: var(--client-light); }
+.contact-buttons .app-btn { height: 60px; }
+.contact-top { background: var(--client-ink); color: #fff; padding: 2px 26px 34px; text-align: center; border-radius: 0 0 28px 28px; }
+.contact-top img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin: 10px auto 16px; box-shadow: 0 0 0 4px rgba(255, 255, 255, .15); }
+.contact-top b { display: block; font: 800 24px/1.1 var(--client-display); }
+.contact-top span { display: block; margin-top: 8px; font-size: 15px; color: #CFC7D3; }
+.contact-buttons { display: grid; gap: 14px; padding: 28px 26px 0; }
+.contact-footer { text-align: center; padding-top: 26px; font-size: 15px; color: var(--client-muted); line-height: 1.6; }
+.contact-footer b { color: var(--client-ink); font-size: 17px; }
+.credit { position: absolute; left: 0; right: 0; bottom: 34px; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 12px; color: #77707C; }
+.credit img { height: 20px; width: auto; }
+
+/* ---------- block: site + search ---------- */
+.site-top { height: 86px; display: flex; align-items: center; gap: 36px; padding: 0 60px; background: #fff; }
+.site-top img { height: 58px; width: 58px; border-radius: 50%; object-fit: cover; }
+.site-top b { font: 800 19px/1.05 var(--client-display); margin-left: -22px; }
+.site-top nav { display: flex; gap: 32px; font: 500 17px var(--font); color: #3A3440; flex: 1; justify-content: flex-end; }
+.site-top .app-btn { height: 48px; padding: 0 22px; font-size: 16px; }
+.site-hero { position: relative; height: 470px; background: linear-gradient(90deg, #17141A 0%, #17141A 46%, #2B2329 100%); color: #fff; padding: 74px 60px 0; overflow: hidden; }
+.site-hero > img { position: absolute; right: 0; top: 0; width: 64%; height: 100%; object-fit: cover; }
+.site-hero::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, #17141A 36%, rgba(23, 20, 26, .82) 50%, rgba(23, 20, 26, .15) 78%, rgba(23, 20, 26, 0) 100%); }
+.site-hero small { position: relative; z-index: 2; font: 700 15px var(--font); letter-spacing: .14em; text-transform: uppercase; color: #D8A1AA; }
+.site-hero h3 { font: 800 50px/1.04 var(--client-display); letter-spacing: -.01em; margin: 16px 0 18px; max-width: 560px; position: relative; z-index: 2; }
+.site-hero p { font-size: 19px; color: #D6CFDA; max-width: 470px; line-height: 1.45; position: relative; z-index: 2; }
+.site-hero .hero-buttons { display: flex; gap: 14px; margin-top: 30px; position: relative; z-index: 2; }
+.site-hero .app-btn { padding: 0 26px; }
+.site-hero .app-btn--light { background: transparent; color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .35); }
+.site-services { display: flex; gap: 20px; padding: 34px 60px; background: #fff; }
+.site-services div { flex: 1; display: flex; align-items: center; gap: 16px; font: 800 22px var(--client-display); }
+.site-services i { width: 56px; height: 56px; border-radius: 14px; background: #F3E6E8; color: var(--client-accent); display: grid; place-items: center; }
+.site-services i .ic { width: 28px; height: 28px; }
+
+.search {
+  position: absolute;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 5mm 5.5mm;
+  box-shadow: 0 22px 44px -16px rgba(5, 29, 56, .35), 0 4px 10px rgba(5, 29, 56, .08);
+}
+.search__field { display: flex; align-items: center; gap: 2.6mm; height: 10mm; border-radius: 99px; box-shadow: inset 0 0 0 1px #D5DBE3; padding: 0 4.2mm; font-size: 10.5pt; color: #202124; }
+.search__field .ic { width: 4.2mm; height: 4.2mm; color: #5F6B78; }
+.search__result { margin-top: 5mm; }
+.search__site { display: flex; align-items: center; gap: 2.6mm; }
+.search__site img { width: 7.4mm; height: 7.4mm; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1px #E3E6EA; }
+.search__site b { display: block; font-size: 9.6pt; font-weight: 500; color: #202124; }
+.search__site span { font-size: 8.6pt; color: #4D5156; }
+.search__title { margin: 2mm 0 1.2mm; font-size: 13.5pt; color: #1A0DAB; line-height: 1.25; }
+.search__text { font-size: 9.6pt; color: #4D5156; line-height: 1.45; }
+
+/* ---------- block: gallery ---------- */
+.photo-pair { position: relative; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-3); }
+.photo-pair > img { width: 100%; }
+.photo-pair__before { position: absolute; left: 3.5mm; bottom: 3.5mm; width: 40%; margin: 0; border: 1.2mm solid #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 8px 18px rgba(0, 0, 0, .35); }
+.photo-pair__before img { width: 100%; display: block; }
+.photo-pair__before .tag { top: auto; bottom: 2mm; left: 2mm; }
+.tag { position: absolute; top: 3.5mm; font: 700 8.5pt var(--font); letter-spacing: .1em; text-transform: uppercase; color: #fff; background: rgba(23, 20, 26, .78); padding: 1.6mm 3mm; border-radius: 99px; }
+.site-gallery { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-1); padding: 4.5mm; }
+.site-gallery__head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3.4mm; }
+.site-gallery__head b { font: 800 12pt var(--client-display); color: var(--client-ink); }
+.site-gallery__head span { font-size: 8.5pt; color: var(--muted); }
+.site-gallery__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.site-gallery__grid img { width: 100%; border-radius: 6px; }
+.site-gallery__grid p { font-size: 8.2pt; line-height: 1.3; color: var(--graphite); margin-top: 1.6mm; }
+.mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mini-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; }
+.photo-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.photo-duo div { position: relative; border-radius: 12px; overflow: hidden; }
+.photo-duo img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.photo-duo span { position: absolute; left: 8px; bottom: 8px; font: 700 12px var(--font); color: #fff; background: rgba(23, 20, 26, .8); padding: 4px 9px; border-radius: 99px; }
+.more-photo { aspect-ratio: 1; border-radius: 12px; box-shadow: inset 0 0 0 2px var(--client-line); display: grid; place-items: center; color: var(--client-muted); }
+
+/* ---------- blocks: tracking (team and customer) ---------- */
+.film-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3mm; }
+.film-strip figure { background: #fff; border-radius: 9px; padding: 1.6mm 1.6mm 2.4mm; box-shadow: var(--shadow-1); }
+.film-strip img { width: 100%; border-radius: 6px; }
+.film-strip figcaption { margin-top: 2mm; font-size: 8.5pt; color: var(--muted); padding: 0 .8mm; }
+.film-strip figcaption b { display: block; font: 700 10pt/1.2 var(--font-display-text); color: var(--ink); margin-bottom: .6mm; }
+.film-strip figure:last-child { box-shadow: 0 0 0 .6mm var(--whatsapp), var(--shadow-1); }
+.film-strip figure:last-child figcaption b { color: var(--whatsapp); }
+
+.callouts { display: grid; gap: 7mm; }
+.callout { display: flex; gap: 3.6mm; }
+.callout p { font-size: 11.5pt; line-height: 1.4; padding-top: .4mm; text-wrap: pretty; }
+.callout strong { display: block; font: 700 13pt/1.2 var(--font-display-text); color: var(--ink); margin-bottom: 1mm; }
+
+.app-list { padding: 0 22px; }
+.app-list h4 { margin: 22px 0 10px; font: 700 14px var(--font); color: var(--client-muted); text-transform: uppercase; letter-spacing: .08em; }
+.app-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--client-line); font-size: 15px; }
+.app-row b { font: 700 16px var(--font-plate); letter-spacing: .06em; }
+.app-row small { display: block; font-size: 13px; color: var(--client-muted); }
+
+.camera { position: relative; margin: 0 16px; border-radius: 18px; overflow: hidden; }
+.camera img { width: 100%; }
+.camera__grid { position: absolute; inset: 0; background:
+  linear-gradient(90deg, transparent 33.1%, rgba(255,255,255,.35) 33.3%, transparent 33.5%, transparent 66.5%, rgba(255,255,255,.35) 66.7%, transparent 66.9%),
+  linear-gradient(0deg, transparent 33.1%, rgba(255,255,255,.35) 33.3%, transparent 33.5%, transparent 66.5%, rgba(255,255,255,.35) 66.7%, transparent 66.9%); }
+.camera__time { position: absolute; left: 12px; top: 12px; font: 600 13px var(--font); color: #fff; background: rgba(0, 0, 0, .55); padding: 4px 10px; border-radius: 99px; }
+.shutter { width: 74px; height: 74px; border-radius: 50%; margin: 18px auto 6px; box-shadow: inset 0 0 0 5px var(--client-ink), inset 0 0 0 9px #fff; background: var(--client-ink); }
+.stages { display: flex; flex-wrap: wrap; gap: 8px; padding: 6px 16px 0; }
+
+.progress { padding: 6px 24px 0; }
+.progress__item { display: flex; gap: 14px; align-items: flex-start; position: relative; padding-bottom: 16px; }
+.progress__item::before { content: ""; position: absolute; left: 11px; top: 24px; bottom: -2px; width: 2px; background: var(--client-line); }
+.progress__item:last-child::before { display: none; }
+.progress__item i { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--client-line); color: #fff; position: relative; z-index: 1; }
+.progress__item i .ic { width: 14px; height: 14px; stroke-width: 3.4; }
+.progress__item--done i { background: #0E7C66; }
+.progress__item--current i { background: var(--client-accent); box-shadow: 0 0 0 5px #F3E0E3; }
+.progress__item b { display: block; font-size: 16px; font-weight: 600; line-height: 1.2; }
+.progress__item small { font-size: 13px; color: var(--client-muted); }
+.progress__item--future b { color: #A39CA8; font-weight: 500; }
+
+.mail-top { display: flex; justify-content: space-between; align-items: center; padding: 6px 22px 10px; color: #3F3A44; }
+.mail-top .ic { width: 22px; height: 22px; }
+.mail-top span { display: flex; gap: 22px; }
+.mail-subject { padding: 4px 22px 12px; font: 600 21px/1.25 var(--font); }
+.mail-from { display: flex; align-items: center; gap: 12px; padding: 0 22px 14px; font-size: 14px; color: var(--client-muted); }
+.mail-from img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.mail-from b { display: block; font-size: 15px; color: var(--client-ink); }
+.mail-body { margin: 0 14px; border-radius: 16px; background: var(--client-light); padding: 22px 20px 18px; text-align: center; }
+.mail-body .mail-ok { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 12px; background: #0E7C66; color: #fff; display: grid; place-items: center; }
+.mail-body .mail-ok .ic { width: 30px; height: 30px; stroke-width: 3; }
+.mail-body h5 { margin: 0; font: 800 22px/1.15 var(--client-display); }
+.mail-body p { font-size: 15px; color: var(--client-muted); margin: 8px 0 14px; }
+.mail-body img.photo { border-radius: 12px; margin-bottom: 14px; }
+.mail-credit { margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: #6E6874; }
+.mail-credit img { height: 20px; width: auto; }
+
+.arrow { flex: none; align-self: center; width: 7mm; color: var(--navy-light); }
+.phone-caption { margin-top: 4.6mm; display: flex; gap: 2.6mm; align-items: flex-start; font-size: 10.6pt; line-height: 1.32; }
+.phone-caption .step__num { width: 6.6mm; height: 6.6mm; font-size: 9.5pt; line-height: 6.6mm; }
+
+.list-card { background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow-1); padding: 2mm 6mm; }
+.list-card .point { padding: 4.4mm 0; font-size: 12pt; border-bottom: 1px solid var(--line); align-items: center; }
+.list-card .point:last-child { border-bottom: 0; }
+.list-card .point p { padding: 0; }
+.list-card .point__icon { box-shadow: none; background: #E8EFF8; }
+
+/* ---------- block: poster (QR on the wall) ---------- */
+.wall {
+  position: absolute;
+  left: 16mm;
+  right: 16mm;
+  top: 58mm;
+  height: 168mm;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.0), rgba(0,0,0,.06)),
+    repeating-linear-gradient(0deg, transparent 0 21.5mm, rgba(80, 74, 70, .10) 21.5mm 22mm),
+    linear-gradient(135deg, #E4E0DA, #D3CDC5);
+}
+.wall::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 17mm; background: linear-gradient(#8E877F, #7B746C); }
+.poster {
+  position: absolute;
+  left: 20mm;
+  top: 16mm;
+  width: 88mm;
+  height: 124mm;
+  background: #fff;
+  transform: rotate(-1.4deg);
+  box-shadow: 0 10px 24px -10px rgba(40, 30, 20, .45), 0 2px 4px rgba(40, 30, 20, .18);
+  padding: 7mm 8mm 0;
+  text-align: center;
+  color: var(--client-ink);
+}
+.poster::before, .poster::after { content: ""; position: absolute; top: -3mm; width: 16mm; height: 6mm; background: rgba(236, 222, 180, .85); }
+.poster::before { left: 4mm; transform: rotate(-8deg); }
+.poster::after { right: 4mm; transform: rotate(7deg); }
+.poster img.logo { width: 21mm; height: 21mm; border-radius: 50%; object-fit: cover; margin: 0 auto 3mm; }
+.poster h4 { margin: 0; font: 800 15pt/1.1 var(--client-display); }
+.poster .poster__qr { width: 44mm; margin: 4mm auto 3.4mm; padding: 2.6mm; border-radius: 3mm; box-shadow: inset 0 0 0 .5mm var(--client-line); }
+.poster p { font-size: 8.6pt; line-height: 1.35; color: var(--client-muted); }
+.poster .poster__url { margin-top: 3mm; font: 800 10pt var(--client-display); color: var(--client-accent); }
+.poster .poster__band { position: absolute; left: 0; right: 0; bottom: 0; height: 5mm; background: var(--client-accent); }
+
+.scan { position: relative; height: 100%; background: #0B0B0D; }
+.scan__viewfinder { position: absolute; left: 0; right: 0; top: 0; bottom: 210px; background: linear-gradient(135deg, #CFC9C1, #B9B2A9); overflow: hidden; }
+.scan__paper { position: absolute; left: 70px; top: 120px; width: 250px; padding: 22px; background: #fff; transform: rotate(-4deg); box-shadow: 0 6px 16px rgba(0, 0, 0, .25); }
+.scan__target { position: absolute; left: 70px; top: 118px; width: 250px; height: 250px; border-radius: 22px; box-shadow: 0 0 0 4px #FFD54A; }
+.scan__toast { position: absolute; left: 22px; right: 22px; top: 420px; background: rgba(255, 255, 255, .96); border-radius: 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: center; box-shadow: 0 8px 20px rgba(0, 0, 0, .3); }
+.scan__toast i { width: 38px; height: 38px; border-radius: 10px; background: var(--client-accent); color: #fff; display: grid; place-items: center; flex: none; }
+.scan__toast i .ic { width: 20px; height: 20px; }
+.scan__toast b { display: block; font-size: 16px; }
+.scan__toast span { font-size: 13px; color: var(--client-muted); }
+.scan__shutter { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px #0B0B0D, 0 0 0 9px #fff; }
+
+/* ---------- block: optional service ---------- */
+.reels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+.reel { position: relative; aspect-ratio: 9 / 16; border-radius: 10px; overflow: hidden; background: #17141A; box-shadow: var(--shadow-2); }
+.reel img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.reel::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(10, 8, 12, .78) 0%, rgba(10, 8, 12, 0) 42%); }
+.reel__text { position: absolute; z-index: 2; left: 3mm; right: 3mm; top: 5mm; font: 800 10.5pt/1.1 var(--client-display); color: #fff; }
+.reel__text small { display: block; font: 600 7.5pt var(--font); letter-spacing: .1em; text-transform: uppercase; color: #E6A9B3; margin-bottom: 1.4mm; }
+.reel__play { position: absolute; z-index: 2; left: 50%; bottom: 7mm; transform: translateX(-50%); width: 10mm; height: 10mm; border-radius: 50%; background: rgba(255, 255, 255, .92); color: var(--client-ink); display: grid; place-items: center; }
+.reel__play .ic { width: 4.4mm; height: 4.4mm; margin-left: .6mm; fill: currentColor; }
+.reel__band { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; height: 2mm; background: var(--client-accent); }
+.price-card { background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow-2); padding: 6mm 7mm; display: flex; justify-content: space-between; align-items: center; gap: 8mm; }
+.price-card .plan__tag { background: #F3E6E8; color: var(--client-accent); }
+.price-card > div > b { display: block; margin: 2.6mm 0 1.6mm; font: 700 17pt/1.15 var(--font-display); color: var(--ink); }
+.price-card p { font-size: 10.5pt; color: var(--muted); max-width: 100mm; }
+.price-card__value { text-align: right; flex: none; }
+.price-card__value b { display: block; font: 800 34pt/1 var(--font-display); color: var(--ink); letter-spacing: -.03em; white-space: nowrap; }
+.price-card__value span { font-size: 11pt; color: var(--muted); }
+
+/* ---------- block: investment ---------- */
+.plan { border-radius: var(--radius-lg); padding: 7mm 7.5mm; }
+.plan--main { background: var(--ink); color: #fff; }
+.plan--extra { background: #fff; box-shadow: var(--shadow-2); }
+.plan__tag { display: inline-block; font: 600 8pt var(--font); letter-spacing: .12em; text-transform: uppercase; padding: 1.4mm 3mm; border-radius: 99px; }
+.plan--main .plan__tag { background: rgba(159, 190, 228, .16); color: var(--sky); }
+.plan--extra .plan__tag { background: #F3E6E8; color: var(--client-accent); }
+.plan h3 { font: 700 19pt/1.1 var(--font-display); margin: 3mm 0 0; letter-spacing: -.01em; }
+.plan__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 1mm 2.4mm; margin-top: 4mm; }
+.plan__price b { font: 800 40pt/1 var(--font-display); letter-spacing: -.03em; white-space: nowrap; }
+.plan__price span { font-size: 12pt; }
+.plan--main .plan__price span { color: var(--sky); }
+.plan--extra .plan__price b { color: var(--ink); }
+.plan--extra .plan__price span { color: var(--muted); }
+.plan__note { margin-top: 2.6mm; font-size: 10.5pt; }
+.plan--main .plan__note { color: #C9D8EA; }
+.plan--extra .plan__note { color: var(--muted); }
+.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 2.6mm 6mm; }
+.checks li { display: flex; gap: 2.4mm; font-size: 10.8pt; line-height: 1.3; align-items: flex-start; }
+.checks .ic { width: 4.6mm; height: 4.6mm; margin-top: .2mm; stroke-width: 3; }
+.plan--main .checks .ic { color: #7FD8C3; }
+.plan--extra .checks .ic { color: var(--whatsapp); }
+.included { margin-top: 6mm; padding-top: 5mm; border-top: 1px solid rgba(159, 190, 228, .22); }
+.included > small { display: block; font: 600 8pt var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--sky); margin-bottom: 3.4mm; }
+.included ul { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3mm; }
+.included li { background: var(--ink-2); border-radius: var(--radius); padding: 3.2mm; font-size: 9.4pt; line-height: 1.3; color: #E3ECF7; }
+.included li .ic { display: block; width: 5mm; height: 5mm; color: var(--sky); margin-bottom: 2mm; }
+
+/* ---------- block: next steps ---------- */
+.timeline { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5mm; }
+.timeline::before { content: ""; position: absolute; left: 5mm; right: 35mm; top: 5.2mm; height: .6mm; background: var(--sky); }
+.timeline li { position: relative; }
+.timeline .step__num { display: block; width: 11mm; height: 11mm; font-size: 14pt; line-height: 11mm; box-shadow: 0 0 0 1.6mm var(--paper); position: relative; }
+.timeline b { display: block; margin: 5mm 0 1.6mm; font: 700 14pt/1.2 var(--font-display-text); color: var(--ink); }
+.timeline p { font-size: 11.5pt; line-height: 1.42; color: var(--muted); text-wrap: pretty; }
+.timeline li:first-child .step__num { background: var(--whatsapp); }
+.contact-card { position: relative; overflow: hidden; background: var(--ink); color: #fff; border-radius: var(--radius-lg); padding: 11mm 10mm; display: grid; grid-template-columns: 1fr 52mm; gap: 8mm; align-items: center; }
+.contact-card > div { position: relative; }
+.contact-card img.logo { height: 14mm; width: auto; margin-bottom: 7mm; }
+.contact-card p.tagline { font: 600 17pt/1.3 var(--font-display-text); color: #fff; margin-bottom: 7mm; max-width: 100mm; }
+.contact-card ul { display: grid; gap: 4mm; }
+.contact-card li { display: flex; gap: 3.4mm; align-items: center; font-size: 12.5pt; color: #E3ECF7; }
+.contact-card li .ic { width: 5.2mm; height: 5.2mm; color: var(--sky); }
+.contact-card .contact-card__qr { background: #fff; border-radius: var(--radius); padding: 4mm; text-align: center; }
+.contact-card .contact-card__qr p { margin-top: 3mm; font-size: 9.4pt; line-height: 1.3; color: var(--muted); }
+.validity { display: flex; justify-content: space-between; align-items: center; background: #fff; border-radius: var(--radius); padding: 5mm 6mm; box-shadow: var(--shadow-1); }
+.validity b { font: 700 13pt var(--font-display-text); color: var(--ink); }
+.validity span { font-size: 10pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- BLOCK cover: text only, no image (the owner's rule). Eyebrow with the client, the product or domain as
+     the title, one line saying what the proposal is about, the index numbered by pageof tokens,
+     the client card (their official logo, never redrawn) and Angatu's CNPJ line. -->
+<section class="page cover" data-id="cover">
+  <img class="bg" src="assets/bg-cover.svg" alt="">
+  <header class="cover__top">
+    <img src="assets/angatu-lockup-white.png" alt="Angatu Sistemas">
+    <div class="cover__doc"><b>Orçamento técnico</b>[[Mês de ano]]</div>
+  </header>
+
+  <div class="cover__title">
+    <p class="eyebrow">Proposta para [[Nome do cliente]]</p>
+    <h1>[[dominio.com.br]]</h1>
+    <p class="cover__sub">[[Uma linha dizendo do que se trata: o que vai ser feito, nas palavras do cliente.]]</p>
+  </div>
+
+  <nav class="cover__index" aria-label="Neste orçamento">
+    <p class="eyebrow">Neste orçamento</p>
+    <ol>
+      <li><span>{{pageof:map}}</span>O que entra no sistema</li>
+      <li><span>{{pageof:contact}}</span>Página de contato (link da bio)</li>
+      <li><span>{{pageof:site}}</span>Site da oficina e Google</li>
+      <li><span>{{pageof:gallery}}</span>Galeria de serviços</li>
+      <li><span>{{pageof:tracking-team}}</span>Acompanhamento na oficina</li>
+      <li><span>{{pageof:tracking-customer}}</span>Acompanhamento pelo cliente</li>
+      <li><span>{{pageof:poster}}</span>QR Code na parede da oficina</li>
+      <li><span>{{pageof:optional}}</span>Instagram profissional (opcional)</li>
+      <li><span>{{pageof:investment}}</span>Investimento</li>
+      <li><span>{{pageof:next-steps}}</span>Próximos passos</li>
+    </ol>
+  </nav>
+
+  <div class="cover__client">
+    <img src="assets/logo-placeholder.svg" alt="Logo de [[Nome do cliente]]">
+    <div class="cover__client-name">
+      <small>Preparado para</small>
+      <b>[[Nome do cliente]]</b>
+      <span>[[(00) 0 0000-0000]]</span>
+    </div>
+    <div class="cover__dates">
+      <div><small>Emitido em</small><b>[[22 de outubro de 2026]]</b></div>
+      <div><small>Válido até</small><b>[[6 de novembro de 2026]]</b></div>
+    </div>
+  </div>
+
+  <footer class="cover__footer">
+    <span>Angatu Sistemas · CNPJ 51.845.362/0001-14 · Porangatu, Goiás</span>
+    <span>angatusistemas.com.br</span>
+  </footer>
+</section>
+
+<!-- BLOCK map: how the customer arrives (entries) -> the address -> what they find (destinations) ->
+     what only the client sees (panel). The connector SVG uses mm inside .map: move boxes and lines together. -->
+<section class="page" data-id="map">
+  <header>
+    <p class="eyebrow">O que entra no sistema</p>
+    <h2 class="title">Tudo num endereço só</h2>
+    <p class="lead">O cliente chega pelo Instagram, pelo QR Code ou pelo Google. Lá dentro, encontra tudo da oficina.</p>
+  </header>
+
+  <div class="map">
+    <svg class="map__links" viewBox="0 0 178 215" preserveAspectRatio="none" aria-hidden="true">
+      <g fill="none" stroke="#9FBEE4" stroke-width=".5" stroke-linecap="round">
+        <path d="M28 30 V35 Q28 39 32 39 H85 Q89 39 89 43 V47"/>
+        <path d="M89 30 V47"/>
+        <path d="M150 30 V35 Q150 39 146 39 H93 Q89 39 89 43"/>
+        <path d="M89 65 V70 Q89 74 85 74 H24.75 Q20.75 74 20.75 78 V86"/>
+        <path d="M89 65 V70 Q89 74 85 74 H70.25 Q66.25 74 66.25 78 V86"/>
+        <path d="M89 65 V70 Q89 74 93 74 H107.75 Q111.75 74 111.75 78 V86"/>
+        <path d="M89 65 V70 Q89 74 93 74 H153.25 Q157.25 74 157.25 78 V86"/>
+      </g>
+      <g fill="#9FBEE4">
+        <circle cx="89" cy="47" r="1.1"/>
+        <circle cx="20.75" cy="86" r="1.1"/><circle cx="66.25" cy="86" r="1.1"/>
+        <circle cx="111.75" cy="86" r="1.1"/><circle cx="157.25" cy="86" r="1.1"/>
+      </g>
+    </svg>
+
+    <p class="map__label" style="top:0">Por onde o cliente chega</p>
+    <div class="entry" style="left:0;top:6mm"><span class="entry__icon" style="background:#B1305A">{{brand:instagram}}</span>Link da bio do Instagram</div>
+    <div class="entry" style="left:61mm;top:6mm"><span class="entry__icon" style="background:var(--client-ink)">{{icon:qr-code}}</span>QR Code na parede da oficina</div>
+    <div class="entry" style="left:122mm;top:6mm"><span class="entry__icon" style="background:var(--navy-light)">{{icon:search}}</span>Pesquisa no Google</div>
+
+    <div class="address" style="top:47mm">{{icon:lock}}[[dominio.com.br]]</div>
+
+    <p class="map__label" style="top:67mm">O que ele encontra</p>
+    <div class="destination" style="left:0;top:86mm">
+      <code>/</code>
+      <div class="destination__icon">{{icon:house}}</div>
+      <b>Site da oficina</b>
+      <p>Serviços, fotos e o botão do WhatsApp.</p>
+    </div>
+    <div class="destination" style="left:45.5mm;top:86mm">
+      <code>/galeria</code>
+      <div class="destination__icon">{{icon:layout-grid}}</div>
+      <b>Galeria</b>
+      <p>Os trabalhos que você posta pelo celular.</p>
+    </div>
+    <div class="destination" style="left:91mm;top:86mm">
+      <code>/contato</code>
+      <div class="destination__icon">{{brand:whatsapp}}</div>
+      <b>Contato</b>
+      <p>WhatsApp e Instagram num toque.</p>
+    </div>
+    <div class="destination" style="left:136.5mm;top:86mm">
+      <code>/veiculo</code>
+      <div class="destination__icon">{{icon:car}}</div>
+      <b>Acompanhar o carro</b>
+      <p>Digita a placa e vê a foto do dia.</p>
+    </div>
+
+    <p class="map__label" style="top:151mm">O que só a oficina vê</p>
+    <div class="panel" style="top:157mm">
+      <div>
+        <code>/painel</code>
+        <b>Painel da oficina</b>
+        <p>Só você entra, com a conta Google da oficina. Funciona no celular.</p>
+      </div>
+      <div class="panel__actions">
+        <div class="action">{{icon:car}}Cadastra o carro que chegou</div>
+        <div class="action">{{icon:camera}}Tira a foto do fim do dia</div>
+        <div class="action">{{icon:image-plus}}Posta um serviço na galeria</div>
+        <div class="action action--auto">{{icon:mail}}<span>Marcou “Pronto para retirar”? O sistema avisa o cliente por <span class="nowrap">e-mail</span>, sem você fazer nada.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span>Orçamento técnico · [[Nome do cliente]]</span>
+    <span class="footer__brand"><img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"><span class="footer__num">{{page}}</span></span>
+  </footer>
+</section>
+
+<!-- BLOCK two-phones: one action in two screens (here, the link in the bio opening the contact page).
+     Markers sit on the element the numbered step names; check them on the review PNG. -->
+<section class="page" data-id="contact">
+  <header>
+    <p class="eyebrow">Página de contato <b>· [[dominio.com.br]]/contato</b></p>
+    <h2 class="title">O link da bio que leva direto para o WhatsApp</h2>
+  </header>
+
+  <div class="pair">
+    <div style="position:relative">
+      <div class="phone" style="--w:280px">
+        <div class="phone__frame"><div class="phone__island"></div>
+          <div class="screen">
+            <div class="statusbar"><span>18:02</span><span>{{icon:signal}}{{icon:wifi}}{{icon:battery-full}}</span></div>
+            <div class="ig-top">{{icon:chevron-left}}<span>[[Nome do cliente]]</span>{{icon:ellipsis}}</div>
+            <div class="ig-profile">
+              <img src="assets/logo-placeholder.svg" alt="">
+              <div><b>[[Nome do cliente]]</b><span>Serviço automotivo</span></div>
+            </div>
+            <div class="ig-bio">
+              Funilaria e pintura<br>
+              Acompanhe seu carro pela placa<br>
+              <span class="ig-link">{{icon:link}}[[dominio.com.br]]/contato</span>
+            </div>
+            <div class="ig-buttons"><span>Seguir</span><span>Mensagem</span></div>
+            <div class="ig-highlights">
+              <div><i>{{icon:spray-can}}</i>Pintura</div>
+              <div><i>{{icon:hammer}}</i>Funilaria</div>
+              <div><i>{{icon:history}}</i>Antes e depois</div>
+              <div><i>{{icon:map-pin}}</i>Contato</div>
+            </div>
+            <div class="ig-grid">
+              <img src="assets/photo-placeholder.svg" alt="">
+              <img src="assets/photo-placeholder.svg" alt="">
+              <img src="assets/photo-placeholder.svg" alt="">
+              <img src="assets/photo-placeholder.svg" alt="">
+              <img src="assets/photo-placeholder.svg" alt="">
+              <img src="assets/photo-placeholder.svg" alt="">
+              <img src="assets/photo-placeholder.svg" alt="">
+              <img src="assets/photo-placeholder.svg" alt="">
+              <img src="assets/photo-placeholder.svg" alt="">
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="marker" style="left:-4mm;top:44mm">1</span>
+    </div>
+
+    <div style="position:relative">
+      <div class="phone" style="--w:280px">
+        <div class="phone__frame"><div class="phone__island"></div>
+          <div class="screen contact-screen">
+            <div class="contact-top">
+              <div class="statusbar" style="color:#fff;padding-left:10px;padding-right:4px"><span>18:02</span><span>{{icon:signal}}{{icon:wifi}}{{icon:battery-full}}</span></div>
+              <img src="assets/logo-placeholder.svg" alt="">
+              <b>[[Nome do cliente]]</b>
+              <span>Funilaria e pintura</span>
+            </div>
+            <div class="contact-buttons">
+              <div class="app-btn app-btn--whatsapp">{{brand:whatsapp}}Chamar no WhatsApp</div>
+              <div class="app-btn app-btn--light">{{brand:instagram}}Seguir no Instagram</div>
+              <div class="app-btn app-btn--light">{{icon:globe}}Conhecer a oficina</div>
+            </div>
+            <div class="contact-footer"><b>[[(00) 0 0000-0000]]</b><br>[[dominio.com.br]]</div>
+            <div class="credit">Desenvolvido por <img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"></div>
+          </div>
+        </div>
+      </div>
+      <span class="marker" style="right:-4mm;top:24mm">2</span>
+      <span class="marker" style="right:-4mm;top:64mm">3</span>
+    </div>
+
+    <div class="arrow-between">
+      <svg viewBox="0 0 100 46" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 36 C30 6 66 6 92 30"/><path d="M78 30 L92 30 L90 16"/></svg>
+      um toque
+    </div>
+  </div>
+
+  <div style="position:absolute;left:16mm;right:16mm;top:221mm">
+    <div class="steps">
+      <div class="step"><span class="step__num">1</span><p>A pessoa toca no link da bio do Instagram.</p></div>
+      <div class="step"><span class="step__num">2</span><p>Abre a página da oficina, com a sua logo.</p></div>
+      <div class="step"><span class="step__num">3</span><p>Mais um toque e ela já está falando com você no WhatsApp.</p></div>
+    </div>
+    <p class="note" style="margin-top:9mm">{{icon:link}}O mesmo link serve para o status do WhatsApp e para o cartão de visita.</p>
+  </div>
+
+  <footer class="footer">
+    <span>Orçamento técnico · [[Nome do cliente]]</span>
+    <span class="footer__brand"><img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"><span class="footer__num">{{page}}</span></span>
+  </footer>
+</section>
+
+<!-- BLOCK browser-and-search: the client's site at 1280 px, zoomed into the frame, and a search result.
+     Keep the honesty note: ranking is Google's decision. -->
+<section class="page" data-id="site">
+  <header>
+    <p class="eyebrow">Site da oficina <b>· [[dominio.com.br]]</b></p>
+    <h2 class="title">Um site para mostrar a oficina e aparecer no Google</h2>
+  </header>
+
+  <div class="browser" style="position:absolute;left:16mm;right:16mm;top:58mm">
+    <div class="browser__bar"><i></i><i></i><i></i><div class="browser__url">{{icon:lock}}[[dominio.com.br]]</div></div>
+    <div class="browser__frame" style="height:96mm">
+      <div class="site">
+        <div class="site-top">
+          <img src="assets/logo-placeholder.svg" alt=""><b>[[Nome do cliente]]</b>
+          <nav><span>Serviços</span><span>Galeria</span><span>Acompanhar meu carro</span><span>Contato</span></nav>
+          <span class="app-btn app-btn--whatsapp">{{brand:whatsapp}}WhatsApp</span>
+        </div>
+        <div class="site-hero">
+          <small>[[Nome do cliente]]</small>
+          <h3>Funilaria e pintura com foto do seu carro todo dia</h3>
+          <p>Deixou o carro com a gente? Digite a placa e veja como ele está, sem precisar ligar.</p>
+          <div class="hero-buttons"><span class="app-btn app-btn--whatsapp">{{brand:whatsapp}}Chamar no WhatsApp</span><span class="app-btn app-btn--light">{{icon:car}}Acompanhar meu carro</span></div>
+          <img src="assets/photo-placeholder.svg" alt="">
+        </div>
+        <div class="site-services">
+          <div><i>{{icon:hammer}}</i>Funilaria</div>
+          <div><i>{{icon:spray-can}}</i>Pintura</div>
+          <div><i>{{icon:wrench}}</i>Reforma de veículos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="points" style="position:absolute;left:16mm;width:70mm;top:172mm">
+    <div class="point"><span class="point__icon">{{icon:smartphone}}</span><p>Feito primeiro para o celular.</p></div>
+    <div class="point"><span class="point__icon">{{brand:whatsapp}}</span><p>Botão do WhatsApp em todas as páginas.</p></div>
+    <div class="point"><span class="point__icon">{{icon:search}}</span><p>Título e descrição em cada página, do jeito que o Google lê.</p></div>
+    <div class="point"><span class="point__icon">{{icon:badge-check}}</span><p>Cadastrado no Google assim que entra no ar.</p></div>
+  </div>
+
+  <div class="search" style="left:94mm;right:16mm;top:166mm">
+    <div class="search__field">{{icon:search}}funilaria e pintura perto de mim</div>
+    <div class="search__result">
+      <div class="search__site"><img src="assets/logo-placeholder.svg" alt=""><div><b>[[Nome do cliente]]</b><span>https://[[dominio.com.br]]</span></div></div>
+      <p class="search__title">[[Nome do cliente]] | Funilaria e pintura</p>
+      <p class="search__text">Funilaria, pintura e reforma de veículos. Veja fotos dos serviços e acompanhe o seu carro pela placa.</p>
+    </div>
+  </div>
+
+  <p class="note" style="position:absolute;left:16mm;right:16mm;top:254mm">{{icon:search}}A posição na pesquisa quem define é o Google. A gente entrega o site pronto e cadastrado para ser encontrado.</p>
+
+  <footer class="footer">
+    <span>Orçamento técnico · [[Nome do cliente]]</span>
+    <span class="footer__brand"><img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"><span class="footer__num">{{page}}</span></span>
+  </footer>
+</section>
+
+<!-- BLOCK phone-and-photos: publishing from the phone and the result on the site. A before/after of two
+     different subjects is a picture-in-picture, never a split that pretends to be one object. -->
+<section class="page" data-id="gallery">
+  <header>
+    <p class="eyebrow">Galeria de serviços <b>· [[dominio.com.br]]/galeria</b></p>
+    <h2 class="title">Terminou um serviço? Posta pelo celular e ele já aparece no site</h2>
+  </header>
+
+  <div style="position:absolute;left:16mm;top:58mm">
+    <div class="phone" style="--w:270px">
+      <div class="phone__frame"><div class="phone__island"></div>
+        <div class="screen">
+          <div class="statusbar"><span>18:10</span><span>{{icon:signal}}{{icon:wifi}}{{icon:battery-full}}</span></div>
+          <div class="app-head"><img src="assets/logo-placeholder.svg" alt=""><div><b>Nova publicação</b><small>Painel da oficina</small></div></div>
+          <div style="padding:18px 22px 0">
+            <div class="photo-duo">
+              <div><img src="assets/photo-placeholder.svg" alt=""><span>Antes</span></div>
+              <div><img src="assets/photo-placeholder.svg" alt=""><span>Depois</span></div>
+            </div>
+            <div class="app-field" style="margin-top:18px"><label>Legenda</label><div>Lateral traseira: funilaria e pintura</div></div>
+            <div class="app-btn" style="margin-top:20px">{{icon:upload}}Publicar na galeria</div>
+          </div>
+          <div class="app-list">
+            <h4>Já publicados</h4>
+            <div class="mini-grid"><img src="assets/photo-placeholder.svg" alt=""><img src="assets/photo-placeholder.svg" alt=""><img src="assets/photo-placeholder.svg" alt=""><img src="assets/photo-placeholder.svg" alt=""><img src="assets/photo-placeholder.svg" alt=""><img src="assets/photo-placeholder.svg" alt=""></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <span class="marker" style="left:-4mm;top:34mm">1</span>
+    <span class="marker" style="left:-4mm;top:68mm">2</span>
+    <span class="marker" style="left:-4mm;top:84mm">3</span>
+  </div>
+
+  <div style="position:absolute;left:95mm;right:16mm;top:58mm">
+    <div class="photo-pair">
+      <img src="assets/photo-placeholder.svg" alt="Carro cinza pronto, com os faróis acesos">
+      <span class="tag" style="right:3.5mm">Depois</span>
+      <figure class="photo-pair__before"><img src="assets/photo-placeholder.svg" alt="Lateral traseira trincada, antes do serviço"><span class="tag">Antes</span></figure>
+    </div>
+    <div class="site-gallery" style="margin-top:6mm">
+      <div class="site-gallery__head"><b>Galeria</b><span>como aparece no site</span></div>
+      <div class="site-gallery__grid">
+        <div><img src="assets/photo-placeholder.svg" alt=""><p>Funilaria no <span class="nowrap">para-choque</span> traseiro</p></div>
+        <div><img src="assets/photo-placeholder.svg" alt=""><p>Carro preparado para pintar</p></div>
+        <div><img src="assets/photo-placeholder.svg" alt=""><p>Polimento do capô</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:16mm;right:16mm;top:224mm">
+    <div class="steps">
+      <div class="step"><span class="step__num">1</span><p>Escolhe as fotos de antes e depois.</p></div>
+      <div class="step"><span class="step__num">2</span><p>Escreve uma legenda curta.</p></div>
+      <div class="step"><span class="step__num">3</span><p>Toca em Publicar. Já está no site.</p></div>
+    </div>
+    <p class="note" style="margin-top:9mm">{{icon:eye}}Quem ainda não conhece a oficina vê o resultado do seu trabalho antes de chamar.</p>
+  </div>
+
+  <footer class="footer">
+    <span>Orçamento técnico · [[Nome do cliente]]</span>
+    <span class="footer__brand"><img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"><span class="footer__num">{{page}}</span></span>
+  </footer>
+</section>
+
+<!-- BLOCK two-phones-and-strip: the team's side of a status workflow (register, daily photo, stage) and a
+     five-photo strip. The stage names are an example: use the client's own words. -->
+<section class="page" data-id="tracking-team">
+  <header>
+    <p class="eyebrow">Acompanhamento do veículo <b>· na oficina</b></p>
+    <h2 class="title">No fim do expediente, uma foto e a etapa do dia</h2>
+  </header>
+
+  <div style="position:absolute;left:16mm;right:16mm;top:52mm;display:flex;justify-content:center;align-items:flex-start;gap:24mm">
+    <div style="position:relative">
+      <div class="phone" style="--w:236px">
+        <div class="phone__frame"><div class="phone__island"></div>
+          <div class="screen">
+            <div class="statusbar"><span>08:14</span><span>{{icon:signal}}{{icon:wifi}}{{icon:battery-full}}</span></div>
+            <div class="app-head"><img src="assets/logo-placeholder.svg" alt=""><div><b>Novo veículo</b><small>Painel da oficina</small></div></div>
+            <div style="padding:18px 22px 0">
+              <div class="app-field"><label>Placa</label><span class="plate" style="width:100%"><span class="plate__band">BRASIL<svg viewBox="0 0 20 14"><rect width="20" height="14" fill="#009C3B"/><path d="M10 1.6 18.2 7 10 12.4 1.8 7Z" fill="#FFDF00"/><circle cx="10" cy="7" r="3.1" fill="#002776"/></svg></span><span class="plate__number" style="font-size:44px">ABC1D23</span></span></div>
+              <div class="app-field"><label>Modelo e cor</label><div>Sedã cinza</div></div>
+              <div class="app-field"><label>Nome do cliente</label><div class="empty">Nome completo</div></div>
+              <div class="app-field"><label><span class="nowrap">E-mail</span> do cliente</label><div class="empty">email@cliente.com.br</div></div>
+              <div class="app-btn" style="margin-top:6px">{{icon:plus}}Cadastrar veículo</div>
+            </div>
+            <div class="app-list">
+              <h4>Na oficina agora</h4>
+              <div class="app-row"><div><b>ABC1D23</b><small>Sedã cinza</small></div><span class="stage">Recebido</span></div>
+              <div class="app-row"><div><b>QTR2B17</b><small>Hatch prata</small></div><span class="stage stage--current">Pintura</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="marker" style="left:-4mm;top:24mm">1</span>
+    </div>
+
+    <div class="arrow-between" style="top:44mm;width:22mm">
+      <svg viewBox="0 0 100 46" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 36 C30 6 66 6 92 30"/><path d="M78 30 L92 30 L90 16"/></svg>
+      todo fim de dia
+    </div>
+
+    <div style="position:relative">
+      <div class="phone" style="--w:236px">
+        <div class="phone__frame"><div class="phone__island"></div>
+          <div class="screen">
+            <div class="statusbar"><span>18:02</span><span>{{icon:signal}}{{icon:wifi}}{{icon:battery-full}}</span></div>
+            <div class="app-head"><img src="assets/logo-placeholder.svg" alt=""><div><b>ABC1D23 · foto do dia</b><small>Quarta-feira, 18:02</small></div></div>
+            <div style="padding-top:16px">
+              <div class="camera"><img src="assets/photo-placeholder.svg" alt=""><div class="camera__grid"></div><span class="camera__time">Hoje, 18:02</span></div>
+              <div class="shutter"></div>
+              <p style="padding:10px 16px 6px;font:600 14px var(--font);color:var(--client-muted)">Em que etapa ele está?</p>
+              <div class="stages">
+                <span class="stage stage--done">{{icon:check}}Recebido</span>
+                <span class="stage stage--done">{{icon:check}}Funilaria</span>
+                <span class="stage stage--current">Pintura</span>
+                <span class="stage">Acabamento</span>
+                <span class="stage">Pronto para retirar</span>
+              </div>
+              <div style="padding:20px 16px 0"><div class="app-btn">{{icon:check}}Salvar foto do dia</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="marker" style="right:-4mm;top:34mm">2</span>
+      <span class="marker" style="right:-4mm;top:78mm">3</span>
+    </div>
+  </div>
+
+  <div class="steps" style="position:absolute;left:16mm;right:16mm;top:187mm">
+    <div class="step"><span class="step__num">1</span><p>Chegou um carro: você cadastra a placa, o modelo e o <span class="nowrap">e-mail</span> do cliente.</p></div>
+    <div class="step"><span class="step__num">2</span><p>No fim do dia, tira uma foto do carro ali mesmo no painel.</p></div>
+    <div class="step"><span class="step__num">3</span><p>Marca a etapa. Em “Pronto para retirar”, o cliente recebe um <span class="nowrap">e-mail</span> na hora.</p></div>
+  </div>
+
+  <div style="position:absolute;left:16mm;right:16mm;top:216mm">
+    <p class="eyebrow" style="color:var(--muted);margin-bottom:2.6mm">Uma foto por dia, do jeito que o cliente vê</p>
+    <div class="film-strip">
+      <figure><img src="assets/photo-placeholder.svg" alt=""><figcaption><b>Recebido</b>Segunda, 17:48</figcaption></figure>
+      <figure><img src="assets/photo-placeholder.svg" alt=""><figcaption><b>Funilaria</b>Terça, 17:55</figcaption></figure>
+      <figure><img src="assets/photo-placeholder.svg" alt=""><figcaption><b>Pintura</b>Quarta, 18:02</figcaption></figure>
+      <figure><img src="assets/photo-placeholder.svg" alt=""><figcaption><b>Acabamento</b>Quinta, 17:40</figcaption></figure>
+      <figure><img src="assets/photo-placeholder.svg" alt=""><figcaption><b>Pronto para retirar</b>Sexta, 17:51</figcaption></figure>
+    </div>
+    <p style="margin-top:3mm;font-size:9.5pt;color:var(--muted)">Fotos ilustrativas. As etapas são um exemplo e podem ter os nomes que a oficina já usa no dia a dia.</p>
+  </div>
+
+  <footer class="footer">
+    <span>Orçamento técnico · [[Nome do cliente]]</span>
+    <span class="footer__brand"><img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"><span class="footer__num">{{page}}</span></span>
+  </footer>
+</section>
+
+<!-- BLOCK three-phones: the end customer's side (look up by code, see the status, receive the e-mail).
+     Say what the public lookup does not show: no personal data. -->
+<section class="page" data-id="tracking-customer">
+  <header>
+    <p class="eyebrow">Acompanhamento do veículo <b>· para o cliente</b></p>
+    <h2 class="title">O cliente digita a placa e vê como o carro está</h2>
+  </header>
+
+  <div style="position:absolute;left:16mm;right:16mm;top:56mm;display:flex;justify-content:space-between">
+    <div>
+      <div class="phone" style="--w:202px">
+        <div class="phone__frame"><div class="phone__island"></div>
+          <div class="screen contact-screen">
+            <div class="contact-top" style="padding-bottom:26px">
+              <div class="statusbar" style="color:#fff;padding-left:10px;padding-right:4px"><span>12:30</span><span>{{icon:signal}}{{icon:wifi}}{{icon:battery-full}}</span></div>
+              <img src="assets/logo-placeholder.svg" alt="" style="width:96px;height:96px">
+              <b>Acompanhe seu carro</b>
+              <span>[[Nome do cliente]]</span>
+            </div>
+            <div style="padding:30px 24px 0;text-align:center">
+              <p style="font:600 17px var(--font);margin-bottom:14px">Digite a placa</p>
+              <span class="plate" style="width:100%"><span class="plate__band">BRASIL<svg viewBox="0 0 20 14"><rect width="20" height="14" fill="#009C3B"/><path d="M10 1.6 18.2 7 10 12.4 1.8 7Z" fill="#FFDF00"/><circle cx="10" cy="7" r="3.1" fill="#002776"/></svg></span><span class="plate__number" style="font-size:60px">ABC1D23</span></span>
+              <div class="app-btn" style="margin-top:22px">{{icon:search}}Consultar</div>
+              <p style="font-size:14px;color:var(--client-muted);margin-top:20px;line-height:1.45">Sem senha e sem baixar aplicativo.</p>
+            </div>
+            <div class="credit">Desenvolvido por <img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption"><span class="step__num">1</span><p>Digita a placa no site.</p></div>
+    </div>
+
+    <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:-12mm"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+
+    <div>
+      <div class="phone" style="--w:202px">
+        <div class="phone__frame"><div class="phone__island"></div>
+          <div class="screen">
+            <div class="statusbar"><span>12:31</span><span>{{icon:signal}}{{icon:wifi}}{{icon:battery-full}}</span></div>
+            <div class="app-head"><img src="assets/logo-placeholder.svg" alt=""><div><b>ABC1D23</b><small>Sedã cinza</small></div></div>
+            <div style="padding:16px 18px 0">
+              <div style="position:relative;border-radius:14px;overflow:hidden"><img src="assets/photo-placeholder.svg" alt=""><span class="camera__time">Ontem, 18:02</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 16px"><span style="font:700 15px var(--font)">Etapa atual</span><span class="stage stage--current">Pintura</span></div>
+            </div>
+            <div class="progress">
+              <div class="progress__item progress__item--done"><i>{{icon:check}}</i><div><b>Recebido</b><small>Segunda</small></div></div>
+              <div class="progress__item progress__item--done"><i>{{icon:check}}</i><div><b>Funilaria</b><small>Terça</small></div></div>
+              <div class="progress__item progress__item--current"><i></i><div><b>Pintura</b><small>Quarta</small></div></div>
+              <div class="progress__item progress__item--future"><i></i><div><b>Acabamento</b></div></div>
+              <div class="progress__item progress__item--future"><i></i><div><b>Pronto para retirar</b></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption"><span class="step__num">2</span><p>Vê a última foto e a etapa.</p></div>
+    </div>
+
+    <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:-12mm"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+
+    <div>
+      <div class="phone" style="--w:202px">
+        <div class="phone__frame"><div class="phone__island"></div>
+          <div class="screen">
+            <div class="statusbar"><span>17:52</span><span>{{icon:signal}}{{icon:wifi}}{{icon:battery-full}}</span></div>
+            <div class="mail-top">{{icon:chevron-left}}<span>{{icon:archive}}{{icon:trash-2}}{{icon:ellipsis}}</span></div>
+            <p class="mail-subject">Seu carro está pronto para retirar</p>
+            <div class="mail-from"><img src="assets/logo-placeholder.svg" alt=""><div><b>[[Nome do cliente]]</b>para você · 17:51</div></div>
+            <div class="mail-body">
+              <div class="mail-ok">{{icon:check}}</div>
+              <h5>Pronto para retirar</h5>
+              <p>Placa ABC1D23 · Sedã cinza</p>
+              <img class="photo" src="assets/photo-placeholder.svg" alt="">
+              <div class="app-btn" style="height:50px;font-size:16px">Ver as fotos da reforma</div>
+              <div class="mail-credit">Desenvolvido por <img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption"><span class="step__num">3</span><p>Recebe o <span class="nowrap">e-mail</span> quando fica pronto.</p></div>
+    </div>
+  </div>
+
+  <div class="list-card" style="position:absolute;left:16mm;right:16mm;top:199mm">
+    <div class="point"><span class="point__icon">{{icon:lock}}</span><p>Na consulta aparecem só as fotos e a etapa. Nome, telefone e <span class="nowrap">e-mail</span> do cliente ficam guardados.</p></div>
+    <div class="point"><span class="point__icon">{{icon:smartphone}}</span><p>Abre no navegador do celular. Não precisa baixar aplicativo nem criar conta.</p></div>
+    <div class="point"><span class="point__icon">{{icon:phone-off}}</span><p>Menos cliente ligando para perguntar se o carro já ficou pronto.</p></div>
+  </div>
+
+  <footer class="footer">
+    <span>Orçamento técnico · [[Nome do cliente]]</span>
+    <span class="footer__brand"><img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"><span class="footer__num">{{page}}</span></span>
+  </footer>
+</section>
+
+<!-- BLOCK wall-poster: printable QR art on a wall and a phone scanning it. The QR is real (qr token, generated at build). -->
+<section class="page" data-id="poster">
+  <header>
+    <p class="eyebrow">QR Code na oficina</p>
+    <h2 class="title">Um cartaz na parede que leva o cliente para o site</h2>
+  </header>
+
+  <div class="wall">
+    <div class="poster">
+      <img class="logo" src="assets/logo-placeholder.svg" alt="">
+      <h4>Aponte a câmera do celular</h4>
+      <div class="poster__qr">{{qr:https://[[dominio.com.br]] #17141A}}</div>
+      <p>Veja nossos serviços, fale no WhatsApp e acompanhe seu carro pela placa.</p>
+      <p class="poster__url">[[dominio.com.br]]</p>
+      <span class="poster__band"></span>
+    </div>
+    <div style="position:absolute;right:18mm;top:22mm;transform:rotate(4deg)">
+      <div class="phone" style="--w:216px">
+        <div class="phone__frame"><div class="phone__island"></div>
+          <div class="screen scan">
+            <div class="scan__viewfinder">
+              <div class="scan__paper">{{qr:https://[[dominio.com.br]] #17141A}}</div>
+              <div class="scan__target"></div>
+              <div class="scan__toast"><i>{{icon:globe}}</i><div><b>[[dominio.com.br]]</b><span>Toque para abrir o site</span></div></div>
+            </div>
+            <div class="scan__shutter"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="points" style="position:absolute;left:16mm;right:16mm;top:236mm;grid-template-columns:repeat(3,1fr);gap:6mm">
+    <div class="point"><span class="point__icon">{{icon:printer}}</span><p>A gente entrega a arte pronta para imprimir.</p></div>
+    <div class="point"><span class="point__icon">{{icon:scan-line}}</span><p>A câmera do celular já lê o código, sem aplicativo.</p></div>
+    <div class="point"><span class="point__icon">{{icon:map-pin}}</span><p>Vai bem na recepção, no balcão e onde o cliente espera.</p></div>
+  </div>
+
+  <footer class="footer">
+    <span>Orçamento técnico · [[Nome do cliente]]</span>
+    <span class="footer__brand"><img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"><span class="footer__num">{{page}}</span></span>
+  </footer>
+</section>
+
+<!-- BLOCK optional-service: an add-on sold apart, with its own price card. -->
+<section class="page" data-id="optional">
+  <header>
+    <p class="eyebrow">Opcional <b>· Instagram profissional</b></p>
+    <h2 class="title">O Instagram da oficina configurado por completo, com 3 vídeos do seu trabalho</h2>
+  </header>
+
+  <div style="position:absolute;left:16mm;top:62mm">
+    <div class="phone" style="--w:250px">
+      <div class="phone__frame"><div class="phone__island"></div>
+        <div class="screen">
+          <div class="statusbar"><span>19:20</span><span>{{icon:signal}}{{icon:wifi}}{{icon:battery-full}}</span></div>
+          <div class="ig-top">{{icon:chevron-left}}<span>[[Nome do cliente]]</span>{{icon:ellipsis}}</div>
+          <div class="ig-profile">
+            <img src="assets/logo-placeholder.svg" alt="">
+            <div><b>[[Nome do cliente]]</b><span>Serviço automotivo</span></div>
+          </div>
+          <div class="ig-bio">Funilaria e pintura<br>Acompanhe seu carro pela placa<br><span class="ig-link">{{icon:link}}[[dominio.com.br]]/contato</span></div>
+          <div class="ig-buttons"><span>Seguir</span><span>Mensagem</span></div>
+          <div class="ig-highlights">
+            <div><i>{{icon:spray-can}}</i>Pintura</div>
+            <div><i>{{icon:hammer}}</i>Funilaria</div>
+            <div><i>{{icon:history}}</i>Antes e depois</div>
+            <div><i>{{icon:map-pin}}</i>Contato</div>
+          </div>
+          <div class="ig-grid">
+            <img src="assets/photo-placeholder.svg" alt="">
+            <img src="assets/photo-placeholder.svg" alt="">
+            <img src="assets/photo-placeholder.svg" alt="">
+            <img src="assets/photo-placeholder.svg" alt="">
+            <img src="assets/photo-placeholder.svg" alt="">
+            <img src="assets/photo-placeholder.svg" alt="">
+            <img src="assets/photo-placeholder.svg" alt="">
+            <img src="assets/photo-placeholder.svg" alt="">
+            <img src="assets/photo-placeholder.svg" alt="">
+          </div>
+        </div>
+      </div>
+    </div>
+    <span class="marker" style="right:-4mm;top:36mm">1</span>
+    <span class="marker" style="right:-4mm;top:62mm">2</span>
+  </div>
+
+  <div style="position:absolute;left:94mm;right:16mm;top:62mm">
+    <div class="reels">
+      <div class="reel"><img src="assets/photo-placeholder.svg" alt=""><p class="reel__text"><small>Vídeo 1</small>Antes e depois</p><span class="reel__play">{{icon:play}}</span><span class="reel__band"></span></div>
+      <div class="reel"><img src="assets/photo-placeholder.svg" alt=""><p class="reel__text"><small>Vídeo 2</small>Durante a pintura</p><span class="reel__play">{{icon:play}}</span><span class="reel__band"></span></div>
+      <div class="reel"><img src="assets/photo-placeholder.svg" alt=""><p class="reel__text"><small>Vídeo 3</small>Pronto para entregar</p><span class="reel__play">{{icon:play}}</span><span class="reel__band"></span></div>
+    </div>
+    <span class="marker" style="left:-4mm;top:-3mm">3</span>
+
+    <div class="callouts" style="margin-top:9mm;gap:5.4mm">
+      <div class="callout"><span class="step__num">1</span><p><strong>Biografia</strong>Nome, categoria, descrição e link, escritos para quem procura oficina.</p></div>
+      <div class="callout"><span class="step__num">2</span><p><strong>Stories</strong>Destaques organizados, com capas no visual da oficina.</p></div>
+      <div class="callout"><span class="step__num">3</span><p><strong>3 vídeos</strong>Editados com acabamento profissional, mostrando o seu trabalho, e publicados no perfil.</p></div>
+    </div>
+  </div>
+
+  <div class="price-card" style="position:absolute;left:16mm;right:16mm;top:214mm">
+    <div>
+      <span class="plan__tag">Opcional</span>
+      <b>Instagram profissional</b>
+      <p>Contratando junto com o sistema, a bio já sai com o link [[dominio.com.br]]/contato.</p>
+    </div>
+    <div class="price-card__value"><b>[[R$ 000]]</b><span>valor único</span></div>
+  </div>
+
+  <footer class="footer">
+    <span>Orçamento técnico · [[Nome do cliente]]</span>
+    <span class="footer__brand"><img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"><span class="footer__num">{{page}}</span></span>
+  </footer>
+</section>
+
+<!-- BLOCK investment: the main plan, what the fee already includes (read it from angatusistemas.com.br),
+     the optional item and the plain sum of both. Never a price, deadline or contract term not given. -->
+<section class="page" data-id="investment">
+  <header>
+    <p class="eyebrow">Investimento</p>
+    <h2 class="title">Quanto custa</h2>
+    <p class="lead">Dá para contratar só o sistema, só o Instagram ou os dois juntos.</p>
+  </header>
+
+  <div class="plan plan--main" style="position:absolute;left:16mm;right:16mm;top:58mm">
+    <div style="display:grid;grid-template-columns:62mm 1fr;gap:8mm">
+      <div>
+        <span class="plan__tag">Sistema</span>
+        <h3>[[dominio.com.br]]</h3>
+        <div class="plan__price"><b>[[R$ 000]]</b><span>por mês</span></div>
+        <p class="plan__note">Sem taxa de criação. Você paga só a mensalidade.</p>
+      </div>
+      <ul class="checks" style="align-self:center">
+        <li>{{icon:check}}<span>Site da oficina</span></li>
+        <li>{{icon:check}}<span>Página de contato para a bio</span></li>
+        <li>{{icon:check}}<span>Galeria de serviços</span></li>
+        <li>{{icon:check}}<span>QR Code com arte para imprimir</span></li>
+        <li>{{icon:check}}<span>Preparado para o Google</span></li>
+        <li>{{icon:check}}<span>Acompanhamento pela placa, com foto do dia</span></li>
+        <li>{{icon:check}}<span><span class="nowrap">E-mail</span> automático de carro pronto</span></li>
+        <li>{{icon:check}}<span>Painel da oficina no celular</span></li>
+      </ul>
+    </div>
+    <div class="included">
+      <small>Já vem na mensalidade</small>
+      <ul>
+        <li>{{icon:server}}Hospedagem, no ar 24 horas</li>
+        <li>{{icon:globe}}Domínio [[dominio.com.br]] no nome da oficina</li>
+        <li>{{icon:refresh-cw}}Atualizações de segurança</li>
+        <li>{{icon:database}}Manutenção e backup</li>
+        <li>{{brand:whatsapp}}Suporte pelo WhatsApp</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="plan plan--extra" style="position:absolute;left:16mm;right:16mm;top:182mm">
+    <div style="display:grid;grid-template-columns:62mm 1fr;gap:8mm;align-items:center">
+      <div>
+        <span class="plan__tag">Opcional</span>
+        <h3>Instagram profissional</h3>
+        <div class="plan__price"><b>[[R$ 000]]</b><span>valor único</span></div>
+      </div>
+      <ul class="checks" style="grid-template-columns:1fr">
+        <li>{{icon:check}}<span>Biografia completa, com o link do site</span></li>
+        <li>{{icon:check}}<span>Stories com destaques organizados</span></li>
+        <li>{{icon:check}}<span>3 vídeos editados e publicados no perfil</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="note" style="position:absolute;left:16mm;right:16mm;top:256mm">{{icon:plus}}Os dois juntos: [[R$ 000]] uma vez, mais [[R$ 000]] por mês do sistema.</p>
+
+  <footer class="footer">
+    <span>Orçamento técnico · [[Nome do cliente]]</span>
+    <span class="footer__brand"><img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"><span class="footer__num">{{page}}</span></span>
+  </footer>
+</section>
+
+<!-- BLOCK next-steps: four steps, Angatu's contact card with a WhatsApp QR, the validity, and the photo
+     credit line only when stock photos are used. -->
+<section class="page" data-id="next-steps">
+  <header>
+    <p class="eyebrow">Próximos passos</p>
+    <h2 class="title">Do “pode fazer” até o sistema no ar</h2>
+  </header>
+
+  <ol class="timeline" style="position:absolute;left:16mm;right:16mm;top:58mm;margin:0;padding:0;list-style:none">
+    <li><span class="step__num">1</span><b>Você aprova</b><p>Pode responder pelo WhatsApp mesmo.</p></li>
+    <li><span class="step__num">2</span><b>Manda o material</b><p>Fotos de serviços, a logo e as informações da oficina.</p></li>
+    <li><span class="step__num">3</span><b>A gente monta</b><p>E vai mostrando o andamento, não só no fim.</p></li>
+    <li><span class="step__num">4</span><b>Fica no ar</b><p>A gente ensina a usar o painel e segue junto no WhatsApp.</p></li>
+  </ol>
+
+  <div class="contact-card" style="position:absolute;left:16mm;right:16mm;top:118mm">
+    <img class="bg" src="assets/bg-engineering.svg" alt="">
+    <div>
+      <img class="logo" src="assets/angatu-lockup-white.png" alt="Angatu Sistemas">
+      <p class="tagline">Quem atende você é quem faz o sistema.</p>
+      <ul>
+        <li>{{brand:whatsapp}}(62) 99178-9937</li>
+        <li>{{icon:mail}}angatusistemas@gmail.com</li>
+        <li>{{icon:globe}}angatusistemas.com.br</li>
+        <li>{{brand:instagram}}@angatusistemas</li>
+      </ul>
+    </div>
+    <div class="contact-card__qr">{{qr:https://wa.me/5562991789937 #051D38}}<p>Aponte a câmera para chamar a gente no WhatsApp</p></div>
+  </div>
+
+  <div class="validity" style="position:absolute;left:16mm;right:16mm;top:238mm">
+    <div><span>Este orçamento vale até</span><br><b>[[6 de novembro de 2026]]</b></div>
+    <span>Angatu Sistemas · CNPJ 51.845.362/0001-14<br>Porangatu, Goiás</span>
+  </div>
+
+  <p style="position:absolute;left:16mm;right:16mm;top:262mm;font-size:8.5pt;color:var(--muted)">As fotos deste orçamento são ilustrativas, do banco de imagens Unsplash. No sistema entram as fotos da própria empresa.</p>
+
+  <footer class="footer">
+    <span>Orçamento técnico · [[Nome do cliente]]</span>
+    <span class="footer__brand"><img src="assets/angatu-lockup-navy.png" alt="Angatu Sistemas"><span class="footer__num">{{page}}</span></span>
+  </footer>
+</section>
+
+<script>
+  // Device screens are drawn at real phone/desktop width and scaled into their frames.
+  for (const phone of document.querySelectorAll(".phone")) {
+    const frame = phone.querySelector(".phone__frame");
+    const screen = phone.querySelector(".screen");
+    const z = frame.clientWidth / 390;
+    screen.style.zoom = z;
+    screen.style.height = frame.clientHeight / z + "px";
+  }
+  for (const browser of document.querySelectorAll(".browser")) {
+    const frame = browser.querySelector(".browser__frame");
+    const site = browser.querySelector(".site");
+    const z = frame.clientWidth / 1280;
+    site.style.zoom = z;
+    site.style.height = frame.clientHeight / z + "px";
+  }
+</script>
+</body>
+</html>

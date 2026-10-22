@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Angatu Sistemas engineering standard - Java 25 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and keep it loaded to think, not just to code; once a repo's CLAUDE.md names it, it governs every session there. Overrides - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist, even unasked; every project ships a Dockerfile for Coolify, not for dev; WebSocket routes check the session inside the route; the client is hostile. Always ask first - backend or static landing page, image compression, Turnstile. Always preview a frontend on a running server and look at it. Triggers - AngatuLibraries, AngatuWhatsappSDK, WhatsApp, bot, Baileys, Saveable, Route, JavalinAPI, Java, Javadoc, Coolify, Dockerfile, deploy, new project, entity, screen, landing page, Remotion, video, motion graphics, PHONK, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, obfuscate, WebSocket, session, cookie, login, OAuth, Google sign-in, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
+description: Angatu Sistemas engineering standard - Java 25 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and to think, not just code; once a repo's CLAUDE.md names it, it governs every session there. Overrides - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist, even unasked; every project ships a Coolify Dockerfile, not for dev; WebSocket routes check the session inside the route; the client is hostile. Always ask first - backend or static landing, image compression, Turnstile, proposal prices. Always preview a frontend on a running server and look at it. Triggers - orçamento, proposta, quote, AngatuLibraries, AngatuWhatsappSDK, WhatsApp, bot, Baileys, Saveable, Route, JavalinAPI, Java, Javadoc, Coolify, Dockerfile, deploy, new project, entity, screen, landing page, Remotion, video, motion graphics, PHONK, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, obfuscate, WebSocket, session, cookie, login, OAuth, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
 ---
 
 # AngatuLibraries — Angatu Sistemas engineering standard
@@ -66,6 +66,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md` 
 | Blocking image/video saving and text copying | `references/content-protection.md` |
 | **Any video that is not a landing hero — start here** (Remotion, from scratch, reviewed until it matches the plan) | `references/video-production.md` |
 | Video: brief and G5, plan and timeline, motion vocabulary, music/voice/SFX sync, PHONK and the Angatu client reel, the review loop | `references/video-briefing.md`, `video-plan.md`, `video-motion.md`, `video-audio.md`, `video-phonk.md`, `video-review.md` |
+| **A proposal or quote for a client (orçamento técnico) — start here** (PDF from the house template in `tools/proposal/`, G6, every page looked at) | `references/proposal.md` |
 
 ---
 
@@ -232,6 +233,15 @@ rule says which one wins.
   means the render matches the plan, measured and looked at in the review loop — "it compiled" and
   "it rendered once" are not done. → `references/video-production.md`
 
+### Proposals
+
+- **R41 — A proposal is built from the owner's numbers and Angatu's published terms, never from
+  invention, and done only once every page has been looked at.** Every orçamento is a PDF from
+  `tools/proposal/`: a text-only cover, one idea per page in mockups with real photos (the client's,
+  or free stock marked as illustrative, never drawn). G6 first: prices, scope, deadline and contract
+  come from the owner, inclusions from angatusistemas.com.br, and every default or omission is said
+  back. Client data never enters this repository. → `references/proposal.md`
+
 ### Security
 
 - **R22 — The client is hostile.** Assume an intercepting proxy (Burp Suite) rewriting the request
@@ -313,6 +323,7 @@ code. Answering on the user's behalf is the failure this section exists to preve
 | **G3 — Cache** | anything would store content | cache is never introduced on the agent's initiative. If it looks necessary, ask; the default is no cache. → `references/cache.md` |
 | **G4 — Turnstile** | a new project, and any existing project that does not have it yet | *"Will this system use Cloudflare Turnstile?"* If yes → `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` from `.env`, backend verification, system-wide coverage, and Cloudflare's notice added to the privacy policy. → `references/turnstile.md` |
 | **G5 — Video** | any video that is not a landing hero — motion graphics, an explainer, an ad, a PHONK edit | Research the client's URL first (logo, palette, type, copy, services, WhatsApp, screens), then ask only what it leaves open, starting with the type — narration or music edit — and, for a music edit, *"É uma edição PHONK normal ou é um vídeo para um novo cliente da Angatu Sistemas?"*. Always *"O vídeo leva a marca da Angatu Sistemas?"*, suggesting yes. Recorded in the video's `docs/BRIEFING.md`. **Not one scene before the answers and the approved plan.** → `references/video-briefing.md` |
+| **G6 — Proposal** | an orçamento, a proposta or a quote for a client | Read the request first, then ask in one message only what it leaves open: the client's logo file, each item and its price (one-time or monthly), optional items, deadline, contract, and whether the photos are the client's or stock. Validity defaults to 15 days and the inclusions are read from angatusistemas.com.br; both are said back. **Not one page before the prices and the scope are known.** → `references/proposal.md` |
 
 ---
 
@@ -372,7 +383,10 @@ filtro · R36 WhatsApp sempre pelo **AngatuWhatsappSDK**
 nem navegador headless — e o repositório é lido antes de escrever código · R37 vídeo que não é
 hero de landing nasce do zero, em pasta própria que fica, com briefing (G5) que pesquisa a URL do
 cliente e pergunta se leva a marca da Angatu, e plano aprovado antes da primeira cena; só fica
-pronto depois de assistido e ouvido no ciclo de revisão, nunca porque compilou ou renderizou uma vez.
+pronto depois de assistido e ouvido no ciclo de revisão, nunca porque compilou ou renderizou uma vez ·
+R41 orçamento sai do template da skill (`tools/proposal/`), com G6 antes: preço, prazo e contrato vêm do
+dono e nunca são inventados, a capa é só texto, cada página mostra uma ideia com mockup e foto real, e só
+fica pronto depois de cada página ser olhada como imagem.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -433,6 +447,7 @@ asked for it; R18 means the source is not rewritten to achieve that.
 - `references/java-standard.md` section 8: every Java change passes the review checklist.
 - `CLAUDE.md` / `GEMINI.md` updated (R2), commit on `development` with no mention of AI (R3).
 - A video is not a frontend: its list is the final checklist of `references/video-review.md` (R37).
+- A proposal is not a frontend either: its list is section 8 of `references/proposal.md` (R41).
 
 ---
 

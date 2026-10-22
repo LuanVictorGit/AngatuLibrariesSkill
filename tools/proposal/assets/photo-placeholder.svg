@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Neutral stand-in for a photo. `proposal.py final` refuses a PDF that still uses it. -->
+  <rect width="400" height="300" fill="#D5DBE3"/>
+  <path d="M0 300 L120 170 L190 235 L250 185 L400 300 Z" fill="#C3CBD6"/>
+  <circle cx="300" cy="90" r="26" fill="#C3CBD6"/>
+  <text x="200" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700"
+        letter-spacing="3" fill="#7A8796">FOTO</text>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Neutral stand-in for the client's logo. The real file is never redrawn; `final` refuses this one. -->
+  <rect width="200" height="200" fill="#EEF1F5"/>
+  <circle cx="100" cy="100" r="70" fill="none" stroke="#9AA6B4" stroke-width="4" stroke-dasharray="10 8"/>
+  <text x="100" y="108" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700"
+        letter-spacing="2" fill="#7A8796">LOGO</text>
+</svg>

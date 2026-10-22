@@ -89,11 +89,14 @@ secao 'SKILL.md'
 # contra sete references e onze ferramentas com o ciclo inteiro. O que o teto
 # tem de barrar e conteudo que deveria estar num reference voltando para ca; se
 # subir de novo, a pergunta antes de mexer no numero e essa.
+# From 460 to 475 when the proposal module came in (R41 and G6): the rule, the
+# gate, one routing row, the block summary and one checklist line here, against
+# the whole of references/proposal.md and tools/proposal/.
 LINHAS=$(wc -l < SKILL.md | tr -d ' ')
-if [ "$LINHAS" -gt 460 ]; then
-  falha "SKILL.md com $LINHAS linhas (teto 460) — conteudo deve descer para references/"
+if [ "$LINHAS" -gt 475 ]; then
+  falha "SKILL.md com $LINHAS linhas (teto 475) — conteudo deve descer para references/"
 else
-  ok "SKILL.md com $LINHAS linhas (teto 460)"
+  ok "SKILL.md com $LINHAS linhas (teto 475)"
 fi
 
 if grep -q 'AngatuLibrariesSkill:begin' SKILL.md && grep -q 'AngatuLibrariesSkill:end' SKILL.md; then
@@ -102,7 +105,7 @@ else
   falha 'bloco AngatuLibrariesSkill:begin/end ausente do SKILL.md — R1 perde a ancora'
 fi
 
-for GATE in G1 G2 G3 G4 G5; do
+for GATE in G1 G2 G3 G4 G5 G6; do
   if grep -q "$GATE" SKILL.md; then
     ok "gate $GATE declarado"
   else
@@ -858,6 +861,67 @@ PY
   fi
 else
   aviso 'python ausente: exemplos Java nao conferidos'
+fi
+
+# ---------------------------------------------------------------------------
+# 7d. the proposal module (R41, G6)
+#
+# Three ways it regresses without an error. A price, deadline or contract term
+# filled in by the agent goes to a client as a commitment the owner never made.
+# A client's name, logo or prices committed as an example lands in a public
+# repository. And the build's protections (static fonts instead of Type3, no
+# placeholder left in a delivered PDF) disappear in a "simplification" of the
+# script, and the next PDF goes out with "[[R$ 000]]" on the price page.
+# ---------------------------------------------------------------------------
+secao 'proposal (R41, G6)'
+PP=references/proposal.md
+TP=tools/proposal
+
+exige SKILL.md '^- \*\*R41' 'R41 defined in SKILL.md' 'R41 missing -- the proposal module has no rule'
+exige SKILL.md 'proposal\.md' 'SKILL.md routes a proposal request' 'SKILL.md has no route to proposal.md'
+exige SKILL.md 'R41 orçamento' 'CLAUDE.md block summarises R41' 'CLAUDE.md block without R41 -- the rule fades on compaction'
+exige GEMINI.md 'R41' 'GEMINI.md summarises R41' 'GEMINI.md without R41'
+case "$DESCRICAO" in
+  *orçamento*) ok 'description triggers on orçamento' ;;
+  *)           falha 'description without the orçamento trigger -- a quote request does not load the skill' ;;
+esac
+
+exige "$PP" 'G6' 'proposal.md covers G6' 'proposal.md without G6'
+exige "$PP" 'never invented' 'proposal.md forbids inventing a price' 'proposal.md lets a price be invented'
+exige "$PP" 'text only' 'proposal.md keeps the cover text only' 'proposal.md lost the text-only cover'
+exige "$PP" 'public' 'proposal.md keeps client data out of this public repository'             'proposal.md does not say the repository is public'
+exige "$PP" 'Unsplash' 'proposal.md names the stock source' 'proposal.md without the photo source'
+exige "$PP" 'plus\.unsplash\.com' 'proposal.md refuses Unsplash+ images' 'proposal.md lets a paid image in'
+exige "$PP" 'picture-in-picture' 'proposal.md forbids a fake before/after split'             'proposal.md lets two subjects pass as one'
+exige "$PP" 'virtual environment' 'proposal.md installs into a venv'             'proposal.md installs into the global interpreter -- it already broke a pinned numpy'
+exige "$PP" 'Type3' 'proposal.md explains the static fonts' 'proposal.md without the Type3 trap'
+exige "$PP" 'rdap\.registro\.br' 'proposal.md checks the client domain' 'proposal.md without the domain check'
+exige "$PP" 'R17' 'proposal.md keeps the Angatu mark on every page' 'proposal.md without R17'
+
+AUSENTE=0
+for F in proposal.py crop.py template.html requirements.txt assets/angatu-lockup-white.png          assets/angatu-lockup-navy.png assets/bg-cover.svg assets/bg-engineering.svg          assets/photo-placeholder.svg assets/logo-placeholder.svg; do
+  if [ ! -f "$TP/$F" ]; then falha "$TP/$F missing -- proposal.md points to it"; AUSENTE=1; fi
+done
+if [ "$AUSENTE" -eq 0 ]; then ok 'the proposal tools and assets exist'; fi
+
+exige "$TP/proposal.py" 'Type3' 'proposal.py fails on Type3 fonts' 'proposal.py lost the Type3 check'
+exige "$TP/proposal.py" 'placeholder' 'proposal.py refuses leftover placeholders'                         'proposal.py lost the placeholder check -- "[[R$ 000]]" reaches the client'
+exige "$TP/template.html" 'data-id="cover"' 'template.html keeps the block ids' 'template.html without block ids'
+exige "$TP/template.html" '\{\{page\}\}' 'template.html numbers its pages' 'template.html with typed page numbers'
+exige "$TP/template.html" '\[\[Nome do cliente\]\]' 'template.html holds placeholders, not a client'                           'template.html without placeholders -- was a real proposal copied in?'
+if grep -qE 'class="(pagina|cel|tela|rodape|sobretitulo)' "$TP/template.html"; then
+  falha 'template.html carries Portuguese identifiers (R12)'
+else
+  ok 'template.html identifiers in English (R12)'
+fi
+if [ -n "${PYTHON:-}" ]; then
+  QUEBRA=0
+  for F in "$TP"/*.py; do
+    if ! "$PYTHON" -c "import ast, sys; ast.parse(open(sys.argv[1], encoding='utf-8').read())" "$F" >/dev/null 2>&1; then
+      falha "broken syntax: $F"; QUEBRA=1
+    fi
+  done
+  if [ "$QUEBRA" -eq 0 ]; then ok 'proposal Python scripts compile'; fi
 fi
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,4 @@
+pymupdf>=1.26
+segno>=1.6
+fonttools>=4.50
+pillow>=10.0
