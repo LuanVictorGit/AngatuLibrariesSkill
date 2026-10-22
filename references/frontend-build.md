@@ -559,7 +559,7 @@ comments and `url()`. Each kind of name is renamed only where that kind is a ref
 
 | Kind | Renamed in | Never in |
 |---|---|---|
-| class, custom property, `data-*` | `class=`, `style=`, CSS, JS strings, any other attribute value, JSON strings, `dataset.x` | text, comments |
+| class, custom property, `data-*` | `class=`, `style=`, CSS, JS strings, any other attribute value, JSON strings, a key read from `dataset` (9.7) | text, comments |
 | `@keyframes`, container and view-transition names | the CSS declarations and at-rules that name them, `style=`, JS strings | selectors, tag names, any other attribute |
 | shared global | JS where it is code, `on*=` and `javascript:` included; after `window.`, `globalThis.`, `self.` | text, strings, attribute values, a property (`totals.net`), a key, a label |
 
@@ -653,6 +653,15 @@ returns `undefined`, with no error and no console output. On a project that disp
 maps both forms in the same pass**, the attribute and its camelCase property. It was found on a
 codebase with 106 `dataset.*` reads; a build that renames the attribute without it is worse than one
 that renames nothing.
+
+**The camelCase key is read in more shapes than `dataset.x`, and the pass follows each one.**
+`dataset['actionChange']` is the same read. So are `const { actionChange } = el.dataset` and the
+handler that destructures its event, `({ currentTarget: { dataset: { actionChange } } })`. A pattern
+is written back as `{ x1abc: actionChange }`, so the key follows the attribute and the local variable
+keeps its name. Then there is the read no build can follow, where `dataset` is handed over whole:
+`Object.keys(el.dataset)`, `el.dataset[key]`, `{ ...rest }`, or `const ds = el.dataset`. Any key can
+be read there, so one such read anywhere keeps every `data-*` attribute, reported as
+`kept (dataset read at runtime)`. This is the `data-*` twin of `window[name]` (9.6).
 
 Two more: `querySelectorAll('[data-action]')` built from a variable falls to proof 6, and
 `data-sitekey` / `data-theme` are read by Cloudflare's own script, so they ship in `keepData` from the
@@ -1126,9 +1135,11 @@ function stringNames(text, at, slot, visit, edits, paths, attribute = false) {
 /**
  * Visits the names of a script through acorn's syntax tree, so nothing is guessed. An identifier is
  * 'code' where it is a reference, 'short' in { net } (a key as well), 'member' after window.,
- * globalThis. or self., 'dataset' after dataset., and 'module' when imported or exported. A property
- * (totals.net), a key, a label and a comment are never visited; strings, templates and regular
- * expressions go to stringNames. window[name] is 'dynamic'. A script acorn cannot read is visited
+ * globalThis. or self., and 'module' when imported or exported. A key read from dataset is 'dataset'
+ * (dataset.actionName, dataset['actionName'], const { actionName } = el.dataset). A property
+ * (totals.net), any other key, a label and a comment are never visited; strings, templates and
+ * regular expressions go to stringNames. window[name] is 'dynamic', and a dataset read whole
+ * (Object.keys(el.dataset), el.dataset[key]) is 'datasetAll'. A script acorn cannot read is visited
  * as one string, so every global it names is kept.
  */
 function jsNames(code, at, visit, edits, paths, handler = false) {
@@ -1147,8 +1158,31 @@ function jsNames(code, at, visit, edits, paths, handler = false) {
   const named = (node, ...names) => node?.type === 'Identifier' && names.includes(node.name);
   // var self = this: there self.net may be a property, so a global spelled after it is kept
   const selfBound = /\b(?:var|let|const)\s+self\b|\bself\s*=(?!=)|[(,]\s*self\s*[,)]/.test(code);
-  const done = new WeakSet();
-  (function walkTree(node, parent, key, moduleName) {
+  const done = new WeakSet(), followed = new WeakSet();
+  /** el.dataset, el?.dataset or a variable named dataset: the DOM's camelCase view of data-*. */
+  const isDataset = node => {
+    const target = node?.type === 'ChainExpression' ? node.expression : node;
+    return named(target, 'dataset')
+      || target?.type === 'MemberExpression' && !target.computed && named(target.property, 'dataset');
+  };
+  /** The keys of a pattern destructured from dataset: { actionName } becomes { x1abc: actionName }. */
+  const datasetKeys = pattern => {
+    for (const p of pattern.properties) {
+      // ...rest and a computed key take whatever keys the element has: none can be renamed
+      if (p.type === 'RestElement' || p.computed && p.key.type !== 'Literal') {
+        visit('datasetAll', '*');
+        continue;
+      }
+      const word = p.key.type === 'Identifier' ? p.key.name : String(p.key.value);
+      const quote = p.key.type === 'Literal' ? 1 : 0;
+      const to = visit('dataset', word), local = p.shorthand ? visit('code', word) : null;
+      if (to || local) edits.push([at + p.key.start + quote, at + p.key.end - quote,
+        p.shorthand ? `${to ?? word}: ${local ?? word}` : to]);
+      if (!p.shorthand) walkTree(p.value, p, 'value');
+      else if (p.value.type === 'AssignmentPattern') walkTree(p.value.right, p.value, 'right');
+    }
+  };
+  function walkTree(node, parent, key, moduleName) {
     if (Array.isArray(node)) return node.forEach(n => walkTree(n, parent, key, moduleName));
     if (!node || typeof node.type !== 'string' || done.has(node)) return;
     switch (node.type) {
@@ -1166,8 +1200,13 @@ function jsNames(code, at, visit, edits, paths, handler = false) {
             && /^(Property|MethodDefinition|PropertyDefinition)$/.test(parent.type)) return;
         if (key === 'label' || parent.type === 'MetaProperty') return;
         return swap(node, 'code');
-      case 'Property':                           // { net } is the key 'net' and the variable at once
-        if (!node.shorthand || moduleName) break;
+      case 'Property':
+        if (parent.type === 'ObjectPattern' && !node.computed && named(node.key, 'dataset')
+            && (node.value.left ?? node.value).type === 'ObjectPattern') {
+          datasetKeys(node.value.left ?? node.value);   // ({ currentTarget: { dataset: { actionName } } })
+          return walkTree(node.value.right ?? [], node.value, 'right');
+        }
+        if (!node.shorthand || moduleName) break;   // { net } is the key 'net' and the variable at once
         swap(node.key, 'short', to => `${node.key.name}: ${to}`);
         return node.value.type === 'AssignmentPattern' && walkTree(node.value.right, node.value, 'right');
       case 'ImportDeclaration': case 'ExportNamedDeclaration': case 'ExportAllDeclaration':
@@ -1176,9 +1215,27 @@ function jsNames(code, at, visit, edits, paths, handler = false) {
         for (const id of [node.declaration?.id, ...(node.declaration?.declarations ?? []).map(d => d.id)])
           if (id) { walkTree(id, node, 'id', true); done.add(id); }
         return walkTree(node.declaration ?? [], node, 'declaration');
+      case 'VariableDeclarator': case 'AssignmentExpression': {
+        const target = node.id ?? node.left, source = node.init ?? node.right;
+        if (target.type !== 'ObjectPattern' || !isDataset(source)) break;
+        datasetKeys(target);                     // const { actionName } = el.dataset
+        followed.add(source.expression ?? source);
+        return walkTree(source, node, 'init');
+      }
       case 'MemberExpression':                   // window[name]: any global can be reached
         if (node.computed && node.property.type !== 'Literal'
             && named(node.object, 'window', 'globalThis', 'self')) visit('dynamic', '*');
+        if (node.computed && isDataset(node.object)) {   // el.dataset['actionName'], el.dataset[key]
+          if (typeof node.property.value !== 'string') visit('datasetAll', '*');
+          else {
+            const to = visit('dataset', node.property.value);
+            if (to) edits.push([at + node.property.start + 1, at + node.property.end - 1, to]);
+            done.add(node.property);
+          }
+        }
+        // el.dataset handed over whole (Object.keys, a spread, a variable): any key can be read
+        if (!node.computed && named(node.property, 'dataset') && !followed.has(node)
+            && !(parent.type === 'MemberExpression' && key === 'object')) visit('datasetAll', '*');
         break;
       case 'Literal': {                          // the text between the quotes or the slashes
         const text = typeof node.value === 'string' ? code.slice(node.start + 1, node.end - 1)
@@ -1189,7 +1246,8 @@ function jsNames(code, at, visit, edits, paths, handler = false) {
         return stringNames(code.slice(node.start, node.end), at + node.start, 'script', visit, edits, paths);
     }
     for (const k in node) if (k !== 'type') walkTree(node[k], node, k, moduleName);
-  })(ast, null, null, false);
+  }
+  walkTree(ast, null, null, false);
 }
 
 /** Visits the names of CSS: every word of the code, as 'cssName' where CSS_NAMED reaches it. */
@@ -1283,9 +1341,9 @@ const mapped = (slot, word) => {
   return entry && RENAMES[entry.kind].includes(slot) ? entry : null;
 };
 // the slots every word of the source occupies: a global counts as used only where it is code,
-// and a name found in a slot of KEEPS is kept (9.6)
+// and a name found in a slot of KEEPS is kept (9.6, 9.7)
 const seen = new Map();
-if (opt.renameVars || opt.renameGlobals) for (const f of textFiles)
+if (opt.renameVars || opt.renameGlobals || opt.renameData) for (const f of textFiles)
   renameIn(f, await readFile(path.join(SRC, f), 'utf8'),
     (slot, word) => { seen.set(word, (seen.get(word) ?? new Set()).add(slot)); }, sourcePaths);
 const seenIn = (word, slots) => slots.some(s => seen.get(word)?.has(s));
@@ -1360,7 +1418,9 @@ if (opt.renameData) {
     for (const m of txt.matchAll(/\b(data-[a-z][\w-]*)\s*[=\]]/g)) candidates.add(m[1]);
   }
   for (const c of [...candidates].sort()) {
-    const reason = blockReason(c, cfg.keepData);
+    // Object.keys(el.dataset), el.dataset[key], { ...rest }: a key read at runtime can be any of them
+    const reason = blockReason(c, cfg.keepData)
+      ?? (seenIn('*', ['datasetAll']) ? 'dataset read at runtime' : null);
     if (reason) { console.log(`  kept  ${c}  (${reason})`); continue; }
     const renamed = freshName(c);
     addMapping(dataMap, 'data', c, 'data-' + renamed);
@@ -1652,6 +1712,11 @@ classes written by hand.
   the global `net` inside `/scripts/net.js`, the file that shares its name, and the page asked for
   `/scripts/x3m9p.js`. The pass must skip URLs and file paths (9.4); a script adapted from an older
   copy of section 16 does not.
+- **A click reads `undefined` from a `data-*` after `renameData`, and the build passes:** the handler
+  destructures the key, as in `const { actionName } = event.currentTarget.dataset`, and the pass renamed
+  only `dataset.actionName`. The attribute became `data-x1abc` while the pattern still asked for
+  `actionName`. The pass must follow every way the key is read (9.7); a script adapted from an older
+  copy of section 16 follows only the dot.
 - **A sentence, an e-mail address or a field from the API changes after `renameGlobals`, and the build
   passes:** the name pass swapped every whole word, so `net` became `x3m9p` in visible text, in
   `contato@sistema.net.br` and in `totals.net` read from the server's JSON, which now reads `undefined`.
