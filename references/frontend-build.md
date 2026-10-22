@@ -208,10 +208,14 @@ then.
 | `esbuild` | minifies JS and CSS | `production`, `protected` |
 | `html-minifier-terser` | minifies HTML preserving SEO and accessibility | `production`, `protected` |
 | `javascript-obfuscator` | obfuscates JS | `protected` |
+| `acorn` | parses JS for the name pass, so a global is renamed only where it is code (9.4) | `protected` |
 
 ```bash
-npm init -y && npm i -D esbuild html-minifier-terser javascript-obfuscator
+npm init -y && npm i -D esbuild html-minifier-terser javascript-obfuscator acorn
 ```
+
+`acorn` already arrives with `javascript-obfuscator`, which parses with it. Declaring it is what makes
+`import 'acorn'` a dependency of the project instead of an accident of `node_modules`.
 
 **Node is a build tool, not an application dependency.** What ships is still vanilla HTML/CSS/JS served
 by Javalin. **Never** introduce React, Vue, Angular or Svelte because "the protection bundler works
@@ -544,15 +548,28 @@ document.querySelector('.product-card')  →  document.querySelector('.a81Kx')
 detail: the validation in section 14 looks for the old name in the dist and fails if it finds any
 remnant of a mapped class.
 
-**A name spelled inside a URL or a file path is not a reference, and the pass leaves it alone.** The
-default names collide by construction: the global `net` lives in `scripts/net.js`, so a whole-word swap
-turns `<script src="/scripts/net.js">` into a request for `/scripts/x3m9p.js`, a file that never
-existed, while step 9 moves the real one elsewhere. The same swap aims `@keyframes spin` at
-`/images/spin.svg` and the global `net` at the canonical `https://sistema.net.br/`. So the pass skips
-every URL up to its query and every path that ends in the name of a file of the tree — bare
-(`'net.js'`), absolute or relative — and the path keeps its spelling until step 9 gives it the file's
-new name. Checks 2 and 11 skip the same ground, so a kept or hashed `net.8f91c2ad.js` is not mistaken
-for a stale `net`. The query stays in reach on purpose: `?callback=initMap` names a global.
+**A name is renamed only where it is a reference, and the pass reads each file to know where that
+is.** A whole-word swap cannot tell a reference from a word, and the default names collide by
+construction. The global `net` lives in `scripts/net.js`, so the swap turns
+`<script src="/scripts/net.js">` into a request for `/scripts/x3m9p.js`, a file that never existed.
+It also rewrites `contato@sistema.net.br`, the word "net" in a sentence and `totals.net` read from
+the server's JSON, and nothing fails, because check 11 then finds nothing stale. So step 4.5 reads
+each file as what it is: JavaScript through acorn's syntax tree, HTML tag by tag, CSS outside its
+comments and `url()`. Each kind of name is renamed only where that kind is a reference:
+
+| Kind | Renamed in | Never in |
+|---|---|---|
+| class, custom property, `data-*` | `class=`, `style=`, CSS, JS strings, any other attribute value, JSON strings, `dataset.x` | text, comments |
+| `@keyframes`, container and view-transition names | the CSS declarations and at-rules that name them, `style=`, JS strings | selectors, tag names, any other attribute |
+| shared global | JS where it is code, `on*=` and `javascript:` included; after `window.`, `globalThis.`, `self.` | text, strings, attribute values, a property (`totals.net`), a key, a label |
+
+No kind is ever renamed inside a URL (up to its query) or a path that ends in the name of a file of the
+tree, whether bare (`'net.js'`), absolute or relative. The path keeps its spelling until step 9 gives it
+the file's new name. Checks 2 and 11 are the same walk over the dist, so they search exactly where the
+pass writes, and a kept or hashed `net.8f91c2ad.js` is never mistaken for a stale `net`. A narrower
+pass has one more duty: a name that may be referenced where it does not write is kept whole. That is a
+global named in a string (9.6), and a CSS name that is a whole attribute value (`data-anim="spin"`),
+which a script may read back into `style.animation`.
 
 The new name is an initial letter plus base36 of `sha256(class + build salt)`, checked against every
 existing class name in the project (including those in `tailwind.css`) so it cannot collide. The salt
@@ -588,16 +605,37 @@ build and **the highest-risk one**, and the risk has a name: renaming a shared g
 documented way to make a whole feature vanish with no error at all (section 18).
 
 What makes it safe is that it is not per file. `reservedGlobals` becomes the input list, each name gets
-one replacement, and step 9 applies it to every text file in the dist in a single pass. Two things it
-has to reach along with the JavaScript:
+one replacement, and step 4 applies it to every text file in the dist in a single pass, but only where
+the name is code. A global is a reference in two places:
 
-- **`onclick="novoDoc()"` in the HTML**, which is a live pattern in this skill and already the cause of
-  one catalogued error;
-- **nothing in `src/main/java/**`** — proof 3 freezes any global the server writes into markup.
+- **JavaScript, read through acorn's syntax tree:** a declaration, a call, `typeof net`, `{ net }`
+  (written back as `{ net: x3m9p }`, so the key stays), and `window.net`, `globalThis.net`, `self.net`;
+- **`onclick="novoDoc()"` and `javascript:` in the HTML**, parsed the same way. This is a live pattern
+  in this skill and already the cause of one catalogued error.
 
-And one it must not reach: the file named after it. `net` is declared in `scripts/net.js`, and the `net`
-inside `/scripts/net.js` is a file name for step 9 to rewrite, not a use of the global — the pass skips
-it (9.4), and so does the test that decides whether the project uses a global at all.
+Nothing else is a use, and nothing else is renamed. That covers the property of another object
+(`totals.net` is the server's field, and `App.net` is a key), a key or a label, the word "net" in a
+sentence, `contato@sistema.net.br`, and the file named after the global. `net` is declared in
+`scripts/net.js`, and the `net` inside `/scripts/net.js` is a file name for step 9 to rewrite (9.4). A
+global with no use in code is not mapped at all, and proof 3 freezes any global the server writes into
+markup from `src/main/java/**`.
+
+**A global the pass cannot follow is kept, never renamed halfway** (proof 2). The pass does not rewrite
+strings, so the name keeps its spelling wherever it might still be a reference:
+
+- **named in a JS string the way code would name it:** `setTimeout('net.ping()')`, `window['net']`, and
+  the list screen that builds `` `<button onclick="UI.open(${id})">` ``. A string cannot be told apart
+  from code, so a sentence in a JS string that has the word keeps it too. Text, attribute prose and a
+  kebab-case id (`'net-total'`) keep nothing;
+- **the whole value of an attribute, or a value after `=`:** `data-callback="initMap"` and
+  `?callback=initMap`, which a third-party script calls by name;
+- **imported or exported** by an ES module, where the name is part of a public interface;
+- **reachable through `window[name]`**, with the name computed. Then every global is kept, because any
+  of them can be reached;
+- **after `self.` in a script that binds `self`** (`var self = this`), where `self.net` may be a
+  property.
+
+The report gives the reason (`kept  net  (named in a string, an attribute or an import)`).
 
 Proof 7 is what stops `fetch` or `JSON` from being renamed, and `keepGlobals` is the manual escape.
 
@@ -769,7 +807,7 @@ Every check below runs over `dist/` and **fails the build with `exit 1`**:
 | # | Check | Fails when |
 |---|---|---|
 | 1 | Referential integrity | a `src=` / `href=` / `url()` starting with `/` that does not exist in the dist |
-| 2 | Class synchronisation | the old name of a mapped class still appears in a dist file, outside a URL or a file path (9.4) |
+| 2 | Class synchronisation | the old name of a mapped class still appears in a dist file, in a place where the name pass writes (9.4) |
 | 3 | JS syntax | `new Function(code)` fails on any generated `.js` |
 | 4 | Secrets | a key, token or password pattern found in the dist |
 | 5 | Forbidden CDN | `cdn.tailwindcss` or `unpkg.com/tailwindcss` present (R14) |
@@ -778,7 +816,7 @@ Every check below runs over `dist/` and **fails the build with `exit 1`**:
 | 8 | Stray source map | a `.map` inside `dist/public/` without `sourceMaps: true` |
 | 9 | Inline script | a `<script>` without `src` in a page, except `application/ld+json` |
 | 10 | Unrequested cache | `caches.put` / `caches.match` in the dist with `cacheAllowed: false` (R25) |
-| 11 | Name synchronisation | the old path of a renamed file or folder still appears whole anywhere in the dist, JavaScript strings included (6.2, 11.2), or the old spelling of a renamed custom property, global or `data-*` appears outside a URL or a file path (9.4) |
+| 11 | Name synchronisation | the old path of a renamed file or folder still appears whole anywhere in the dist, JavaScript strings included (6.2, 11.2), or the old spelling of a renamed custom property, global or `data-*` appears in a place where the name pass writes (9.4) |
 | 12 | Comment in the dist | `/*` in a `.css` or `.js`, or `<!--` in an `.html` or `.svg`, outside `emails/**` and `vendor/**` |
 
 Checks 6 and 7 are R20 enforced mechanically: they make it impossible for obfuscation to quietly cost
@@ -787,10 +825,12 @@ remain 100% intact, readable and indexable by search engines. Check 11 is the co
 half-applied rename produces a page that loads and does nothing, which is the failure mode this whole
 document exists to prevent.
 
-**Check 11 searches the whole dist for the old spelling — URLs and file paths aside (9.4) — so only map
-a name the project actually uses.** A global listed in `reservedGlobals` but absent from the source has
-nothing to rename, and mapping it anyway turns the check into a search for a common word — `net` matches
-inside the e-mail `contato@exemplo.net` and fails an honest build.
+**Check 11 searches where the pass writes, not the whole dist.** It walks each dist file the way step
+4.5 walked the source (9.4), so the word "net" in a sentence, `contato@exemplo.net` and `totals.net`
+can neither be renamed nor fail an honest build. The two only stay honest together: a check that
+searched more than the pass writes would fail on every e-mail address, and one that searched less would
+let a half-applied rename through. Where the pass does not write and a name may still be referenced, the
+name is kept instead (9.6), so nothing is left there for the check to miss.
 
 **Check 12 must not look for `//`.** `https://` appears in every canonical, every Open Graph tag and
 every `fetch` URL, so a bare search for `//` would reject every honest build and the fix would be to
@@ -919,6 +959,7 @@ import path from 'node:path';
 import { transform } from 'esbuild';
 import { minify as minifyHtml } from 'html-minifier-terser';
 import JavaScriptObfuscator from 'javascript-obfuscator';
+import { parse as parseJs } from 'acorn';
 
 const cfg = JSON.parse(await readFile('frontend.build.json', 'utf8'));
 const level = (process.argv.find(a => a.startsWith('--level=')) ?? '').split('=')[1] || cfg.level;
@@ -1006,8 +1047,8 @@ const wholeWord = n => new RegExp(`(?<![\\w-])${escapeRegExp(n)}(?![\\w-])`, 'g'
 /**
  * Matches a URL up to its query or a ${...}, and any path ending in the name of a file of the tree:
  * 'net.js', '/scripts/net.js', '../scripts/net.js'. A name spelled inside one is not a reference to
- * it, so renaming the global net leaves the file net.js to step 9 (9.4). The query stays out because
- * ?callback=initMap does name a global. One capturing group: split() keeps the matches.
+ * it, so renaming the global net leaves the file net.js to step 9 (9.4). The query stays out of the
+ * match: ?callback=initMap names a global, and 4.3 keeps it. One capturing group: split() keeps them.
  */
 const pathsAndUrls = list => new RegExp(`(\\b[a-zA-Z][\\w+.-]*:\\/\\/[^\\s'"\`<>(){}$?#\\\\]*` +
   `|(?<![\\w-])(?:[\\w.-]+\\/)*(?:${[...new Set(list.map(f => path.posix.basename(f)))]
@@ -1036,14 +1077,218 @@ function blockReason(name, keep = []) {
     : null;
 }
 
-const nameMap = new Map();                        // everything together, for the single pass of 4.5
+// the walk behind 4.5 and check 11: each file is read as what it is, and every word is visited
+// with its slot, the place it occupies. A name is renamed only in a slot where its kind is a
+// reference (RENAMES), and the same walk over the dist is what check 11 searches (9.4)
+/** A word as a class list, a selector or a custom property spells it: product-card, --space-6. */
+const WORD = /[\w-]+/g;
+/**
+ * An identifier as code spells it inside a string: setTimeout('net.ping()'), `onclick="UI.open()"`.
+ * A kebab-case word ('net-total', an id) is a name, not code.
+ */
+const IDENT = /(?<![\w$-])[A-Za-z_$][\w$]*(?![\w$-])/g;
+const GLOBAL_OBJECT = /(?<![\w$.])(?:window|globalThis|self)\.$/;
+const QUOTED = String.raw`"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'`;
+/** What is not CSS code: comments, url() and strings. */
+const CSS_SKIP = new RegExp(String.raw`\/\*[\s\S]*?(?:\*\/|$)|\burl\(\s*(?:${QUOTED}|[^)]*)\s*\)|${QUOTED}`, 'g');
+/** Where a bare CSS name is a reference: these declarations, @keyframes, @container, the pseudos. */
+const CSS_NAMED = new RegExp(String.raw`(?:^|[{;])\s*(?:-webkit-)?(?:animation(?:-name)?|container(?:-name)?` +
+  String.raw`|view-transition-name|--[\w-]+)\s*:([^;{}]*)|@(?:-webkit-)?(?:keyframes|container)\s+([\w-]+)` +
+  String.raw`|::view-transition-(?:old|new|group|image-pair)\(\s*([\w-]+)`, 'dg');
+/** A tag, a comment or a doctype. The text between them is prose, and the walk never reads it. */
+const TAG = /<!--[\s\S]*?(?:-->|$)|<![^>]*>?|<\/[^>]*>?|<([a-zA-Z][^\s/>]*)((?:[^>"']|"[^"]*"|'[^']*')*)>?/g;
+const ATTR = /([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+
+/**
+ * Visits the words of a string outside its paths and URLs: 'script' in JS, 'data' in an attribute,
+ * JSON or CSS string. An attribute word that is the whole value or follows '=' is a 'value'
+ * (data-callback="initMap", ?callback=initMap). A JS string also yields each identifier it spells
+ * as code would, as a 'word'. A 'value' or a 'word' can keep a global, never rename one (9.6).
+ */
+function stringNames(text, at, slot, visit, edits, paths, attribute = false) {
+  text.split(paths).forEach((piece, i) => {      // odd pieces: the paths and URLs
+    if (i % 2 === 0) {
+      for (const m of piece.matchAll(WORD)) {
+        const value = attribute && (m[0] === text.trim() || piece[m.index - 1] === '=');
+        const to = visit(value ? 'value' : slot, m[0]);
+        if (to) edits.push([at + m.index, at + m.index + m[0].length, to]);
+      }
+      if (slot === 'script') for (const m of piece.matchAll(IDENT)) {
+        const before = piece[m.index - 1];       // contato@sistema.net.br, totals.net: no global there
+        if (before !== '@' && (before !== '.' || GLOBAL_OBJECT.test(piece.slice(0, m.index))))
+          visit('word', m[0]);
+      }
+    }
+    at += piece.length;
+  });
+}
+
+/**
+ * Visits the names of a script through acorn's syntax tree, so nothing is guessed. An identifier is
+ * 'code' where it is a reference, 'short' in { net } (a key as well), 'member' after window.,
+ * globalThis. or self., 'dataset' after dataset., and 'module' when imported or exported. A property
+ * (totals.net), a key, a label and a comment are never visited; strings, templates and regular
+ * expressions go to stringNames. window[name] is 'dynamic'. A script acorn cannot read is visited
+ * as one string, so every global it names is kept.
+ */
+function jsNames(code, at, visit, edits, paths, handler = false) {
+  let ast;
+  for (const sourceType of ['script', 'module']) {
+    try {
+      ast = parseJs(code, { ecmaVersion: 'latest', sourceType, allowReturnOutsideFunction: handler });
+      break;
+    } catch { /* the next source type, then the fallback */ }
+  }
+  if (!ast) return stringNames(code, at, 'script', visit, edits, paths);
+  const swap = (node, slot, write = to => to) => {
+    const to = visit(slot, node.name);
+    if (to) edits.push([at + node.start, at + node.end, write(to)]);
+  };
+  const named = (node, ...names) => node?.type === 'Identifier' && names.includes(node.name);
+  // var self = this: there self.net may be a property, so a global spelled after it is kept
+  const selfBound = /\b(?:var|let|const)\s+self\b|\bself\s*=(?!=)|[(,]\s*self\s*[,)]/.test(code);
+  const done = new WeakSet();
+  (function walkTree(node, parent, key, moduleName) {
+    if (Array.isArray(node)) return node.forEach(n => walkTree(n, parent, key, moduleName));
+    if (!node || typeof node.type !== 'string' || done.has(node)) return;
+    switch (node.type) {
+      case 'Identifier':
+        if (moduleName) return swap(node, 'module');
+        if (parent.type === 'MemberExpression' && key === 'property' && !parent.computed) {
+          const object = parent.object;
+          if (named(object, 'window', 'globalThis') || named(object, 'self') && !selfBound)
+            return swap(node, 'member');
+          if (named(object, 'self')) return visit('word', node.name);
+          return named(object, 'dataset') || named(object.property, 'dataset') && !object.computed
+            ? swap(node, 'dataset') : undefined;
+        }
+        if (key === 'key' && !parent.computed
+            && /^(Property|MethodDefinition|PropertyDefinition)$/.test(parent.type)) return;
+        if (key === 'label' || parent.type === 'MetaProperty') return;
+        return swap(node, 'code');
+      case 'Property':                           // { net } is the key 'net' and the variable at once
+        if (!node.shorthand || moduleName) break;
+        swap(node.key, 'short', to => `${node.key.name}: ${to}`);
+        return node.value.type === 'AssignmentPattern' && walkTree(node.value.right, node.value, 'right');
+      case 'ImportDeclaration': case 'ExportNamedDeclaration': case 'ExportAllDeclaration':
+        walkTree(node.specifiers ?? [], node, 'specifiers', true);
+        walkTree(node.exported ?? [], node, 'exported', true);
+        for (const id of [node.declaration?.id, ...(node.declaration?.declarations ?? []).map(d => d.id)])
+          if (id) { walkTree(id, node, 'id', true); done.add(id); }
+        return walkTree(node.declaration ?? [], node, 'declaration');
+      case 'MemberExpression':                   // window[name]: any global can be reached
+        if (node.computed && node.property.type !== 'Literal'
+            && named(node.object, 'window', 'globalThis', 'self')) visit('dynamic', '*');
+        break;
+      case 'Literal': {                          // the text between the quotes or the slashes
+        const text = typeof node.value === 'string' ? code.slice(node.start + 1, node.end - 1)
+          : node.regex?.pattern;
+        return text !== undefined && stringNames(text, at + node.start + 1, 'script', visit, edits, paths);
+      }
+      case 'TemplateElement':
+        return stringNames(code.slice(node.start, node.end), at + node.start, 'script', visit, edits, paths);
+    }
+    for (const k in node) if (k !== 'type') walkTree(node[k], node, k, moduleName);
+  })(ast, null, null, false);
+}
+
+/** Visits the names of CSS: every word of the code, as 'cssName' where CSS_NAMED reaches it. */
+function cssNames(css, at, visit, edits, paths) {
+  const code = css.replace(CSS_SKIP, (m, offset) => {
+    if (m[0] === '"' || m[0] === "'") stringNames(m.slice(1, -1), at + offset + 1, 'data', visit, edits, paths);
+    return ' '.repeat(m.length);                // url() and comments are never visited
+  });
+  const spans = [...code.matchAll(CSS_NAMED)].map(m => m.indices.slice(1).find(Boolean));
+  for (const m of code.matchAll(WORD)) {
+    const to = visit(spans.some(([s, e]) => m.index >= s && m.index < e) ? 'cssName' : 'css', m[0]);
+    if (to) edits.push([at + m.index, at + m.index + m[0].length, to]);
+  }
+}
+
+/**
+ * Visits the names of HTML, SVG or XML. Text and comments are never visited. An attribute name is
+ * an 'attr'; class is a list of 'class' words, style is CSS, on*= and javascript: are JS, and any
+ * other value is a 'data' string. <script> is JS unless its type says data; <style> is CSS.
+ */
+function markupNames(html, visit, edits, paths) {
+  const tags = new RegExp(TAG);
+  for (let m; (m = tags.exec(html));) {
+    if (!m[1]) continue;
+    const tag = m[1].toLowerCase(), attrsAt = m.index + 1 + m[1].length;
+    let type = '';
+    for (const a of m[2].matchAll(ATTR)) {
+      const name = a[1].toLowerCase(), value = a[2] ?? a[3] ?? a[4], nameAt = attrsAt + a.index;
+      const renamed = visit('attr', a[1]);
+      if (renamed) edits.push([nameAt, nameAt + a[1].length, renamed]);
+      if (value === undefined) continue;
+      const valueAt = nameAt + a[0].length - value.length - (a[4] === undefined ? 1 : 0);
+      const js = /^\s*javascript:/i.exec(value)?.[0].length;
+      if (name === 'type') type = value.trim();
+      if (name === 'class') for (const w of value.matchAll(WORD)) {
+        const to = visit('class', w[0]);
+        if (to) edits.push([valueAt + w.index, valueAt + w.index + w[0].length, to]);
+      }
+      else if (name === 'style') cssNames(value, valueAt, visit, edits, paths);
+      else if (name.startsWith('on')) jsNames(value, valueAt, visit, edits, paths, true);
+      else if (js) jsNames(value.slice(js), valueAt + js, visit, edits, paths, true);
+      else stringNames(value, valueAt, 'data', visit, edits, paths, true);
+    }
+    if (!/^(script|style|textarea|title)$/.test(tag)) continue;
+    const start = tags.lastIndex, close = html.slice(start).search(new RegExp(`</${tag}[\\s>]`, 'i'));
+    const content = html.slice(start, close < 0 ? html.length : start + close);
+    if (tag === 'style') cssNames(content, start, visit, edits, paths);
+    if (tag === 'script' && (!type || /^(module|(text|application)\/(java|ecma)script)$/i.test(type)))
+      jsNames(content, start, visit, edits, paths);  // ld+json is data, and stays as the source wrote it
+    tags.lastIndex = start + content.length;
+  }
+}
+
+/** Calls visit(slot, word) for every name of one file, and writes back what visit returns. */
+function renameIn(file, text, visit, paths) {
+  const edits = [];
+  if (/\.m?js$/.test(file)) jsNames(text, 0, visit, edits, paths);
+  else if (file.endsWith('.css')) cssNames(text, 0, visit, edits, paths);
+  else if (/\.(html|svg|xml)$/.test(file)) markupNames(text, visit, edits, paths);
+  else if (/\.(json|webmanifest)$/.test(file)) for (const m of text.matchAll(/"(?:[^"\\]|\\.)*"/g))
+    stringNames(m[0].slice(1, -1), m.index + 1, 'data', visit, edits, paths);
+  let out = '', last = 0;                        // a .txt is prose: nothing in it is visited
+  for (const [start, end, to] of edits.sort((a, b) => a[0] - b[0])) {
+    out += text.slice(last, start) + to; last = end;
+  }
+  return out + text.slice(last);
+}
+
+const PREFIXED = ['attr', 'class', 'css', 'cssName', 'script', 'data', 'value'];
+/**
+ * The slots where each kind is a reference: renamed by 4.5 and searched by check 11. A class, a
+ * custom property and a data-* carry a hyphen or a prefix no prose has, so every slot but text and
+ * comments; a global only as code; a bare CSS name (@keyframes spin) only in CSS and in JS strings.
+ */
+const RENAMES = { class: PREFIXED, prop: PREFIXED, data: PREFIXED, dataset: ['dataset'],
+                  global: ['code', 'short', 'member'], cssName: ['cssName', 'script'] };
+/** The slots that keep a name, because there it may be a reference 4.5 does not rewrite (9.6). */
+const KEEPS = { global: ['module', 'word', 'value'], cssName: ['value'] };
+
+const nameMap = new Map();                        // old name → { to, kind }, for the single pass of 4.5
 const classMap = new Map(), varMap = new Map();
 const globalMap = new Map(), dataMap = new Map();
 /** Records the swap, ignoring a name that another step has already mapped. */
-function addMapping(map, oldName, newName) {
+function addMapping(map, kind, oldName, newName) {
   if (nameMap.has(oldName)) return;
-  map.set(oldName, newName); nameMap.set(oldName, newName);
+  map.set(oldName, newName); nameMap.set(oldName, { to: newName, kind });
 }
+/** The mapping of a word in this slot, when the slot is a reference for the word's kind. */
+const mapped = (slot, word) => {
+  const entry = nameMap.get(slot === 'dataset' ? 'dataset.' + word : word);
+  return entry && RENAMES[entry.kind].includes(slot) ? entry : null;
+};
+// the slots every word of the source occupies: a global counts as used only where it is code,
+// and a name found in a slot of KEEPS is kept (9.6)
+const seen = new Map();
+if (opt.renameVars || opt.renameGlobals) for (const f of textFiles)
+  renameIn(f, await readFile(path.join(SRC, f), 'utf8'),
+    (slot, word) => { seen.set(word, (seen.get(word) ?? new Set()).add(slot)); }, sourcePaths);
+const seenIn = (word, slots) => slots.some(s => seen.get(word)?.has(s));
 
 // 4.1) classes (9.1)
 if (opt.renameClasses) {
@@ -1059,7 +1304,7 @@ if (opt.renameClasses) {
   for (const c of [...candidates].sort()) {
     const reason = blockReason(c, cfg.keepClasses);
     if (reason) { console.log(`  kept  ${c}  (${reason})`); continue; }
-    addMapping(classMap, c, freshName(c));
+    addMapping(classMap, 'class', c, freshName(c));
   }
 }
 
@@ -1082,23 +1327,28 @@ if (opt.renameVars) {
       candidates.add(m[1]);
   }
   for (const c of [...candidates].sort()) {
-    const reason = /^--(webkit|moz|ms|o)-/.test(c) ? 'vendor prefix' : blockReason(c, cfg.keepVars);
+    const prop = c.startsWith('--');
+    // a bare name (@keyframes spin) spelled as an attribute value may be read back by a script
+    const reason = /^--(webkit|moz|ms|o)-/.test(c) ? 'vendor prefix' : blockReason(c, cfg.keepVars)
+      ?? (!prop && seenIn(c, KEEPS.cssName) ? 'named in an attribute' : null);
     if (reason) { console.log(`  kept  ${c}  (${reason})`); continue; }
-    addMapping(varMap, c, c.startsWith('--') ? '--' + freshName(c) : freshName(c));
+    addMapping(varMap, prop ? 'prop' : 'cssName', c, prop ? '--' + freshName(c) : freshName(c));
   }
 }
 
 // 4.3) shared globals: one name, one swap, the whole program (9.6)
 if (opt.renameGlobals) {
-  const srcText = sourceText.replace(sourcePaths, ' ');
   for (const g of (cfg.reservedGlobals ?? [])) {
-    // a name the project does not use stays out of the map: once mapped, validation 11
-    // would start looking for it across the whole dist and fail on 'example.net'. A file
-    // name is not a use: '/scripts/net.js' alone does not make net a global
-    if (!wholeWord(g).test(srcText)) continue;
-    const reason = blockReason(g, cfg.keepGlobals);
+    // a name the project never uses as code stays out of the map: '/scripts/net.js', the word
+    // net in a sentence and totals.net are not uses, and there is nothing to rename
+    if (!seenIn(g, RENAMES.global)) continue;
+    // proof 2: a global spelled in a string, an attribute or an import may be a reference that
+    // 4.5 does not rewrite (window['net'], `onclick="UI.open()"`, data-callback="initMap")
+    const reason = blockReason(g, cfg.keepGlobals)
+      ?? (seenIn('*', ['dynamic']) ? 'window indexed at runtime'
+        : seenIn(g, KEEPS.global) ? 'named in a string, an attribute or an import' : null);
     if (reason) { console.log(`  kept  ${g}  (${reason})`); continue; }
-    addMapping(globalMap, g, freshName(g));
+    addMapping(globalMap, 'global', g, freshName(g));
   }
 }
 
@@ -1113,23 +1363,22 @@ if (opt.renameData) {
     const reason = blockReason(c, cfg.keepData);
     if (reason) { console.log(`  kept  ${c}  (${reason})`); continue; }
     const renamed = freshName(c);
-    addMapping(dataMap, c, 'data-' + renamed);
+    addMapping(dataMap, 'data', c, 'data-' + renamed);
     // the MISSING HALF: the DOM reads `data-action-change` as dataset.actionChange,
     // and without this line the script looks up a key that no longer exists — undefined,
     // no error, and the click silently stops working (9.7)
     const camel = c.replace(/^data-/, '').replace(/-([a-z0-9])/g, (_, l) => l.toUpperCase());
-    nameMap.set('dataset.' + camel, 'dataset.' + renamed);
+    nameMap.set('dataset.' + camel, { to: renamed, kind: 'dataset' });
   }
 }
 
-// 4.5) a single pass, with the four maps together, and never inside a URL or a file path:
-// '/scripts/net.js' keeps its spelling here, and step 9 gives it the file's new name (9.4)
+// 4.5) a single pass, with the four maps together, and only where a name is a reference (9.4):
+// never in text, a comment, a URL or a file path, and a global only where it is code.
+// '/scripts/net.js' keeps its spelling here, and step 9 gives it the file's new name
 if (nameMap.size) for (const f of textFiles) {
   const p = path.join(OUT, f);
-  const parts = (await readFile(p, 'utf8')).split(sourcePaths);   // odd indices: the paths
-  for (let i = 0; i < parts.length; i += 2)
-    for (const [oldName, newName] of nameMap) parts[i] = parts[i].replace(wholeWord(oldName), newName);
-  await writeFile(p, parts.join(''));
+  const renamed = renameIn(f, await readFile(p, 'utf8'), (slot, word) => mapped(slot, word)?.to, sourcePaths);
+  await writeFile(p, renamed);
 }
 console.log(`  ${classMap.size} classes, ${varMap.size} variables, ${globalMap.size} globals ` +
             `and ${dataMap.size} data-* renamed`);
@@ -1287,9 +1536,12 @@ for (const f of generated.filter(isText)) {
     failures.push(`cache not allowed in ${f} (R25)`);
 
   if (!matchGlob(f, cfg.neverTransform)) {
-    const outsidePaths = txt.replace(distPaths, ' ');   // the same ground 4.5 covered
-    for (const oldName of nameMap.keys())          // 2 and 11) out-of-sync name
-      if (wholeWord(oldName).test(outsidePaths)) failures.push(`name out of sync in ${f}: ${oldName}`);
+    // 2 and 11) out-of-sync name: the walk of 4.5 again, so it searches exactly where the pass writes
+    const stale = new Set();
+    if (nameMap.size) renameIn(f, txt, (slot, word) => {
+      if (mapped(slot, word)) stale.add(slot === 'dataset' ? 'dataset.' + word : word);
+    }, distPaths);
+    for (const oldName of stale) failures.push(`name out of sync in ${f}: ${oldName}`);
     for (const oldPath of fileMap.keys())          // what step 9 rewrites, JS strings included (6.2)
       if (wholePath(oldPath).test(txt)) failures.push(`old path in ${f}: ${oldPath}`);
     // 12) comment in the dist. NEVER search for '//': https:// is in every URL.
@@ -1400,6 +1652,15 @@ classes written by hand.
   the global `net` inside `/scripts/net.js`, the file that shares its name, and the page asked for
   `/scripts/x3m9p.js`. The pass must skip URLs and file paths (9.4); a script adapted from an older
   copy of section 16 does not.
+- **A sentence, an e-mail address or a field from the API changes after `renameGlobals`, and the build
+  passes:** the name pass swapped every whole word, so `net` became `x3m9p` in visible text, in
+  `contato@sistema.net.br` and in `totals.net` read from the server's JSON, which now reads `undefined`.
+  Check 11 searched the same ground and found nothing stale. The pass renames a global only where it is
+  code (9.4, 9.6); a script adapted from an older copy of section 16 renames words.
+- **A button built by a list screen stops working at `protected`:** the screen writes
+  `` `<button onclick="UI.open(${id})">` `` in a template string, and the global was renamed everywhere
+  else. The pass does not rewrite strings, so it must keep a global named in one (9.6). If the report
+  does not say `kept  UI  (named in a string, an attribute or an import)`, the script predates that rule.
 - **Every page with two or more scripts dies at `protected`, with
   `Cannot read properties of undefined (reading 'charAt')`:** each obfuscated file declared its
   string-array helpers (`function a()`, `function b()`) in the global scope that classic scripts share,
