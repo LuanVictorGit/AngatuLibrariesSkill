@@ -246,10 +246,10 @@ The build runs in **exactly** this order. Changing it breaks synchronisation bet
 3. Clean + full copy                → source → dist (byte for byte, without touching the source)
 4. Name renaming                    → class, CSS variable, global and data-* PROVEN safe (9, 10)
 5. CSS minification                 (5)
-6. JS minification + obfuscation    (6) — never in emails/**, never obfuscates sw.js
+6. JS minification + obfuscation    (6) — never in emails/**, never obfuscates sw.js, never encodes a path
 7. HTML minification                (7) — preserving SEO, a11y and placeholders
 8. File renaming and hashing        (11) — obfuscated name + optional hash, in a single pass
-9. Reference update                 → HTML, CSS, JS, manifest, sw
+9. Reference update                 → HTML, CSS, JS, manifest, sw — the whole path, never a prefix (11.2)
 10. Writing dist/.build-info.json
 11. Post-build validation           → fails with exit 1 if any reference broke (14)
 ```
@@ -258,6 +258,14 @@ Rename *names* **before** minifying — a readable file makes the substitution p
 *files* **after** minifying, and never before: steps 5 to 7 walk the **source** list and write to
 `path.join(OUT, f)`, so a file renamed earlier would pull those paths out from under them. The hash also
 has to be taken of the final content.
+
+That order costs something in JavaScript, and the cost is paid by keeping paths readable, not by moving
+the steps. Step 6 is where the string array encodes most string literals, and steps 8 and 9 come after
+it, so a path held in a JS string — `script.src = '/scripts/lazy.js'`, a dynamic `import()`, a list
+of files — would reach the rewrite already encoded: step 9 could not change it, check 11 could not see
+it, and the page would ask for the old name. The order cannot move to fix that, because the hashed half
+of a new name does not exist until the final content does. So a string holding the path of a file step
+8 may rename never enters the string array (6.2), and it reaches step 9 as plain text.
 
 ---
 
@@ -306,7 +314,9 @@ JavaScriptObfuscator.obfuscate(code, {
                                            // here it is per file, and per file it breaks everything
   identifierNamesGenerator: 'mangled',
   seed: derivedFromSalt,                   // 0 = draws one: two identical builds would come out different
+  identifiersPrefix: thisFilesPrefix,      // salt + path, one per file: the helpers it adds are globals
   reservedNames: ['^UI$','^net$','^Auth$','^AppBus$','^showToast$'],
+  reservedStrings: [pathsStep8MayRename],  // a path stays plain text for step 9 and check 11
 
   stringArray: true,                       // string transformation
   stringArrayThreshold: 0.75,
@@ -328,6 +338,26 @@ JavaScriptObfuscator.obfuscate(code, {
   disableConsoleOutput: false              // FORBIDDEN: it blinds whoever is debugging in good faith
 }).getObfuscatedCode();
 ```
+
+**Every file gets its own `identifiersPrefix`, and that is not a tuning knob.** With `stringArray` on,
+the obfuscator adds helpers to each file — the string array and its decoder, as top-level
+`function a()` and `function b()` — and the top level of a classic script is the page's global scope,
+shared with every other script. Without a prefix, every file names them `a` and `b`, the last script
+loaded replaces the helpers of the ones before it, and their next call reads the wrong array:
+`TypeError: Cannot read properties of undefined (reading 'charAt')`, on any page that loads two
+obfuscated scripts, which is every page of the standard shell. The prefix is the obfuscator's documented
+answer for multiple files, and the build derives it from the salt and the file's path (`freshName`,
+9.4), so it differs per file, changes with the salt, and never changes between two builds of the same
+commit. It reaches only what the obfuscator adds; the project's own globals stay where
+`renameGlobals: false` and 9.6 put them.
+
+**A path never enters the string array.** The array encodes about three quarters of the string
+literals here, in step 6, while file names only change in steps 8 and 9 — so `'/scripts/lazy.js'`
+would reach the rewrite encoded, keep the old name, and 404 at runtime, with check 11 as blind to it as
+the rewrite. `reservedStrings` lists every path step 8 may rename, in the whole-path form step 9 uses
+(11.2), and the obfuscator leaves a matching literal alone in every transformation. What ships in its
+place is the new name in plain text — the one the network tab shows anyway. R20 settles the trade:
+correct behaviour is priority 1, obfuscation priority 8.
 
 **Permanent prohibitions**, because they hit people who are not the target: `debugProtection`,
 `disableConsoleOutput`, devtools-detection loops, and `selfDefending` combined with any post-processing.
@@ -682,6 +712,22 @@ root** (`/styles/ds.css`, `/scripts/ui.js`). A path assembled at runtime (`'/ass
 cannot be rewritten — leave those files in `neverRename`, or publish the generated map at
 `/assets/manifest.json` and read the final name from there.
 
+**Step 9 rewrites a path only where it stands whole.** `/scripts/net.js` is a prefix of
+`/scripts/net.json`, and a plain substring swap moved the data file's reference along with the script's:
+`fetch('/scripts/net.json')` asked for `/x1kvvy/xd75ey.json`, which never existed, while `net.json`
+stayed where it was — and no check noticed, because the old path was gone. So the rewrite stops where
+the file name stops (`net.json`, `net.js.map` and `net.js-old` are other files), and it starts only
+where a path starts: the same characters at the end of `/vendor/theme/scripts/net.js` or of
+`https://cdn.example.com/scripts/net.js` name somebody else's file. Check 11 looks for exactly that
+form, so `/scripts/net.json` is not mistaken for a stale `/scripts/net.js`.
+
+That leaves one case to the proof rather than to the rewrite: a path that also *ends* a URL or a
+longer path. `https://sistema.net.br/scripts/auth.js` may be this very site, and `../scripts/auth.js`
+may resolve to the same file, but the build cannot know either, so it cannot rewrite them. A file whose
+path is spelled that way anywhere in the source keeps its name, reported as
+`kept (path inside a URL or a longer path)` — proof 2 applied to a file: every reference has to be the
+absolute path from the site root.
+
 ---
 
 ## 12. PWA and service worker
@@ -732,7 +778,7 @@ Every check below runs over `dist/` and **fails the build with `exit 1`**:
 | 8 | Stray source map | a `.map` inside `dist/public/` without `sourceMaps: true` |
 | 9 | Inline script | a `<script>` without `src` in a page, except `application/ld+json` |
 | 10 | Unrequested cache | `caches.put` / `caches.match` in the dist with `cacheAllowed: false` (R25) |
-| 11 | Name synchronisation | the old path of a renamed file or folder still appears anywhere in the dist, or the old spelling of a renamed custom property, global or `data-*` appears outside a URL or a file path (9.4) |
+| 11 | Name synchronisation | the old path of a renamed file or folder still appears whole anywhere in the dist, JavaScript strings included (6.2, 11.2), or the old spelling of a renamed custom property, global or `data-*` appears outside a URL or a file path (9.4) |
 | 12 | Comment in the dist | `/*` in a `.css` or `.js`, or `<!--` in an `.html` or `.svg`, outside `emails/**` and `vendor/**` |
 
 Checks 6 and 7 are R20 enforced mechanically: they make it impossible for obfuscation to quietly cost
@@ -906,6 +952,10 @@ const isText = rel => /\.(html|css|js|mjs|json|webmanifest|svg|txt|xml)$/.test(r
 
 // 1-3) analysis, input validation and full copy --------------------------------
 const files = await walk(SRC);
+// the text files the build rewrites, read once: the proofs of steps 4 and 8 search them
+const textFiles = files.filter(f => isText(f) && !matchGlob(f, cfg.neverTransform));
+const sourceText = (await Promise.all(textFiles
+  .map(f => readFile(path.join(SRC, f), 'utf8')))).join('\n');
 const javaSrc = existsSync(JAVA)
   ? (await Promise.all((await walk(JAVA)).filter(f => f.endsWith('.java'))
       .map(f => readFile(path.join(JAVA, f), 'utf8')))).join('\n')
@@ -963,6 +1013,15 @@ const pathsAndUrls = list => new RegExp(`(\\b[a-zA-Z][\\w+.-]*:\\/\\/[^\\s'"\`<>
   `|(?<![\\w-])(?:[\\w.-]+\\/)*(?:${[...new Set(list.map(f => path.posix.basename(f)))]
     .map(escapeRegExp).join('|')})(?![\\w-]))`, 'g');
 const sourcePaths = pathsAndUrls(files);
+/** Where a path ends: '/scripts/net.js' does not run on into net.json, net.js.map or net.js-old. */
+const PATH_END = '(?![\\w/-]|\\.\\w)';
+/**
+ * Matches a site-root path standing whole, never the tail of '/vendor/scripts/net.js' or of a URL.
+ * It is the form step 6 keeps readable, step 9 rewrites and check 11 looks for (6.2, 11.2).
+ */
+const wholePath = p => new RegExp(`(?<![\\w.-])${escapeRegExp(p)}${PATH_END}`, 'g');
+/** True when the path also ends a URL or a longer path (../scripts/net.js), where step 9 cannot follow. */
+const insideLonger = p => new RegExp(`[\\w.-]${escapeRegExp(p)}${PATH_END}`).test(sourceText);
 /** Freezes a path assembled at runtime: '/assets/' + name freezes the whole assets/ folder. */
 const assembled = target => [...fragments].some(fr => fr.includes(target) || target.includes(fr));
 /** The proof from 9.3. Returns the REASON not to rename, or null when it is safe. */
@@ -980,7 +1039,6 @@ function blockReason(name, keep = []) {
 const nameMap = new Map();                        // everything together, for the single pass of 4.5
 const classMap = new Map(), varMap = new Map();
 const globalMap = new Map(), dataMap = new Map();
-const textFiles = files.filter(f => isText(f) && !matchGlob(f, cfg.neverTransform));
 /** Records the swap, ignoring a name that another step has already mapped. */
 function addMapping(map, oldName, newName) {
   if (nameMap.has(oldName)) return;
@@ -1032,8 +1090,7 @@ if (opt.renameVars) {
 
 // 4.3) shared globals: one name, one swap, the whole program (9.6)
 if (opt.renameGlobals) {
-  const srcText = (await Promise.all(textFiles
-    .map(f => readFile(path.join(SRC, f), 'utf8')))).join('\n').replace(sourcePaths, ' ');
+  const srcText = sourceText.replace(sourcePaths, ' ');
   for (const g of (cfg.reservedGlobals ?? [])) {
     // a name the project does not use stays out of the map: once mapped, validation 11
     // would start looking for it across the whole dist and fail on 'example.net'. A file
@@ -1077,6 +1134,12 @@ if (nameMap.size) for (const f of textFiles) {
 console.log(`  ${classMap.size} classes, ${varMap.size} variables, ${globalMap.size} globals ` +
             `and ${dataMap.size} data-* renamed`);
 
+// the files step 8 may rename, known before step 6: a path to one of them has to reach step 9
+// as plain text, so the obfuscator keeps it out of the string array (6.2)
+const renameable = opt.renameFiles || opt.hashAssets ? files.filter(f =>
+  /\.(png|jpe?g|webp|avif|gif|svg|woff2?|ttf|otf|ico|mp4|webm|css|js|mjs)$/.test(f)
+  && !matchGlob(f, cfg.neverRename) && !matchGlob(f, cfg.neverTransform)) : [];
+
 // 5-7) minification and obfuscation — and no comment survives from here on -----
 if (opt.minify) for (const f of files) {
   if (matchGlob(f, cfg.neverTransform)) continue;
@@ -1095,9 +1158,16 @@ if (opt.minify) for (const f of files) {
       js = JavaScriptObfuscator.obfuscate(js, {
         compact: true, simplify: true, target: 'browser', renameGlobals: false,
         identifierNamesGenerator: 'mangled', seed,   // without a seed the build is not reproducible
+        // classic scripts share one global scope, and each file declares its own string-array
+        // helpers in it: without a prefix per file, the last script loaded replaces the helpers
+        // of the others, and their next call dies on undefined (6.2)
+        identifiersPrefix: freshName('prefix:' + f) + '_',
         // the globals were already swapped in 4.3: what is reserved here is the FINAL name
         reservedNames: (cfg.reservedGlobals ?? [])
           .map(g => `^${escapeRegExp(globalMap.get(g) ?? g)}$`),
+        // a path step 8 may rename stays a plain string: encoded, it would keep the old name
+        // past step 9 and hide it from check 11 (6.2)
+        reservedStrings: renameable.length ? [renameable.map(r => wholePath('/' + r).source).join('|')] : [],
         stringArray: !!opt.transformStrings, stringArrayThreshold: 0.75,
         stringArrayEncoding: ['base64'], stringArrayRotate: true,
         stringArrayShuffle: true, stringArrayIndexShift: true,
@@ -1138,14 +1208,15 @@ if (opt.renameFiles || opt.hashAssets) {
     return folders.get(seg);
   }
 
-  const leaves = files.filter(f => /\.(png|jpe?g|webp|avif|gif|svg|woff2?|ttf|otf|ico|mp4|webm)$/.test(f));
-  const code = files.filter(f => /\.(css|js|mjs)$/.test(f));
-  for (const group of [leaves, code]) {          // leaves first; code after
+  const isCode = f => /\.(css|js|mjs)$/.test(f);
+  for (const group of [renameable.filter(f => !isCode(f)), renameable.filter(isCode)]) {  // leaves first
     for (const f of group) {
-      if (matchGlob(f, cfg.neverRename) || matchGlob(f, cfg.neverTransform)) continue;
       const dir = path.posix.dirname(f), base = path.posix.basename(f);
       const ext = base.slice(base.indexOf('.'));   // keeps the whole .min.js; the extension NEVER changes
-      const reason = blockReason(base) ?? (assembled('/' + f) ? 'path assembled dynamically' : null);
+      // proof 2: step 9 follows the path only where it stands whole, so a file whose path also
+      // ends a URL or a longer path (https://host/scripts/net.js, ../scripts/net.js) stays put
+      const reason = blockReason(base) ?? (assembled('/' + f) ? 'path assembled dynamically'
+        : insideLonger('/' + f) ? 'path inside a URL or a longer path' : null);
       if (reason) { console.log(`  kept  ${f}  (${reason})`); continue; }
 
       const buf = await readFile(path.join(OUT, f));
@@ -1164,10 +1235,10 @@ if (opt.renameFiles || opt.hashAssets) {
     for (const f of await walk(OUT)) {             // rewrites HTML, CSS, JS, manifest and sw
       if (!isText(f) || matchGlob(f, cfg.neverTransform)) continue;
       const p = path.join(OUT, f);
-      let txt = await readFile(p, 'utf8'), changed = false;
-      for (const [oldPath, newPath] of fileMap)
-        if (txt.includes(oldPath)) { txt = txt.split(oldPath).join(newPath); changed = true; }
-      if (changed) await writeFile(p, txt);
+      const txt = await readFile(p, 'utf8');
+      let next = txt;                              // the whole path only: net.json is another file
+      for (const [oldPath, newPath] of fileMap) next = next.replace(wholePath(oldPath), () => newPath);
+      if (next !== txt) await writeFile(p, next);
     }
   }
   // an empty folder does not enter the dist: its name would leak on its own. rmdir fails
@@ -1219,8 +1290,8 @@ for (const f of generated.filter(isText)) {
     const outsidePaths = txt.replace(distPaths, ' ');   // the same ground 4.5 covered
     for (const oldName of nameMap.keys())          // 2 and 11) out-of-sync name
       if (wholeWord(oldName).test(outsidePaths)) failures.push(`name out of sync in ${f}: ${oldName}`);
-    for (const oldPath of fileMap.keys())
-      if (txt.includes(oldPath)) failures.push(`old path in ${f}: ${oldPath}`);
+    for (const oldPath of fileMap.keys())          // what step 9 rewrites, JS strings included (6.2)
+      if (wholePath(oldPath).test(txt)) failures.push(`old path in ${f}: ${oldPath}`);
     // 12) comment in the dist. NEVER search for '//': https:// is in every URL.
     if (opt.minify && /\.(css|js|mjs)$/.test(f) && txt.includes('/*'))
       failures.push(`comment in the dist file ${f}`);
@@ -1329,6 +1400,23 @@ classes written by hand.
   the global `net` inside `/scripts/net.js`, the file that shares its name, and the page asked for
   `/scripts/x3m9p.js`. The pass must skip URLs and file paths (9.4); a script adapted from an older
   copy of section 16 does not.
+- **Every page with two or more scripts dies at `protected`, with
+  `Cannot read properties of undefined (reading 'charAt')`:** each obfuscated file declared its
+  string-array helpers (`function a()`, `function b()`) in the global scope that classic scripts share,
+  and the last script loaded replaced the others'. The build passes, because check 3 only parses. Each
+  file needs its own `identifiersPrefix`, derived from the salt and the path (6.2).
+- **A script loaded from a JS string 404s after `renameFiles` or `hashAssets`, and check 11 is silent:**
+  the string array encoded `'/scripts/lazy.js'` in step 6, before step 9 renamed the file, so neither the
+  rewrite nor the check could read it. A path step 8 may rename goes into `reservedStrings` and stays
+  plain text (6.2).
+- **`fetch('/scripts/net.json')` asks for `/x1kvvy/xd75ey.json` once `net.js` is renamed:** step 9
+  swapped `/scripts/net.js` as a plain substring, and it is a prefix of `/scripts/net.json`. The data
+  file never moved, so the request 404s while the build passes. The rewrite takes the path only where it
+  stands whole (11.2).
+- **A script keeps its name, reported as `kept (path inside a URL or a longer path)`:** the source also
+  spells its path at the end of a URL or a relative path (`https://sistema.net.br/scripts/auth.js`,
+  `../scripts/auth.js`), which step 9 cannot rewrite. Write the reference as the absolute path from the
+  site root and the file is renamed again (11.2).
 - **A Java-served page loses its styling after `renameFiles`:** a handler serves the file by name
   (`AssetsAPI.serveAsset(ctx, "scripts/ui.js")`). Proof 3 freezes it; if it did not, the string is built
   in Java rather than written literally, and the file belongs in `neverRename`.
