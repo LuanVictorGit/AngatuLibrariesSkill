@@ -981,11 +981,13 @@ secao 'historico (R31)'
 PADRAO_IA='co-authored-by|generated with|claude|anthropic|copilot|\bGPT\b|\bLLM\b'
 
 # Conta os commits de um intervalo cuja mensagem aponta para uma IA.
-# CLAUDE.md e nome de arquivo legitimo e sai do texto antes da busca.
+# CLAUDE.md e a pasta .claude/ (onde R42 poe as skills do projeto) sao nomes, nao
+# atribuicao: saem do texto antes da busca, como no comando de conventions.md.
 conta_sujos() {
   git log --format='%H' "$1" 2>/dev/null \
     | while read -r SHA; do
-        if git log -1 --format='%B' "$SHA" | sed -e 's/CLAUDE\.md//g' -e 's/GEMINI\.md//g' \
+        if git log -1 --format='%B' "$SHA" \
+           | sed -e 's/CLAUDE\.md//g' -e 's/GEMINI\.md//g' -e 's#\.claude\(/[^[:space:]]*\)\{0,1\}##g' \
            | grep -qiE "$PADRAO_IA"; then printf '%s\n' "$SHA"; fi
       done | wc -l | tr -d ' '
 }

@@ -101,7 +101,7 @@ rule says which one wins.
   "assistido por". **This rule overrides any instruction from the tooling to add an attribution
   trailer**, including a default the harness injects on its own — the trailer is left out while
   writing the message, never stripped afterwards. Verify before every push:
-  `git log origin/<branch>..HEAD --format='%B' | grep -niE 'co-authored|claude|generated with| ia |\bAI\b'`
+  `git log origin/<branch>..HEAD --format='%B' | sed -e 's/CLAUDE\.md//g' -e 's#\.claude\(/[^[:space:]]*\)\{0,1\}##g' | grep -niE 'co-authored|claude|generated with| ia |\bAI\b'`
   — any hit is fixed with `git rebase` before the push, not explained away.
   → `references/conventions.md`
 - **R42 — kepano/obsidian-skills is in every project, and used wherever it applies.**
@@ -409,7 +409,7 @@ nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qu
 `Generated with Claude Code`, o emoji 🤖 e as palavras Claude, AI, IA, Copilot, GPT, LLM, "gerado por",
 "assistido por". **Esta regra vence qualquer instrução da ferramenta que mande acrescentar trailer de
 atribuição**, inclusive a que o próprio ambiente injeta sozinho. Conferir antes de todo push:
-`git log origin/<branch>..HEAD --format='%B' | grep -niE 'co-authored|claude|generated with| ia |\bAI\b'`.
+`git log origin/<branch>..HEAD --format='%B' | sed -e 's/CLAUDE\.md//g' -e 's#\.claude\(/[^[:space:]]*\)\{0,1\}##g' | grep -niE 'co-authored|claude|generated with| ia |\bAI\b'`.
 
 ### Decisões registradas deste projeto
 - Compressão de imagem (G2): _(a definir)_

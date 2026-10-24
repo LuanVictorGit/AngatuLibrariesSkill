@@ -132,12 +132,15 @@ The same applies to a pull request: no `🤖 Generated with…` footer, no AI me
 **Check before every push.** This is part of the push, not an optional audit:
 
 ```bash
-# CLAUDE.md is a legitimate file name, so it leaves the text before the search
-git log origin/development..HEAD --format='%B' | sed 's/CLAUDE\.md//g' \
+# the file CLAUDE.md and the folder .claude/ are names, not attribution: they leave the text first
+git log origin/development..HEAD --format='%B' \
+  | sed -e 's/CLAUDE\.md//g' -e 's#\.claude\(/[^[:space:]]*\)\{0,1\}##g' \
   | grep -niE 'co-authored|claude|anthropic|generated with|copilot|\bGPT\b|\bLLM\b|\bIA\b|\bAI\b|gerado por|assistido por'
 ```
 
-Zero lines is the only acceptable result. A hit is fixed **before** the push:
+Zero lines is the only acceptable result. The file `CLAUDE.md` and the folder `.claude/` (where R42 puts
+the project's skills) are names, not attribution, so the check removes them before searching; the word
+in any other form is still a hit. A hit is fixed **before** the push:
 
 ```bash
 # the commit at the top
