@@ -26,6 +26,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md` 
 | Task at hand | Read |
 |---|---|
 | **Session start: sync this skill with its repository (R1, mandatory, no asking)** | `references/conventions.md` (section 1) |
+| **Session start in a project: obsidian-skills in `.claude/skills/`, caveman on (R42, R43)** | `references/companion-skills.md` |
 | **Any Java at all — writing, editing or reviewing a class** (Java 25, structure, performance, errors, Javadoc) | `references/java-standard.md` |
 | Starting a project, `pom.xml` for Java 25, `AngatuLib`, Javalin, rate limiting, request log | `references/backend-server.md` |
 | Entities, SQLite, queries, indexes, concurrency, porting an old project | `references/backend-persistence.md` |
@@ -103,6 +104,14 @@ rule says which one wins.
   `git log origin/<branch>..HEAD --format='%B' | grep -niE 'co-authored|claude|generated with| ia |\bAI\b'`
   — any hit is fixed with `git rebase` before the push, not explained away.
   → `references/conventions.md`
+- **R42 — kepano/obsidian-skills is in every project, and used wherever it applies.**
+  <https://github.com/kepano/obsidian-skills>, copied into the project's `.claude/skills/` at the newest
+  commit and checked unasked, like R4. Every `.md` is Obsidian Flavored Markdown, `.base` and `.canvas`
+  follow their skills, a web page is read with `defuddle`. → `references/companion-skills.md`
+- **R43 — caveman speaks in every session of every project, and only in the chat.**
+  <https://github.com/JuliusBrussee/caveman> is loaded with this skill and shapes every reply; what is
+  persisted — code, commits (R3), documents, product copy (R16) — stays full prose, as caveman itself
+  demands, and `caveman-compress` never touches `CLAUDE.md`. → `references/companion-skills.md`
 
 ### Library and hosting
 
@@ -350,6 +359,12 @@ escrever código. Sessão nova, contexto compactado ou agente recém-aberto carr
 **antes de responder**. O resumo abaixo é índice, uma linha por identificador: o que a regra
 exige, e qual delas vence quando duas colidem, só está no texto completo da skill.
 
+Junto com ela são obrigatórias, em todo projeto, as **obsidian-skills**
+(<https://github.com/kepano/obsidian-skills>), em `.claude/skills/` e usadas sempre que a tarefa toca um
+`.md`, `.base` ou `.canvas`, lê uma página web ou mexe num cofre do Obsidian (R42), e o **caveman**
+(<https://github.com/JuliusBrussee/caveman>), carregado no início de toda sessão para toda resposta no
+chat — nunca para o que fica gravado (R43).
+
 ### Resumo das regras (texto completo na skill; os IDs são estáveis)
 
 R1 skill obrigatória neste repositório e sincronizada com o próprio repo a cada sessão, sem pedir · R2 CLAUDE.md e GEMINI.md sempre atualizados · R3 commits na
@@ -386,7 +401,8 @@ cliente e pergunta se leva a marca da Angatu, e plano aprovado antes da primeira
 pronto depois de assistido e ouvido no ciclo de revisão, nunca porque compilou ou renderizou uma vez ·
 R41 orçamento sai do template da skill (`tools/proposal/`), com G6 antes: preço, prazo e contrato vêm do
 dono e nunca são inventados, a capa é só texto, cada página mostra uma ideia com mockup e foto real, e só
-fica pronto depois de cada página ser olhada como imagem.
+fica pronto depois de cada página ser olhada como imagem · R42 obsidian-skills em todo projeto, na versão
+mais nova · R43 caveman em toda sessão, só no chat, e o `caveman-compress` nunca toca o CLAUDE.md.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -402,6 +418,7 @@ atribuição**, inclusive a que o próprio ambiente injeta sozinho. Conferir ant
 - Limpeza inicial (R32): _(a definir)_
 - Login (R33): _(a definir)_
 - Filtro de IP (R34): _(a definir)_
+- obsidian-skills em `.claude/skills/` (R42): commit _(a definir)_
 - Cache (G3): não usar
 <!-- AngatuLibrariesSkill:end -->
 ```
@@ -423,7 +440,8 @@ Rewrite the block when a rule changes. Everything outside the markers belongs to
 6. `references/paint.md` — the whole frontend pipeline, plus R13 for every other surface.
 7. `references/frontend-build.md` — the build, with obfuscation on by R19.
 8. `references/testing.md` — the project checklist, run the JAR, then the `dist`.
-9. Write the section 3 block into `CLAUDE.md` / `GEMINI.md`, commit to `development`.
+9. Write the section 3 block into `CLAUDE.md` / `GEMINI.md`, copy the obsidian-skills into
+   `.claude/skills/` (R42), commit to `development`.
 
 ### 4.2 Landing page
 

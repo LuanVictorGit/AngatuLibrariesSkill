@@ -92,11 +92,14 @@ secao 'SKILL.md'
 # From 460 to 475 when the proposal module came in (R41 and G6): the rule, the
 # gate, one routing row, the block summary and one checklist line here, against
 # the whole of references/proposal.md and tools/proposal/.
+# From 475 to 490 when the companion skills became mandatory (R42 and R43): two
+# rules, one routing row, one paragraph and two summary lines in the CLAUDE.md
+# block, against the whole of references/companion-skills.md.
 LINHAS=$(wc -l < SKILL.md | tr -d ' ')
-if [ "$LINHAS" -gt 475 ]; then
-  falha "SKILL.md com $LINHAS linhas (teto 475) — conteudo deve descer para references/"
+if [ "$LINHAS" -gt 490 ]; then
+  falha "SKILL.md com $LINHAS linhas (teto 490) — conteudo deve descer para references/"
 else
-  ok "SKILL.md com $LINHAS linhas (teto 475)"
+  ok "SKILL.md com $LINHAS linhas (teto 490)"
 fi
 
 if grep -q 'AngatuLibrariesSkill:begin' SKILL.md && grep -q 'AngatuLibrariesSkill:end' SKILL.md; then
@@ -923,6 +926,48 @@ if [ -n "${PYTHON:-}" ]; then
   done
   if [ "$QUEBRA" -eq 0 ]; then ok 'proposal Python scripts compile'; fi
 fi
+
+# ---------------------------------------------------------------------------
+# 7e. the companion skills (R42, R43)
+#
+# Both rules only work if the CLAUDE.md block names them: that block is what
+# every project session reads, and a rule missing from it fades on the first
+# compaction. And both have one silent way to break the house rules: caveman
+# compressing what is persisted (a commit, the CLAUDE.md block), and Obsidian
+# properties pushed above the AngatuLibrariesSkill block of the anchor files.
+# ---------------------------------------------------------------------------
+secao 'companion skills (R42, R43)'
+CS=references/companion-skills.md
+
+for REGRA in R42 R43; do
+  exige SKILL.md "^- \\*\\*$REGRA" "$REGRA defined in SKILL.md" "$REGRA missing from SKILL.md"
+  exige GEMINI.md "$REGRA" "GEMINI.md summarises $REGRA" "GEMINI.md without $REGRA"
+done
+exige SKILL.md 'companion-skills\.md' 'SKILL.md routes the companion skills' \
+               'SKILL.md has no route to companion-skills.md'
+BLOCO=$(awk '/AngatuLibrariesSkill:begin/,/AngatuLibrariesSkill:end/' SKILL.md)
+for LINK in 'github.com/kepano/obsidian-skills' 'github.com/JuliusBrussee/caveman'; do
+  case "$BLOCO" in
+    *"$LINK"*) ok "CLAUDE.md block demands $LINK" ;;
+    *)         falha "CLAUDE.md block without $LINK -- projects never hear of it" ;;
+  esac
+done
+exige "$CS" '\.claude/skills' 'companion-skills.md installs the obsidian-skills in the project' \
+            'companion-skills.md does not say where the obsidian-skills live'
+exige "$CS" 'ls-remote' 'companion-skills.md checks the obsidian-skills version unasked' \
+            'companion-skills.md without the version check -- the copy freezes'
+exige "$CS" 'R1 wins' 'companion-skills.md keeps the R1 block above any property' \
+            'companion-skills.md lets properties push the R1 block down'
+exige "$CS" 'caveman-compress' 'companion-skills.md keeps caveman-compress off CLAUDE.md' \
+            'companion-skills.md lets caveman-compress rewrite the R1 block'
+exige "$CS" 'caveman-commit' 'companion-skills.md keeps the detailed R3 commit' \
+            'companion-skills.md lets caveman-commit cut the R3 body'
+exige "$CS" 'chat only' 'companion-skills.md limits caveman to the chat' \
+            'companion-skills.md does not limit caveman to the chat -- product copy gets compressed'
+exige references/deploy-coolify.md '^\.claude/$' '.dockerignore keeps .claude/ out of the image' \
+            '.dockerignore ships .claude/ into the build context'
+exige references/dead-code.md '\.claude/skills' 'dead-code.md protects the project skills' \
+            'dead-code.md lets the project skills be swept as orphans'
 
 # ---------------------------------------------------------------------------
 # 8. o historico deste repositorio nao aponta para uma IA (R31)

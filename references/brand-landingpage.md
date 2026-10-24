@@ -100,6 +100,11 @@ when it genuinely relates to the content. Nothing goes in to fill space.
 1. **Create `.brand/DESIGN.md`:**
 
 ```
+---
+tags:
+  - design-system
+project: {Nome do Projeto}
+---
 # {Nome do Projeto} — Sistema de Design
 ## Sensação de marca
 {adj1}, {adj2}, {adj3}

@@ -67,6 +67,13 @@ PEDIDO" enters on *criar*.
 ## 3. `docs/PLANO.md`
 
 ```markdown
+---
+tags:
+  - video
+  - plano
+client: <cliente>
+status: aguardando aprovação
+---
 # Plano — <cliente> · <peça>
 Relógio mestre: música (120 BPM, drop 16,0 s) | narração | voz sobre música
 Duração: 19,0 s = 570 quadros a 30 fps · Formato: 1080×1920

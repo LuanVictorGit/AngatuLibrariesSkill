@@ -43,7 +43,9 @@ startup (`AngatuLib`), routes, entities or environment variables is reflected in
 same commit**.
 
 It carries two things: the `AngatuLibrariesSkill` block from section 3 of `SKILL.md` (R1), and the project's
-own documentation. Both are written in PT-BR: they are documentation, not code (R12).
+own documentation. Both are written in PT-BR: they are documentation, not code (R12). The block is the
+first thing in the file, so these two files carry no Obsidian properties; every other `.md` of the
+project does (R42, `companion-skills.md`).
 
 **The block is mandatory and it is the first thing in the file.** It is the only anchor that
 survives compaction, and what it demands is the skill loaded in context **before thinking** —
@@ -98,7 +100,8 @@ Padrão Java da skill (java-standard.md); Route/Saveable só via extends; json_e
 
 - Messages in PT-BR, detailed (what + why + impact). Conventional Commits: `feat:`, `fix:`, `chore:`,
   `docs:`, `refactor:`, `perf:`. Class and file names keep their English spelling inside the message.
-- The body always carries bullets explaining each relevant change.
+- The body always carries bullets explaining each relevant change — never cut down by
+  `caveman-commit` (R43).
 - **Always `git push`** to `development` after committing. Never `--no-verify` or `--no-gpg-sign`
   unless asked.
 

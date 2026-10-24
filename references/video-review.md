@@ -13,6 +13,13 @@
 At the start of phase 5, at the top of `docs/REVISAO.md`, derived from the plan:
 
 ```markdown
+---
+tags:
+  - video
+  - revisao
+client: <cliente>
+status: em revisão
+---
 # Revisão — <cliente> · <peça>
 
 ## Objetivo

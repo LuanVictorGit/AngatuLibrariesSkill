@@ -126,6 +126,7 @@ bin/
 data/
 uploads/
 .env
+.claude/
 .env.*
 tools/
 node_modules/

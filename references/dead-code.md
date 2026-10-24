@@ -42,7 +42,10 @@ unused. R32 adds the procedure for everything else; it overrules nothing.
   signed document. Orphaned in the code does not mean disposable: it may be a tax document or proof of
   delivery (`images.md`). The volume exists precisely because this data outlives deploys.
 
-These two are not subject to proof. There is no evidence that makes them deletable — if the owner wants
+- **The project's skills under `.claude/skills/`** (R42). Nothing in the code references them — the
+  agent reads them — so every grep comes back empty, and that is not evidence of anything.
+
+These three are not subject to proof. There is no evidence that makes them deletable — if the owner wants
 data removed, that is a migration they ask for explicitly, not cleanup.
 
 ---

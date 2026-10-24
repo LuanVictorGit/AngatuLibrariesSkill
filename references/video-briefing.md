@@ -197,6 +197,13 @@ autor · data · onde é usado.
 ## 10. `docs/BRIEFING.md`
 
 ```markdown
+---
+tags:
+  - video
+  - briefing
+client: <cliente>
+status: aguardando respostas
+---
 # Briefing — <cliente> · <peça>
 
 Data: <aaaa-mm-dd> · Pedido original: "<frase do usuário>"
