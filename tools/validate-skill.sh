@@ -95,11 +95,14 @@ secao 'SKILL.md'
 # From 475 to 490 when the companion skills became mandatory (R42 and R43): two
 # rules, one routing row, one paragraph and two summary lines in the CLAUDE.md
 # block, against the whole of references/companion-skills.md.
+# From 490 to 500 when the command-execution module joined every CLAUDE.md
+# (R44): the rule, one routing row, one summary line and a three-line pointer
+# here, while the module itself lives in references/command-execution.md.
 LINHAS=$(wc -l < SKILL.md | tr -d ' ')
-if [ "$LINHAS" -gt 490 ]; then
-  falha "SKILL.md com $LINHAS linhas (teto 490) — conteudo deve descer para references/"
+if [ "$LINHAS" -gt 500 ]; then
+  falha "SKILL.md com $LINHAS linhas (teto 500) — conteudo deve descer para references/"
 else
-  ok "SKILL.md com $LINHAS linhas (teto 490)"
+  ok "SKILL.md com $LINHAS linhas (teto 500)"
 fi
 
 if grep -q 'AngatuLibrariesSkill:begin' SKILL.md && grep -q 'AngatuLibrariesSkill:end' SKILL.md; then
@@ -729,7 +732,7 @@ exige references/deploy-coolify.md 'UnsupportedClassVersionError' 'deploy-coolif
              'deploy-coolify.md sem o JDK 25 na imagem do Playwright -- o conteiner nao sobe'
 
 ANTIGO=$(grep -rnE 'eclipse-temurin[:-](1[0-9]|2[0-4])([^0-9]|$)|<maven\.compiler\.(release|source|target)>(1[0-9]|2[0-4])<' \
-           SKILL.md GEMINI.md references/ 2>/dev/null || true)
+           SKILL.md references/ 2>/dev/null || true)
 if [ -n "$ANTIGO" ]; then
   falha 'alvo de compilacao ou imagem anterior ao Java 25'
   printf '%s\n' "$ANTIGO" | sed 's/^/        /'
@@ -746,7 +749,7 @@ else
 fi
 
 REGRA_VELHA=$(grep -rniE 'Javadoc (in|em) (PT-BR|Portuguese|portugu)|comments (always |in )?(PT-BR|Portuguese)|Javadoc on every public|every public class and method carries Javadoc' \
-                SKILL.md GEMINI.md references/ 2>/dev/null || true)
+                SKILL.md references/ 2>/dev/null || true)
 if [ -n "$REGRA_VELHA" ]; then
   falha 'regra antiga de Javadoc ou comentario em portugues sobrando'
   printf '%s\n' "$REGRA_VELHA" | sed 's/^/        /'
@@ -883,7 +886,6 @@ TP=tools/proposal
 exige SKILL.md '^- \*\*R41' 'R41 defined in SKILL.md' 'R41 missing -- the proposal module has no rule'
 exige SKILL.md 'proposal\.md' 'SKILL.md routes a proposal request' 'SKILL.md has no route to proposal.md'
 exige SKILL.md 'R41 orçamento' 'CLAUDE.md block summarises R41' 'CLAUDE.md block without R41 -- the rule fades on compaction'
-exige GEMINI.md 'R41' 'GEMINI.md summarises R41' 'GEMINI.md without R41'
 case "$DESCRICAO" in
   *orçamento*) ok 'description triggers on orçamento' ;;
   *)           falha 'description without the orçamento trigger -- a quote request does not load the skill' ;;
@@ -941,7 +943,6 @@ CS=references/companion-skills.md
 
 for REGRA in R42 R43; do
   exige SKILL.md "^- \\*\\*$REGRA" "$REGRA defined in SKILL.md" "$REGRA missing from SKILL.md"
-  exige GEMINI.md "$REGRA" "GEMINI.md summarises $REGRA" "GEMINI.md without $REGRA"
 done
 exige SKILL.md 'companion-skills\.md' 'SKILL.md routes the companion skills' \
                'SKILL.md has no route to companion-skills.md'
@@ -970,6 +971,43 @@ exige references/dead-code.md '\.claude/skills' 'dead-code.md protects the proje
             'dead-code.md lets the project skills be swept as orphans'
 
 # ---------------------------------------------------------------------------
+# 7f. the command-execution module (R44)
+#
+# The module only works as the owner wrote it, so the check is on its exact
+# lines: a paraphrase that drops "never claim that a build or test passed" or
+# the 10-minute ceiling is the module quietly losing its teeth.
+# ---------------------------------------------------------------------------
+secao 'command execution (R44)'
+CE=references/command-execution.md
+
+exige SKILL.md '^- \*\*R44' 'R44 defined in SKILL.md' 'R44 missing from SKILL.md'
+exige SKILL.md 'command-execution\.md' 'SKILL.md routes to the module' \
+               'SKILL.md has no route to command-execution.md'
+exige SKILL.md 'R44 logo depois deste bloco' 'CLAUDE.md block summarises R44' \
+               'CLAUDE.md block without R44 -- projects never hear of the module'
+FALTANDO=0
+for LINHA in 'AngatuCommandExecution:begin' 'AngatuCommandExecution:end' '## Efficient Command Execution' \
+             'Never run a full build or complete automated test suite after every code change.' \
+             '`tail -f`' 'Do not intentionally run foreground commands for longer than 10 minutes.' \
+             'Never claim that a build or test passed without checking its result.'; do
+  if ! grep -qF -- "$LINHA" "$CE"; then falha "command-execution.md lost: $LINHA"; FALTANDO=1; fi
+done
+if [ "$FALTANDO" -eq 0 ]; then ok 'command-execution.md keeps the module intact'; fi
+
+# The skill serves any agent: CLAUDE.md is the one anchor, and a per-vendor copy
+# (GEMINI.md) is not to come back -- it was added once and removed by the owner.
+if [ -e GEMINI.md ]; then
+  falha 'GEMINI.md exists -- the skill is for any agent and anchors on CLAUDE.md only'
+else
+  ok 'no GEMINI.md: CLAUDE.md is the only anchor'
+fi
+if grep -nE 'GEMINI\.md' SKILL.md | grep -vq 'no .GEMINI\.md'; then
+  falha 'SKILL.md tells projects to write a GEMINI.md'
+else
+  ok 'SKILL.md anchors projects on CLAUDE.md alone'
+fi
+
+# ---------------------------------------------------------------------------
 # 8. o historico deste repositorio nao aponta para uma IA (R31)
 #
 # A verificacao vive aqui, e nao so no texto da regra, porque foi aqui que a
@@ -987,7 +1025,7 @@ conta_sujos() {
   git log --format='%H' "$1" 2>/dev/null \
     | while read -r SHA; do
         if git log -1 --format='%B' "$SHA" \
-           | sed -e 's/CLAUDE\.md//g' -e 's/GEMINI\.md//g' -e 's#\.claude\(/[^[:space:]]*\)\{0,1\}##g' \
+           | sed -e 's/CLAUDE\.md//g' -e 's#\.claude\(/[^[:space:]]*\)\{0,1\}##g' \
            | grep -qiE "$PADRAO_IA"; then printf '%s\n' "$SHA"; fi
       done | wc -l | tr -d ' '
 }

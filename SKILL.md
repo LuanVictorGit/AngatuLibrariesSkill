@@ -14,7 +14,7 @@ detail. Open the reference for the task at hand instead of working from memory o
 
 **Language.** This skill is written in English, and so is all the code it produces — identifiers,
 comments, Javadoc, log lines (R12). Brazilian Portuguese is for what people read: the product's
-user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md` and `GEMINI.md`.
+user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md`.
 
 **Method.** Before writing a file, read one or two existing files of the same kind (`entities/`,
 `routes/`, `public/*.html`) and match their style. Never reimplement what the library already does.
@@ -27,6 +27,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md` 
 |---|---|
 | **Session start: sync this skill with its repository (R1, mandatory, no asking)** | `references/conventions.md` (section 1) |
 | **Session start in a project: obsidian-skills in `.claude/skills/`, caveman on (R42, R43)** | `references/companion-skills.md` |
+| Builds, tests and logs without waste; the module every `CLAUDE.md` carries (R44) | `references/command-execution.md` |
 | **Any Java at all — writing, editing or reviewing a class** (Java 25, structure, performance, errors, Javadoc) | `references/java-standard.md` |
 | Starting a project, `pom.xml` for Java 25, `AngatuLib`, Javalin, rate limiting, request log | `references/backend-server.md` |
 | Entities, SQLite, queries, indexes, concurrency, porting an old project | `references/backend-persistence.md` |
@@ -41,7 +42,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md` 
 | Filtering hostile networks: Spamhaus DROP | `references/ip-blocklist.md` |
 | Saving, resizing or compressing images | `references/images.md` |
 | Cache policy, service worker, asset hashing | `references/cache.md` |
-| `CLAUDE.md` / `GEMINI.md`, commits, branches | `references/conventions.md` |
+| `CLAUDE.md`, commits, branches | `references/conventions.md` |
 | Removing dead code and orphan files, the first-use sweep | `references/dead-code.md` |
 | Running, testing, project checklist, known traps | `references/testing.md` |
 | Automated tests for routes and services, without packaging | `references/route-testing.md` |
@@ -79,18 +80,18 @@ rule says which one wins.
 
 ### Session and project
 
-- **R1 — This skill is sticky, and the project's `CLAUDE.md` or `GEMINI.md` must demand it.** Writing the
-  section 3 block into `CLAUDE.md` (for Claude Code) and `GEMINI.md` (for Gemini / Antigravity) is **mandatory**, not a nicety: those files are the persistent anchors
-  that survive compaction, and a repository without them loses the standard the first time a
-  session runs long. What the block demands is the skill **loaded in context before thinking** —
+- **R1 — This skill is sticky, and the project's `CLAUDE.md` must demand it.** Writing the section 3
+  block into `CLAUDE.md` is **mandatory**, not a nicety: it is the persistent anchor that survives
+  compaction, whatever agent works in the repository, and a repository without it loses the standard
+  the first time a session runs long. What the block demands is the skill **loaded in context before thinking** —
   not merely before writing code: reading a file, planning a step, answering a question,
   reviewing a diff. Not loaded → load it **before replying**. And never work from the rule
   summary alone: it is an index of titles, and the edge cases are decided by the full text.
   **And the copy in use is the current one:** every session begins by syncing this skill with its own
   repository (`git pull --ff-only` on `origin/main`), run **without asking** — a stale standard is
   worse than none, and a fast-forward can never discard work. → `references/conventions.md` (section 1)
-- **R2 — `CLAUDE.md` and `GEMINI.md` stay current.** Any change to stack, structure, startup, routes, entities or
-  environment variables updates `CLAUDE.md` and `GEMINI.md` in the same commit. → `references/conventions.md`
+- **R2 — `CLAUDE.md` stays current.** Any change to stack, structure, startup, routes, entities or
+  environment variables updates `CLAUDE.md` in the same commit. → `references/conventions.md`
 - **R3 — Commits go to `development`.** `main` is production and receives only what the project
   owner explicitly confirms. Messages in PT-BR, detailed, Conventional Commits.
   → `references/conventions.md`
@@ -112,6 +113,9 @@ rule says which one wins.
   <https://github.com/JuliusBrussee/caveman> is loaded with this skill and shapes every reply; what is
   persisted — code, commits (R3), documents, product copy (R16) — stays full prose, as caveman itself
   demands, and `caveman-compress` never touches `CLAUDE.md`. → `references/companion-skills.md`
+- **R44 — Commands run efficiently, and every `CLAUDE.md` carries the module that says how.** Efficient Command Execution goes right after the section 3 block, verbatim and kept current:
+  targeted tests while working, the full build before delivery, bounded output, explicit timeouts, no
+  result claimed unchecked. → `references/command-execution.md`
 
 ### Library and hosting
 
@@ -336,12 +340,13 @@ code. Answering on the user's behalf is the failure this section exists to preve
 
 ---
 
-## 3. Making the skill stick to the project — CLAUDE.md & GEMINI.md (R1)
+## 3. Making the skill stick to the project — CLAUDE.md (R1)
 
 The body of a skill is loaded once, and it is the first thing a long session compacts away. A
-project's `CLAUDE.md` (for Claude Code) or `GEMINI.md` (for Gemini / Antigravity) is re-injected every session and survives. So the rules are anchored there.
+project's `CLAUDE.md` is re-injected every session and survives. So the rules are anchored there. This
+skill serves any agent, so the anchor is one file: no `GEMINI.md` or other per-vendor copy.
 
-**On the first use of this skill in any project**, write this block into the project's `CLAUDE.md` and/or `GEMINI.md`.
+**On the first use of this skill in any project**, write this block into the project's `CLAUDE.md`.
 Keep the markers: they allow the block to be rewritten later without touching anything else, and they
 carry the skill's exact name so the agent reading them knows which skill to load.
 
@@ -367,7 +372,7 @@ chat — nunca para o que fica gravado (R43).
 
 ### Resumo das regras (texto completo na skill; os IDs são estáveis)
 
-R1 skill obrigatória neste repositório e sincronizada com o próprio repo a cada sessão, sem pedir · R2 CLAUDE.md e GEMINI.md sempre atualizados · R3 commits na
+R1 skill obrigatória neste repositório e sincronizada com o próprio repo a cada sessão, sem pedir · R2 CLAUDE.md sempre atualizado · R3 commits na
 `development`, nunca citar IA · R4 sempre a última versão de toda lib da Angatu, conferida
 mesmo sem pedido · R5 só as dependências usadas ·
 R6 Jetty vem do Javalin · R7 só HTTP, o TLS é do Coolify · R8 Dockerfile obrigatório, sem
@@ -402,7 +407,8 @@ pronto depois de assistido e ouvido no ciclo de revisão, nunca porque compilou 
 R41 orçamento sai do template da skill (`tools/proposal/`), com G6 antes: preço, prazo e contrato vêm do
 dono e nunca são inventados, a capa é só texto, cada página mostra uma ideia com mockup e foto real, e só
 fica pronto depois de cada página ser olhada como imagem · R42 obsidian-skills em todo projeto, na versão
-mais nova · R43 caveman em toda sessão, só no chat, e o `caveman-compress` nunca toca o CLAUDE.md.
+mais nova · R43 caveman em toda sessão, só no chat, e o `caveman-compress` nunca toca o CLAUDE.md ·
+R44 logo depois deste bloco vem o módulo Efficient Command Execution, copiado sem alteração.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -423,7 +429,10 @@ atribuição**, inclusive a que o próprio ambiente injeta sozinho. Conferir ant
 <!-- AngatuLibrariesSkill:end -->
 ```
 
-Rewrite the block when a rule changes. Everything outside the markers belongs to the project.
+Right after the block goes the Efficient Command Execution module (R44), copied verbatim from
+`references/command-execution.md` with its own markers. At every session start, after the sync (R1), both
+are compared with the project's copies and rewritten when they differ. Everything outside the markers
+belongs to the project.
 
 ---
 
@@ -440,8 +449,8 @@ Rewrite the block when a rule changes. Everything outside the markers belongs to
 6. `references/paint.md` — the whole frontend pipeline, plus R13 for every other surface.
 7. `references/frontend-build.md` — the build, with obfuscation on by R19.
 8. `references/testing.md` — the project checklist, run the JAR, then the `dist`.
-9. Write the section 3 block into `CLAUDE.md` / `GEMINI.md`, copy the obsidian-skills into
-   `.claude/skills/` (R42), commit to `development`.
+9. Write the section 3 block and the command-execution module (R44) into `CLAUDE.md`, copy the
+   obsidian-skills into `.claude/skills/` (R42), commit to `development`.
 
 ### 4.2 Landing page
 
@@ -463,7 +472,7 @@ asked for it; R18 means the source is not rewritten to achieve that.
 - `references/testing.md`: the JAR runs, the routes answer, and the `dist` was tested too —
   minification defects never show up in the readable build.
 - `references/java-standard.md` section 8: every Java change passes the review checklist.
-- `CLAUDE.md` / `GEMINI.md` updated (R2), commit on `development` with no mention of AI (R3).
+- `CLAUDE.md` updated (R2), commit on `development` with no mention of AI (R3).
 - A video is not a frontend: its list is the final checklist of `references/video-review.md` (R37).
 - A proposal is not a frontend either: its list is section 8 of `references/proposal.md` (R41).
 

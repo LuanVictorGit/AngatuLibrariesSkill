@@ -14,7 +14,7 @@ plugin. Six skills, each one mandatory as soon as the task enters its ground:
 
 | Skill | Loaded and followed whenever the task… |
 |---|---|
-| `obsidian-markdown` | writes or edits any `.md` of the project: `README.md`, everything under `docs/` (briefings, plans, reviews, licences, design notes, decision records), and `CLAUDE.md` / `GEMINI.md` within the limit of 1.2 |
+| `obsidian-markdown` | writes or edits any `.md` of the project: `README.md`, everything under `docs/` (briefings, plans, reviews, licences, design notes, decision records), and `CLAUDE.md` within the limit of 1.2 |
 | `obsidian-bases` | creates or edits a `.base` file |
 | `json-canvas` | creates or edits a `.canvas` file — an architecture map, a flow, a plan laid out as a board |
 | `obsidian-cli` | reads or changes an Obsidian vault, or develops an Obsidian plugin or theme |
@@ -52,9 +52,9 @@ rm -rf "$U"
 
 ### 1.2 Where Obsidian syntax meets the house rules
 
-- **R1 wins at the top of the anchor files.** Properties must be the first thing in an Obsidian note,
-  and `CLAUDE.md` / `GEMINI.md` open with the AngatuLibrariesSkill block. So the anchor files carry no
-  properties; wikilinks and callouts inside them are fine.
+- **R1 wins at the top of the anchor file.** Properties must be the first thing in an Obsidian note,
+  and `CLAUDE.md` opens with the AngatuLibrariesSkill block. So `CLAUDE.md` carries no properties;
+  wikilinks and callouts inside it are fine.
 - **Every other document opens with properties** — `tags` at least, plus whatever it tracks (`client`,
   `status`, `created`). Property names are English and lower case, because Bases query them like code
   (R12); values are PT-BR, like the text (R16).
@@ -90,7 +90,7 @@ fact kept verbatim.
 
 - **`caveman-commit` is never used for a project commit.** It cuts the body down to intent; R3 requires
   the detailed PT-BR body with bullets. R3 wins. Both already agree on R31: no AI attribution.
-- **`caveman-compress` never touches `CLAUDE.md`, `GEMINI.md` or the block of `SKILL.md` section 3.** It
+- **`caveman-compress` never touches `CLAUDE.md` or the block of `SKILL.md` section 3.** It
   rewrites the file in compressed form, R1 requires the block copied verbatim, and the validator checks
   its exact sentences. It also sends the file to a model provider: never point it at anything secret.
 - The other skills of the plugin (`caveman-review`, `cavecrew`, `caveman-stats`…) are tools, used when

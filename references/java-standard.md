@@ -327,7 +327,8 @@ no `TODO` or `FIXME` in delivered code.
 | log lines, exception messages, comments, Javadoc, test names | the label of an enum constant shown on screen (`PAID("Pago")`) |
 
 Values are data, not code: a customer named "João" in a test stays João. Commit messages and the
-project's `CLAUDE.md` / `GEMINI.md` are not code either — they stay in PT-BR (R3, R2).
+project's `CLAUDE.md` are not code either — they stay in PT-BR (R3, R2), except the module R44 copies
+verbatim.
 
 ## 7. The standard in one piece
 
