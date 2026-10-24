@@ -903,32 +903,45 @@ mvn -Pfrontend-dist package -DskipTests && java -jar target/<app>.jar
 Coolify builds the image from the repository, so the frontend build runs **inside** the image:
 
 ```dockerfile
+# syntax=docker/dockerfile:1
+
 # 1) frontend: readable source -> protected dist
 FROM node:22-alpine AS frontend
 WORKDIR /app
 COPY package.json package-lock.json* frontend.build.json ./
-RUN npm ci --omit=optional || npm install
+RUN --mount=type=cache,id=angatu-npm,target=/root/.npm \
+    npm ci --omit=optional --no-audit --no-fund || npm install --no-audit --no-fund
 COPY tools/ tools/
 COPY src/main/resources/public/ src/main/resources/public/
 COPY src/main/java/ src/main/java/
 RUN node tools/frontend-build.mjs --level=protected
 
-# 2) java: packages using the dist
+# 2) java: packages using the dist — the Maven cache and flags of deploy-coolify.md
 FROM maven:3.9-eclipse-temurin-25 AS build
 WORKDIR /app
+ENV MAVEN_OPTS="-XX:TieredStopAtLevel=1 -XX:+UseSerialGC"
 COPY pom.xml .
-RUN mvn -B -q dependency:go-offline
 COPY src/ src/
 COPY --from=frontend /app/dist/ dist/
-RUN mvn -B -Pfrontend-dist package -DskipTests
+RUN --mount=type=cache,id=angatu-maven,target=/root/.m2 \
+    mvn -B -q -Dmaven.test.skip=true -Pfrontend-dist \
+        -Daether.dependencyCollector.impl=bf \
+        -Daether.syncContext.named.factory=file-lock \
+        -Daether.syncContext.named.nameMapper=file-hgav \
+        package \
+ && mkdir -p /out/lib \
+ && cp "$(ls -S target/*.jar | head -n1)" /out/app.jar \
+ && if [ -d target/lib ]; then cp target/lib/*.jar /out/lib/; fi
 
 # 3) runtime: identical to the one in deploy-coolify.md
 FROM eclipse-temurin:25-jre
-# ... ENV TZ/ANGATU_ENV/ANGATU_DB_PATH/PORT/JAVA_OPTS, WORKDIR /data, EXPOSE, HEALTHCHECK, ENTRYPOINT
+# ... ENV, user, busybox wget, COPY of /out/lib/ and /out/app.jar, WORKDIR /data, EXPOSE, HEALTHCHECK, ENTRYPOINT
 ```
 
 Stage 1 does not enter the final image — the runtime stays JRE plus JAR. `src/main/java/` is copied into
 the frontend stage because the rename safety proof has to read the server code (section 9.1, item 4).
+The npm and Maven caches are BuildKit cache mounts shared by every project on the server: a new
+`package-lock.json` or `pom.xml` downloads only what changed (`deploy-coolify.md` 2.2).
 
 Without this stage, Coolify packages the readable source: it works, but it is not what R19 requires.
 

@@ -154,7 +154,8 @@ FROM node:22-alpine AS build
 WORKDIR /build
 
 COPY package*.json ./
-RUN npm ci --no-audit --no-fund || true
+RUN --mount=type=cache,id=angatu-npm,target=/root/.npm \
+    npm ci --no-audit --no-fund || true
 
 COPY . .
 RUN node tools/frontend-build.mjs --level=protected
@@ -170,11 +171,17 @@ COPY --from=build /build/dist/ /usr/share/nginx/html/
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=5s --timeout=3s --start-period=2s --start-interval=1s --retries=12 \
   CMD wget -q --spider "http://127.0.0.1:8080/health" || exit 1
 ```
 
 Notes:
+
+- **The `HEALTHCHECK` numbers are deploy time.** Coolify sleeps the `--start-period` and then asks
+  Docker every `--interval` whether the container is healthy (`deploy-coolify.md` 2.2). nginx answers
+  in under a second, so 2 s and 5 s; the old 10 s / 30 s made every deploy wait ten seconds or more.
+- **npm's cache is a BuildKit cache mount**, shared by every project on the server: a new
+  `package-lock.json` downloads only what changed.
 
 - **Port 8080**, matching the backend track, so the Coolify configuration is the same everywhere.
 - **`nginx:alpine` ships `wget`, not `curl`** — hence the different `HEALTHCHECK` from

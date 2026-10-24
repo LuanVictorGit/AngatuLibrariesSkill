@@ -139,7 +139,10 @@ rule says which one wins.
   container:** it runs on the JVM (`mvn exec:java`, `java -jar`), where the loop is seconds instead of
   an image rebuild. `docker build` is a gate before deploying, not a step repeated while working.
   Never cap the heap with `-Xmx` — use `-XX:MaxRAMPercentage` with `ExitOnOutOfMemoryError` and let
-  the hosting panel own the memory limit. → `references/deploy-coolify.md`
+  the hosting panel own the memory limit. **The template is also what keeps a deploy under a minute**
+  — the Maven repository in a BuildKit cache shared by every project, no `apt-get`, a `HEALTHCHECK`
+  timed to the way Coolify waits — so it is copied as it is, never rewritten by hand.
+  → `references/deploy-coolify.md`
 
 ### Persistence
 

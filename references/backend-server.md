@@ -22,6 +22,9 @@ Then:
 2. Align every third-party coordinate with the `pom.xml` of that commit (section 3 below).
 3. Record the hash in the project's `CLAUDE.md` (R2), so the next session knows what is pinned
    without reading `pom.xml`.
+4. Deploy once that commit's `JitPack` check is green on GitHub. JitPack builds a commit only when
+   asked, in about four minutes; the library's workflow asks on every push to `main`, and a deploy that
+   reaches an unbuilt hash sits in Maven until the build ends (`deploy-coolify.md` 2.2).
 
 **This check is run every time, including when nobody asked for it.** On a new project it is
 obvious; on an existing one it is the whole point — the pinned hash is read and compared against
@@ -80,32 +83,33 @@ What makes the project a Java 25 build — the dependencies themselves are secti
     </plugin>
     <plugin>
       <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-shade-plugin</artifactId>
-      <version>3.6.2</version>
+      <artifactId>maven-jar-plugin</artifactId>
+      <version>3.4.2</version>
+      <configuration>
+        <archive>
+          <manifest>
+            <mainClass>com.company.store.Main</mainClass>
+            <addClasspath>true</addClasspath>
+            <classpathPrefix>lib/</classpathPrefix>
+            <useUniqueVersions>false</useUniqueVersions>
+          </manifest>
+          <manifestEntries>
+            <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+          </manifestEntries>
+        </archive>
+      </configuration>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-dependency-plugin</artifactId>
+      <version>3.8.1</version>
       <executions>
         <execution>
           <phase>package</phase>
-          <goals><goal>shade</goal></goals>
+          <goals><goal>copy-dependencies</goal></goals>
           <configuration>
-            <filters>
-              <filter>
-                <artifact>*:*</artifact>
-                <excludes>
-                  <exclude>META-INF/*.SF</exclude>
-                  <exclude>META-INF/*.DSA</exclude>
-                  <exclude>META-INF/*.RSA</exclude>
-                </excludes>
-              </filter>
-            </filters>
-            <transformers>
-              <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                <mainClass>com.company.store.Main</mainClass>
-                <manifestEntries>
-                  <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
-                </manifestEntries>
-              </transformer>
-            </transformers>
+            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+            <includeScope>runtime</includeScope>
           </configuration>
         </execution>
       </executions>
@@ -122,8 +126,13 @@ What makes the project a Java 25 build — the dependencies themselves are secti
   with a warning on every start and a future release will refuse. `java -jar` reads it from the
   manifest; `mvn exec:java` takes `--enable-native-access=ALL-UNNAMED` from a `.mvn/jvm.config` file,
   and the tests from Surefire's `argLine` (`route-testing.md` 3.1).
-- **Signature files excluded.** BouncyCastle (Web Push) ships a signed JAR, and a shaded JAR that keeps
-  its `.SF`/`.RSA` files refuses to start.
+- **A thin JAR, the dependencies beside it.** `mvn package` writes `target/<app>.jar` and
+  `target/lib/`; the manifest lists `lib/*.jar`, so `java -jar target/<app>.jar` still runs. No shade
+  step means a faster build on every deploy, and the `Dockerfile` puts `lib/` in a layer of its own that
+  repeats from one deploy to the next while `pom.xml` stays the same (`deploy-coolify.md` 2). Signed JARs
+  (BouncyCastle) and `META-INF/services` work untouched — the two traps of shading are gone. An older
+  project still on `maven-shade-plugin` deploys with the same `Dockerfile`; moving it is these two
+  plugins in place of the shade block.
 
 ## 2. `.env` and debug
 
@@ -475,5 +484,8 @@ the security filter, an error, a WebSocket upgrade — with **no per-route code*
   catches the exception and answers by itself calls `JavalinAPI.markRequestError(ctx, e)`.
 - **Reduce or silence it:** `ANGATU_REQUEST_LOG=errors` (status ≥ 400 or an exception) or `off`, as a
   Coolify service variable; in code, `JavalinAPI.setRequestLogMode(RequestLogMode.ERRORS)`, which
-  applies at once and beats the variable. The default is `all` — leave it on in production; the
-  `HEALTHCHECK` shows up too, which is the price of seeing every request.
+  applies at once and beats the variable. The default is `all` — leave it on in production.
+- **The one request without a line:** the container's own `HEALTHCHECK` probe when it succeeds — a
+  path registered with `addIgnoredPath`, a loopback peer and no `X-Forwarded-For`. It repeats every
+  five seconds (`deploy-coolify.md` 2) and would bury the real traffic; a probe that fails is logged,
+  because that is the line that explains a deploy stuck waiting for the container.
