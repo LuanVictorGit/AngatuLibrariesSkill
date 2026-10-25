@@ -35,7 +35,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md`.
 | Console, Gson, Env, Password, StringAPI, DataTime, Task, Request, e-mail, push, Discord, QR code | `references/backend-utilities.md` |
 | Sessions, cookies, authorization, uploads, secrets, rate limiting, hostile client | `references/security.md` |
 | Live channels, `RouteType.WS`, reconnection, event shape | `references/websocket.md` |
-| Charging money, AI text generation, webhooks from the CRM | `references/crm-payments-ai.md` |
+| Charging money (buyers abroad included), AI text generation, webhooks from the CRM | `references/crm-payments-ai.md` |
 | WhatsApp: sending, receiving, session, pacing, the Node bridge | `references/whatsapp.md` |
 | Cloudflare Turnstile: keys, verification, privacy policy, CSP | `references/turnstile.md` |
 | A login screen: Google OAuth through AngatuCRM | `references/auth-oauth.md` |

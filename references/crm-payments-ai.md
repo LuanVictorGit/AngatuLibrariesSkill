@@ -114,6 +114,7 @@ POST /api/v1/payments                  PIX
 POST /api/v1/payments/card             cartão, a partir do token gerado no navegador
 POST /api/v1/payments/boleto           boleto, com pagador completo
 POST /api/v1/checkout/preferences      checkout hospedado
+POST /api/v1/checkout/international    comprador estrangeiro: página do CRM, cartão, en-US, sem CPF
 GET  /api/v1/payments/{id}             consulta  (?refresh=true força o provedor)
 POST /api/v1/payments/{id}/cancel      cancela o que ainda não foi aprovado
 POST /api/v1/payments/{id}/refund      estorna o que já foi, total ou parcial
@@ -133,6 +134,40 @@ POST /api/v1/payments/{id}/refund      estorna o que já foi, total ou parcial
   both the same is how duplicates are born.
 
 Also: the amount charged is computed by the server from the database, never from the browser (R22).
+
+### 4.1 Buyers outside Brazil — the international checkout, not the Payment Brick
+
+**The Payment Brick does not serve a foreign buyer.** On a Brazilian Mercado Pago account its card
+form demands a valid CPF or CNPJ in every language, `en-US` included, and has no setting to hide the
+field; the hosted checkout asks the same. A foreigner sees "Cardholder ID (CPF)", has no number, and
+leaves. So the answer to "accept payments from abroad" is never the Brick — not even translated, and
+not embedded in the project with a guessed or borrowed CPF, which is someone else's identity.
+
+The CRM solves it on its side: `POST /api/v1/checkout/international` (`payments:checkout`) returns
+the usual charge, `pending`, with `checkout_url` pointing at a CRM page — card only, English by
+default, no Brazilian document. The page builds its own form on Mercado Pago's secure fields, so the
+card number never reaches the project or the CRM. What the integrating project does:
+
+1. Its **server** creates the link with the amount, `title`, `external_reference`, optionally
+   `payer_email` (prefills the page), `locale` (`en-US` default; `pt-BR` and the SDK's Spanish ones
+   too), `back_url` and `expires_in_minutes` (one day by default, thirty at most).
+2. It sends the buyer to `checkout_url` — a redirect, an e-mail link, a button.
+3. It waits for the outbound webhook (section 5). The charge leaves `pending` only when a card passes
+   (`approved`, or `in_process` while the issuer reviews it).
+
+Three things that change the integrating code:
+
+- **A declined card does not mark the charge `rejected`.** The buyer may try another card while the
+  link is valid; five declines close the link. Never cancel the order on a decline you did not see —
+  you will not see one.
+- **It charges in BRL, single installment.** The issuer converts to the buyer's currency; the page
+  says so. There is no PIX or boleto on that page: both need a Brazilian bank account or document.
+- **Whoever tests it signed in to the CRM panel gets a "use a private window" notice** instead of the
+  form. That is deliberate: the page loads Mercado Pago's script, and it never runs beside a panel
+  session.
+
+Read the CRM page before integrating, as always: section `#international` of
+[docs-pagamentos](https://crm.angatusistemas.com.br/docs-pagamentos#international).
 
 ## 5. Learning about approval without asking — the CRM's outbound webhook
 
