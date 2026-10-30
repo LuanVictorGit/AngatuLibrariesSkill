@@ -199,6 +199,7 @@ node_modules/
 .git/
 .github/
 .claude/
+graphify-out/
 docs/
 *.md
 *.log

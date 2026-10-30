@@ -26,7 +26,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md`.
 | Task at hand | Read |
 |---|---|
 | **Session start: sync this skill with its repository (R1, mandatory, no asking)** | `references/conventions.md` (section 1) |
-| **Session start in a project: obsidian-skills in `.claude/skills/`, caveman on (R42, R43)** | `references/companion-skills.md` |
+| **Session start in a project: obsidian-skills in `.claude/skills/` and Obsidian on the machine, caveman on, the graphify graph (R42, R43, R45)** | `references/companion-skills.md` |
 | Builds, tests and logs without waste; the module every `CLAUDE.md` carries (R44) | `references/command-execution.md` |
 | **Any Java at all — writing, editing or reviewing a class** (Java 25, structure, performance, errors, Javadoc) | `references/java-standard.md` |
 | Starting a project, `pom.xml` for Java 25, `AngatuLib`, Javalin, rate limiting, request log | `references/backend-server.md` |
@@ -108,7 +108,9 @@ rule says which one wins.
 - **R42 — kepano/obsidian-skills is in every project, and used wherever it applies.**
   <https://github.com/kepano/obsidian-skills>, copied into the project's `.claude/skills/` at the newest
   commit and checked unasked, like R4. Every `.md` is Obsidian Flavored Markdown, `.base` and `.canvas`
-  follow their skills, a web page is read with `defuddle`. → `references/companion-skills.md`
+  follow their skills, a web page is read with `defuddle`. **The Obsidian app is part of it:** a machine
+  without it gets it from the agent, unasked — installed, the graph vault of R45 registered and opened;
+  only a machine with no desktop is skipped. → `references/companion-skills.md`
 - **R43 — caveman speaks in every session of every project, and only in the chat.**
   <https://github.com/JuliusBrussee/caveman> is loaded with this skill and shapes every reply; what is
   persisted — code, commits (R3), documents, product copy (R16) — stays full prose, as caveman itself
@@ -116,6 +118,12 @@ rule says which one wins.
 - **R44 — Commands run efficiently, and every `CLAUDE.md` carries the module that says how.** Efficient Command Execution goes right after the section 3 block, verbatim and kept current:
   targeted tests while working, the full build before delivery, bounded output, explicit timeouts, no
   result claimed unchecked. → `references/command-execution.md`
+- **R45 — Every project has a graphify knowledge graph, and it is read before the code.**
+  <https://github.com/safishamsi/graphify> — package `graphifyy`, command `graphify`, its skill in the
+  agent — is checked unasked and installed when missing. `/graphify . --obsidian` builds
+  `graphify-out/` on first use; a codebase question starts with `graphify query`, `path` or `explain`,
+  before any grep; `graphify update .` follows every code change. The graph maps the whole codebase, so
+  it stays local: `.gitignore`, `.dockerignore`, never under `public/`. → `references/companion-skills.md`
 
 ### Library and hosting
 
@@ -369,9 +377,13 @@ exige, e qual delas vence quando duas colidem, só está no texto completo da sk
 
 Junto com ela são obrigatórias, em todo projeto, as **obsidian-skills**
 (<https://github.com/kepano/obsidian-skills>), em `.claude/skills/` e usadas sempre que a tarefa toca um
-`.md`, `.base` ou `.canvas`, lê uma página web ou mexe num cofre do Obsidian (R42), e o **caveman**
+`.md`, `.base` ou `.canvas`, lê uma página web ou mexe num cofre do Obsidian — e o próprio Obsidian,
+que o agente instala e configura na máquina, sem pedir, quando faltar (R42); o **caveman**
 (<https://github.com/JuliusBrussee/caveman>), carregado no início de toda sessão para toda resposta no
-chat — nunca para o que fica gravado (R43).
+chat — nunca para o que fica gravado (R43); e o grafo de conhecimento do **graphify**
+(<https://github.com/safishamsi/graphify>): gerado com `/graphify . --obsidian` em `graphify-out/`,
+consultado com `graphify query` antes de qualquer busca no código e atualizado com `graphify update .`
+depois de cada mudança (R45).
 
 ### Resumo das regras (texto completo na skill; os IDs são estáveis)
 
@@ -410,8 +422,10 @@ pronto depois de assistido e ouvido no ciclo de revisão, nunca porque compilou 
 R41 orçamento sai do template da skill (`tools/proposal/`), com G6 antes: preço, prazo e contrato vêm do
 dono e nunca são inventados, a capa é só texto, cada página mostra uma ideia com mockup e foto real, e só
 fica pronto depois de cada página ser olhada como imagem · R42 obsidian-skills em todo projeto, na versão
-mais nova · R43 caveman em toda sessão, só no chat, e o `caveman-compress` nunca toca o CLAUDE.md ·
-R44 logo depois deste bloco vem o módulo Efficient Command Execution, copiado sem alteração.
+mais nova, e o Obsidian instalado e configurado na máquina pelo agente · R43 caveman em toda sessão, só no
+chat, e o `caveman-compress` nunca toca o CLAUDE.md · R44 logo depois deste bloco vem o módulo Efficient
+Command Execution, copiado sem alteração · R45 grafo do graphify em todo projeto, lido antes do código e
+atualizado a cada mudança, com `graphify-out/` fora do git e da imagem.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -453,7 +467,8 @@ belongs to the project.
 7. `references/frontend-build.md` — the build, with obfuscation on by R19.
 8. `references/testing.md` — the project checklist, run the JAR, then the `dist`.
 9. Write the section 3 block and the command-execution module (R44) into `CLAUDE.md`, copy the
-   obsidian-skills into `.claude/skills/` (R42), commit to `development`.
+   obsidian-skills into `.claude/skills/` (R42), build the graph with its hooks and `graphify-out/` in
+   `.gitignore` (R45), commit to `development`.
 
 ### 4.2 Landing page
 
@@ -476,6 +491,7 @@ asked for it; R18 means the source is not rewritten to achieve that.
   minification defects never show up in the readable build.
 - `references/java-standard.md` section 8: every Java change passes the review checklist.
 - `CLAUDE.md` updated (R2), commit on `development` with no mention of AI (R3).
+- R45: `graphify update .` ran after the last code change, so the graph matches what is delivered.
 - A video is not a frontend: its list is the final checklist of `references/video-review.md` (R37).
 - A proposal is not a frontend either: its list is section 8 of `references/proposal.md` (R41).
 

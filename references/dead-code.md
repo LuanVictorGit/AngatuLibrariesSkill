@@ -44,8 +44,11 @@ unused. R32 adds the procedure for everything else; it overrules nothing.
 
 - **The project's skills under `.claude/skills/`** (R42). Nothing in the code references them — the
   agent reads them — so every grep comes back empty, and that is not evidence of anything.
+- **The knowledge graph in `graphify-out/`** (R45). It is in `.gitignore`, so a sweep of tracked files
+  never meets it, and deleting it throws away the documents' layer, which costs tokens to rebuild. The
+  `merge=graphify` line that `graphify hook install` adds to `.gitattributes` stays with it.
 
-These three are not subject to proof. There is no evidence that makes them deletable — if the owner wants
+These four are not subject to proof. There is no evidence that makes them deletable — if the owner wants
 data removed, that is a migration they ask for explicitly, not cleanup.
 
 ---

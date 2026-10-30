@@ -1,9 +1,9 @@
-# Companion skills — obsidian-skills and caveman, mandatory in every project
+# Companion skills — obsidian-skills, caveman and graphify, mandatory in every project
 
-> Covers R42 (kepano/obsidian-skills) and R43 (caveman). Both are third-party skills that every Angatu
-> project uses alongside this one. This file says where they live, when each one applies, and how they
-> meet the house rules. What each skill teaches is in its own `SKILL.md`: load it and follow it — this
-> page never replaces reading it.
+> Covers R42 (kepano/obsidian-skills, and the Obsidian app they write for), R43 (caveman) and R45
+> (graphify). All three are third-party skills that every Angatu project uses alongside this one. This
+> file says where they live, when each one applies, and how they meet the house rules. What each skill
+> teaches is in its own `SKILL.md`: load it and follow it — this page never replaces reading it.
 
 ---
 
@@ -66,6 +66,40 @@ rm -rf "$U"
 - If someone opens the project as a vault, `.obsidian/workspace*.json` goes into `.gitignore`; the rest
   of `.obsidian/` may be committed.
 
+### 1.3 The Obsidian app on the machine, configured by the agent
+
+The skills write for Obsidian and the graph of R45 is read in it, so the app is part of the standard.
+**Checked at the start of every session in a project, and configured in the same task when it is
+missing, without asking** — the owner's decision, unlike caveman's install (2.3). Configured means:
+
+1. **Installed**, through the machine's package manager — never an installer downloaded by hand:
+
+   | OS | Present when | Install |
+   |---|---|---|
+   | Windows | `winget list --id Obsidian.Obsidian -e` lists it | `winget install --id Obsidian.Obsidian -e --silent --accept-package-agreements --accept-source-agreements` |
+   | macOS | `/Applications/Obsidian.app` exists | `brew install --cask obsidian` |
+   | Linux | `command -v obsidian` or `flatpak info md.obsidian.Obsidian` finds it | `flatpak install -y flathub md.obsidian.Obsidian` |
+
+2. **The project's graph vault registered and opened** — `graphify-out/obsidian/` (section 3), added to
+   Obsidian's vault list by this skill's script instead of the vault picker:
+
+   ```bash
+   S=~/.claude/skills/AngatuLibrariesSkill          # this skill's directory, as in conventions.md
+   python -X utf8 "$S/tools/obsidian/register-vault.py" graphify-out/obsidian --open
+   ```
+
+   Obsidian rewrites its vault list when it quits, so the script refuses (exit 3) while the app is
+   running: ask the user to close it — never kill it. A vault already registered is only opened.
+3. **Said in one line**: what was installed, what was registered.
+
+- **No desktop** — a cloud session, a container, CI, SSH without a display — is skipped, and said once.
+  The graph is still built, and `graphify-out/graph.html` opens in any browser.
+- **No winget, brew or flatpak**, or an install that wants `sudo` → ask: that one is the owner's to run.
+- **The CLI is the owner's one click.** The `obsidian` command that `obsidian-cli` drives (installer
+  1.12.7 or newer) is switched on inside the app — *Settings → General → Command line interface* —
+  behind a confirmation the agent cannot answer. Ask for it once, the first time a task needs
+  `obsidian-cli`; on Windows the PATH change reaches only terminals opened afterwards.
+
 ## 2. caveman (R43)
 
 Source: <https://github.com/JuliusBrussee/caveman> — Julius Brussee, published as the `caveman`
@@ -110,7 +144,88 @@ and then `/plugin install caveman@caveman`. Installing it changes the owner's ma
 until it is installed, say so once and follow `skills/caveman/SKILL.md` from its repository for the
 rest of the session.
 
-## 3. What goes into `CLAUDE.md`
+## 3. graphify (R45)
 
-The section 3 block of `SKILL.md` already demands both skills. Under "Decisões registradas", record the
+Source: <https://github.com/safishamsi/graphify> — Apache-2.0, published on PyPI as `graphifyy`. It turns
+the project into a knowledge graph: code through tree-sitter, locally and at no token cost; documents
+and images through the agent's own subagents, which do cost tokens. `/graphify .` writes `graphify-out/`:
+
+| Output | What it is |
+|---|---|
+| `graph.html` | the interactive graph — opens in any browser |
+| `GRAPH_REPORT.md` | god nodes, surprising connections, suggested questions |
+| `graph.json` | the graph that `query`, `path` and `explain` read |
+| `cache/` | per-file hashes: a rebuild re-reads only what changed |
+| `obsidian/` | with `--obsidian`: one note per node, `graph.canvas`, colours by community — the vault of 1.3 |
+
+### 3.1 On the machine, checked unasked
+
+At the start of every session in a project, after the sync of R1, and installed in the same task when
+missing — the owner's decision, like 1.3:
+
+```bash
+graphify --help >/dev/null 2>&1 || echo "graphify: command missing"
+test -f ~/.claude/skills/graphify/SKILL.md || echo "graphify: skill missing"
+```
+
+```bash
+python -m pip install --upgrade graphifyy    # two y's; the command it installs is graphify
+graphify install                             # the skill into ~/.claude/skills/graphify/, for this OS
+```
+
+- **The package is `graphifyy`, never `graphify`.** PyPI has no `graphify` today, and a name nobody owns
+  is a name anybody can claim: a `pip install graphify` that one day succeeds installs someone else's code.
+- **`graphify` resolves on PATH**, because the skill calls it by name. `pip install --user` on Windows
+  leaves `graphify.exe` in `%APPDATA%\Python\Python3XX\Scripts`, outside PATH: add that folder to the
+  user PATH — the folder `pip` names in its warning — and open a new terminal.
+- **One skill per machine, never a copy in the project.** `graphify install` picks the flavour of the OS
+  (PowerShell on Windows, bash elsewhere). `graphify install --project` would commit one OS's flavour to
+  every clone, and `graphify claude install` writes this machine's absolute path into the committed
+  `.claude/settings.json`; neither is used. What they would add to `CLAUDE.md` is already in the block of
+  `SKILL.md` section 3.
+- **Upgraded together.** After `pip install --upgrade graphifyy`, run `graphify install` again: graphify
+  warns when the skill on disk is older than the package.
+
+### 3.2 In the project
+
+- **First session, no `graphify-out/graph.json`** → build it in the agent, install the git hooks, and add
+  `graphify-out/` to `.gitignore` in the same commit:
+
+  ```
+  /graphify . --obsidian
+  ```
+  ```bash
+  graphify hook install    # rebuilds the code layer after commit, checkout, merge and rebase
+  ```
+
+  The hooks live in `.git/hooks`, so a fresh clone has none: `graphify hook status` at every session
+  start, `graphify hook install` when they are missing. They pin the Python that has graphify, so they
+  work even where the command is not on PATH.
+- **The graph is read before the code.** A question about the codebase — where something lives, what
+  calls what, what a change touches — starts with `graphify query "<question>"`, `graphify path "<A>"
+  "<B>"` or `graphify explain "<X>"`, before the first grep, glob or file read; raw files are opened for
+  the lines the graph pointed at. Every subagent prompt that explores code carries the same instruction.
+  `GRAPH_REPORT.md` is for architecture review.
+- **Kept current in the same task.** After a code change, `graphify update .` (code only, no tokens);
+  after documents changed, `/graphify . --update`; before the vault is opened, `graphify export
+  obsidian`, because `update` does not rewrite the notes.
+- **What the graph does not read.** graphify honours `.gitignore`, so `.env`, `data/` and the database
+  never enter it. What git tracks but the graph does not need goes into `.graphifyignore`, same syntax:
+  the committed `tailwind.css` (R14), `vendor/` (R19), large binaries.
+
+### 3.3 What stays out
+
+- **`graphify-out/` is local.** It is in `.gitignore`: each clone builds its own, so nothing has to be
+  merged and no rewritten JSON lands in every diff. `graphify hook install` also adds one line to
+  `.gitattributes` (`graphify-out/graph.json merge=graphify`): harmless while the folder is ignored,
+  committed with the rest, never swept as junk (R32).
+- **Never in the image, never published.** `.dockerignore` lists `graphify-out/` (`deploy-coolify.md`,
+  `static-site.md`), and nothing of it goes under `src/main/resources/public/` or into `dist/`: the graph
+  is a map of the whole codebase, routes and checks included — what a hostile client wants most (R22).
+- **The vault is regenerated, never edited.** A note written inside `graphify-out/obsidian/` is lost on
+  the next export; project documents stay in `docs/` (1.2).
+
+## 4. What goes into `CLAUDE.md`
+
+The section 3 block of `SKILL.md` already demands all three. Under "Decisões registradas", record the
 obsidian-skills commit copied into `.claude/skills/`, so the next session compares it in one command.

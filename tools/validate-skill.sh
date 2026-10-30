@@ -98,11 +98,16 @@ secao 'SKILL.md'
 # From 490 to 500 when the command-execution module joined every CLAUDE.md
 # (R44): the rule, one routing row, one summary line and a three-line pointer
 # here, while the module itself lives in references/command-execution.md.
+# From 500 to 520 when the knowledge graph became mandatory (R45) and R42 took
+# in the Obsidian app: one rule, two lines of R42, four of the block paragraph,
+# two of its summary and two checklist lines here, against sections 1.3 and 3
+# of references/companion-skills.md and tools/obsidian/. The file already stood
+# at 501 before them, one line over the old ceiling.
 LINHAS=$(wc -l < SKILL.md | tr -d ' ')
-if [ "$LINHAS" -gt 500 ]; then
-  falha "SKILL.md com $LINHAS linhas (teto 500) — conteudo deve descer para references/"
+if [ "$LINHAS" -gt 520 ]; then
+  falha "SKILL.md com $LINHAS linhas (teto 520) — conteudo deve descer para references/"
 else
-  ok "SKILL.md com $LINHAS linhas (teto 500)"
+  ok "SKILL.md com $LINHAS linhas (teto 520)"
 fi
 
 if grep -q 'AngatuLibrariesSkill:begin' SKILL.md && grep -q 'AngatuLibrariesSkill:end' SKILL.md; then
@@ -930,24 +935,27 @@ if [ -n "${PYTHON:-}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 7e. the companion skills (R42, R43)
+# 7e. the companion skills (R42, R43, R45)
 #
-# Both rules only work if the CLAUDE.md block names them: that block is what
-# every project session reads, and a rule missing from it fades on the first
-# compaction. And both have one silent way to break the house rules: caveman
-# compressing what is persisted (a commit, the CLAUDE.md block), and Obsidian
-# properties pushed above the AngatuLibrariesSkill block of the anchor files.
+# The three rules only work if the CLAUDE.md block names them: that block is
+# what every project session reads, and a rule missing from it fades on the
+# first compaction. And each has a silent way to break the house rules: caveman
+# compressing what is persisted (a commit, the CLAUDE.md block), Obsidian
+# properties pushed above the AngatuLibrariesSkill block of the anchor files,
+# and the graph -- a map of the whole codebase -- shipped in the image, or
+# installed from "graphify", a PyPI name nobody owns.
 # ---------------------------------------------------------------------------
-secao 'companion skills (R42, R43)'
+secao 'companion skills (R42, R43, R45)'
 CS=references/companion-skills.md
 
-for REGRA in R42 R43; do
+for REGRA in R42 R43 R45; do
   exige SKILL.md "^- \\*\\*$REGRA" "$REGRA defined in SKILL.md" "$REGRA missing from SKILL.md"
 done
 exige SKILL.md 'companion-skills\.md' 'SKILL.md routes the companion skills' \
                'SKILL.md has no route to companion-skills.md'
 BLOCO=$(awk '/AngatuLibrariesSkill:begin/,/AngatuLibrariesSkill:end/' SKILL.md)
-for LINK in 'github.com/kepano/obsidian-skills' 'github.com/JuliusBrussee/caveman'; do
+for LINK in 'github.com/kepano/obsidian-skills' 'github.com/JuliusBrussee/caveman' \
+            'github.com/safishamsi/graphify'; do
   case "$BLOCO" in
     *"$LINK"*) ok "CLAUDE.md block demands $LINK" ;;
     *)         falha "CLAUDE.md block without $LINK -- projects never hear of it" ;;
@@ -969,6 +977,48 @@ exige references/deploy-coolify.md '^\.claude/$' '.dockerignore keeps .claude/ o
             '.dockerignore ships .claude/ into the build context'
 exige references/dead-code.md '\.claude/skills' 'dead-code.md protects the project skills' \
             'dead-code.md lets the project skills be swept as orphans'
+
+case "$BLOCO" in
+  *'graphify query'*) ok 'CLAUDE.md block sends codebase questions to the graph first' ;;
+  *)                  falha 'CLAUDE.md block without graphify query -- the graph is built and never read' ;;
+esac
+exige "$CS" 'install --upgrade graphifyy' 'companion-skills.md installs the graphifyy package' \
+            'companion-skills.md without pip install graphifyy -- "graphify" is a name anybody can claim'
+exige "$CS" 'graphify query' 'companion-skills.md reads the graph before the code' \
+            'companion-skills.md does not send codebase questions to the graph first'
+exige "$CS" 'graphify update \.' 'companion-skills.md keeps the graph current' \
+            'companion-skills.md lets the graph go stale after a code change'
+exige "$CS" 'graphify hook install' 'companion-skills.md installs the git hooks in every clone' \
+            'companion-skills.md without the hooks -- a fresh clone never rebuilds the graph'
+exige "$CS" 'claude install' 'companion-skills.md keeps the machine path out of the committed settings' \
+            'companion-skills.md does not warn against graphify claude install'
+exige "$CS" 'winget install --id Obsidian\.Obsidian' 'companion-skills.md installs Obsidian when missing' \
+            'companion-skills.md does not install Obsidian -- the machine stays unconfigured'
+exige "$CS" 'register-vault\.py' 'companion-skills.md registers the graph vault' \
+            'companion-skills.md without the vault registration'
+exige "$CS" 'never kill it' 'companion-skills.md waits for Obsidian to close' \
+            'companion-skills.md lets the agent kill a running Obsidian'
+exige "$CS" 'No desktop' 'companion-skills.md skips Obsidian where there is no desktop' \
+            'companion-skills.md tries to install a desktop app in a container'
+exige references/deploy-coolify.md '^graphify-out/$' '.dockerignore keeps the graph out of the image' \
+            '.dockerignore ships graphify-out/ -- a map of the code in production'
+exige references/static-site.md '^graphify-out/$' 'static .dockerignore keeps the graph out of the image' \
+            'static .dockerignore ships graphify-out/'
+exige references/dead-code.md 'graphify-out' 'dead-code.md protects the local graph' \
+            'dead-code.md lets graphify-out/ be swept as junk'
+if [ -f tools/obsidian/register-vault.py ]; then
+  ok 'tools/obsidian/register-vault.py exists'
+  if [ -n "$PYTHON" ]; then
+    if "$PYTHON" -c "import ast, sys; ast.parse(open(sys.argv[1], encoding='utf-8').read())" \
+         tools/obsidian/register-vault.py >/dev/null 2>&1; then
+      ok 'register-vault.py compiles'
+    else
+      falha 'broken syntax: tools/obsidian/register-vault.py'
+    fi
+  fi
+else
+  falha 'tools/obsidian/register-vault.py missing -- companion-skills.md tells agents to run it'
+fi
 
 # ---------------------------------------------------------------------------
 # 7f. the command-execution module (R44)

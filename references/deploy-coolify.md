@@ -24,7 +24,7 @@
 ## 2. Standard Dockerfile
 
 Copy it to the project root, next to `pom.xml`. Adjust only the port, if the project uses another. The
-same file ships in the library repository as `templates/Dockerfile`, with the comments in Portuguese.
+same file ships in the library repository as `templates/Dockerfile`, its comments written in Portuguese.
 
 ```dockerfile
 # syntax=docker/dockerfile:1
@@ -182,6 +182,7 @@ data/
 uploads/
 .env
 .claude/
+graphify-out/
 .env.*
 tools/
 node_modules/
