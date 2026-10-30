@@ -109,8 +109,8 @@ rule says which one wins.
   <https://github.com/kepano/obsidian-skills>, copied into the project's `.claude/skills/` at the newest
   commit and checked unasked, like R4. Every `.md` is Obsidian Flavored Markdown, `.base` and `.canvas`
   follow their skills, a web page is read with `defuddle`. **The Obsidian app is part of it:** a machine
-  without it gets it from the agent, unasked — installed, the graph vault of R45 registered and opened;
-  only a machine with no desktop is skipped. → `references/companion-skills.md`
+  without it gets it from the agent, unasked — installed, the R45 graph's vault named after the project,
+  registered and opened; a machine with no desktop is skipped. → `references/companion-skills.md`
 - **R43 — caveman speaks in every session of every project, and only in the chat.**
   <https://github.com/JuliusBrussee/caveman> is loaded with this skill and shapes every reply; what is
   persisted — code, commits (R3), documents, product copy (R16) — stays full prose, as caveman itself
@@ -120,10 +120,14 @@ rule says which one wins.
   result claimed unchecked. → `references/command-execution.md`
 - **R45 — Every project has a graphify knowledge graph, and it is read before the code.**
   <https://github.com/safishamsi/graphify> — package `graphifyy`, command `graphify`, its skill in the
-  agent — is checked unasked and installed when missing. `/graphify . --obsidian` builds
+  agent — is checked unasked and installed when missing. `/graphify .` builds
   `graphify-out/` on first use; a codebase question starts with `graphify query`, `path` or `explain`,
   before any grep; `graphify update .` follows every code change. The graph maps the whole codebase, so
   it stays local: `.gitignore`, `.dockerignore`, never under `public/`. → `references/companion-skills.md`
+- **R46 — On the machine, the agent leaves only what the task delivers.** Its scratch scripts, samples,
+  downloads, extracted archives, test images and containers, test vaults and their entry in Obsidian's
+  list are deleted once the task no longer needs them, before it is reported done, each by the path noted
+  when it was made — never what was already there, never the user's. → `references/conventions.md`
 
 ### Library and hosting
 
@@ -381,7 +385,7 @@ Junto com ela são obrigatórias, em todo projeto, as **obsidian-skills**
 que o agente instala e configura na máquina, sem pedir, quando faltar (R42); o **caveman**
 (<https://github.com/JuliusBrussee/caveman>), carregado no início de toda sessão para toda resposta no
 chat — nunca para o que fica gravado (R43); e o grafo de conhecimento do **graphify**
-(<https://github.com/safishamsi/graphify>): gerado com `/graphify . --obsidian` em `graphify-out/`,
+(<https://github.com/safishamsi/graphify>): gerado com `/graphify .` em `graphify-out/`,
 consultado com `graphify query` antes de qualquer busca no código e atualizado com `graphify update .`
 depois de cada mudança (R45).
 
@@ -425,7 +429,8 @@ fica pronto depois de cada página ser olhada como imagem · R42 obsidian-skills
 mais nova, e o Obsidian instalado e configurado na máquina pelo agente · R43 caveman em toda sessão, só no
 chat, e o `caveman-compress` nunca toca o CLAUDE.md · R44 logo depois deste bloco vem o módulo Efficient
 Command Execution, copiado sem alteração · R45 grafo do graphify em todo projeto, lido antes do código e
-atualizado a cada mudança, com `graphify-out/` fora do git e da imagem.
+atualizado a cada mudança, com `graphify-out/` fora do git e da imagem · R46 o que o agente cria na máquina
+para uso próprio é apagado quando a tarefa não precisa mais dele — nunca o que já existia nem o que é do usuário.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -492,6 +497,7 @@ asked for it; R18 means the source is not rewritten to achieve that.
 - `references/java-standard.md` section 8: every Java change passes the review checklist.
 - `CLAUDE.md` updated (R2), commit on `development` with no mention of AI (R3).
 - R45: `graphify update .` ran after the last code change, so the graph matches what is delivered.
+- R46: nothing the agent made for its own use is left on the machine — or the reply names what is, and why.
 - A video is not a frontend: its list is the final checklist of `references/video-review.md` (R37).
 - A proposal is not a frontend either: its list is section 8 of `references/proposal.md` (R41).
 

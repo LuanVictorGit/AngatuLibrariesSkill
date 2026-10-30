@@ -103,11 +103,14 @@ secao 'SKILL.md'
 # two of its summary and two checklist lines here, against sections 1.3 and 3
 # of references/companion-skills.md and tools/obsidian/. The file already stood
 # at 501 before them, one line over the old ceiling.
+# From 520 to 525 when R46 made the agent delete what it makes for its own use:
+# the rule, one summary line and one checklist line here, against section 4 of
+# references/conventions.md.
 LINHAS=$(wc -l < SKILL.md | tr -d ' ')
-if [ "$LINHAS" -gt 520 ]; then
-  falha "SKILL.md com $LINHAS linhas (teto 520) — conteudo deve descer para references/"
+if [ "$LINHAS" -gt 525 ]; then
+  falha "SKILL.md com $LINHAS linhas (teto 525) — conteudo deve descer para references/"
 else
-  ok "SKILL.md com $LINHAS linhas (teto 520)"
+  ok "SKILL.md com $LINHAS linhas (teto 525)"
 fi
 
 if grep -q 'AngatuLibrariesSkill:begin' SKILL.md && grep -q 'AngatuLibrariesSkill:end' SKILL.md; then
@@ -942,8 +945,9 @@ fi
 # first compaction. And each has a silent way to break the house rules: caveman
 # compressing what is persisted (a commit, the CLAUDE.md block), Obsidian
 # properties pushed above the AngatuLibrariesSkill block of the anchor files,
-# and the graph -- a map of the whole codebase -- shipped in the image, or
-# installed from "graphify", a PyPI name nobody owns.
+# and the graph -- a map of the whole codebase -- shipped in the image,
+# installed from "graphify", a PyPI name nobody owns, or exported to the default
+# graphify-out/obsidian/, a vault name every project shares.
 # ---------------------------------------------------------------------------
 secao 'companion skills (R42, R43, R45)'
 CS=references/companion-skills.md
@@ -996,6 +1000,15 @@ exige "$CS" 'winget install --id Obsidian\.Obsidian' 'companion-skills.md instal
             'companion-skills.md does not install Obsidian -- the machine stays unconfigured'
 exige "$CS" 'register-vault\.py' 'companion-skills.md registers the graph vault' \
             'companion-skills.md without the vault registration'
+exige "$CS" 'graphify-out/vault/' 'companion-skills.md names each vault after its project' \
+            'companion-skills.md leaves every vault named obsidian -- the list tells none apart'
+exige "$CS" 'export obsidian --dir' 'companion-skills.md exports the vault into the named folder' \
+            'companion-skills.md exports the vault to graphify-out/obsidian/, a name every project shares'
+if grep -rnE -- '/graphify \. --obsidian' SKILL.md references/ >/dev/null 2>&1; then
+  falha '/graphify . --obsidian still prescribed -- it writes every vault to graphify-out/obsidian/'
+else
+  ok 'no command writes the vault where every project shares its name'
+fi
 exige "$CS" 'never kill it' 'companion-skills.md waits for Obsidian to close' \
             'companion-skills.md lets the agent kill a running Obsidian'
 exige "$CS" 'No desktop' 'companion-skills.md skips Obsidian where there is no desktop' \
@@ -1056,6 +1069,35 @@ if grep -nE 'GEMINI\.md' SKILL.md | grep -vq 'no .GEMINI\.md'; then
 else
   ok 'SKILL.md anchors projects on CLAUDE.md alone'
 fi
+
+# ---------------------------------------------------------------------------
+# 7g. what the agent leaves on the machine (R46)
+#
+# The rule holds only with both halves: what goes, by the exact path noted when
+# it was made, and what never goes -- what was already there, the user's files,
+# the deliverables. With only the first half, it is the rule that empties
+# somebody's Downloads.
+# ---------------------------------------------------------------------------
+secao 'temporary files (R46)'
+CV=references/conventions.md
+
+exige SKILL.md '^- \*\*R46' 'R46 defined in SKILL.md' 'R46 missing from SKILL.md'
+case "$BLOCO" in
+  *'R46 o que o agente'*) ok 'CLAUDE.md block summarises R46' ;;
+  *)                      falha 'CLAUDE.md block without R46 -- projects never hear of it' ;;
+esac
+exige SKILL.md '^- R46:' 'the delivery checklist asks for R46' \
+               'section 4.4 lets a task end with its leftovers on the machine'
+exige "$CV" 'What never goes' 'conventions.md says what is never deleted' \
+            'conventions.md deletes without saying what never goes'
+exige "$CV" 'mktemp -d' 'conventions.md makes scratch work in a folder of its own' \
+            'conventions.md does not say where scratch work is made'
+exige "$CV" 'exact' 'conventions.md deletes by the exact path' \
+            'conventions.md lets leftovers go by wildcard'
+exige "$CV" 'register-vault\.py <folder> --remove' 'conventions.md takes a test vault off the list first' \
+            'conventions.md deletes a test vault and leaves it listed in Obsidian'
+exige tools/obsidian/register-vault.py '"--remove"' 'register-vault.py takes a vault off the list' \
+            'register-vault.py cannot remove a vault -- a test vault stays listed'
 
 # ---------------------------------------------------------------------------
 # 8. o historico deste repositorio nao aponta para uma IA (R31)

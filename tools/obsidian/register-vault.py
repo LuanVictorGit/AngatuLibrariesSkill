@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Registers a folder as an Obsidian vault and opens it, so "Obsidian configured"
-(R42) never waits for someone to click through the vault picker.
+(R42) never waits for someone to click through the vault picker -- and takes it
+off the list again, so a test vault leaves nothing behind (R46).
 
 Obsidian keeps its vault list in obsidian.json, in its own config folder, and
 writes that file whole when it quits: an entry added while the app runs is gone
@@ -9,16 +10,23 @@ at the next exit. So the live file is edited only while Obsidian is closed, and
 nothing else in it is touched -- other vaults, window state, settings. A folder
 already in the list is left as it is.
 
-The folder is the vault graphify exports for the project (R45):
+The folder is the vault graphify exports for the project, under the project's
+name, because Obsidian names a vault after its folder (R45):
 
-  python -X utf8 tools/obsidian/register-vault.py graphify-out/obsidian --open
+  graphify export obsidian --dir graphify-out/vault/<project>
+  python -X utf8 tools/obsidian/register-vault.py graphify-out/vault/<project> --open
+
+--remove deletes the entry and what Obsidian keeps beside the list for that
+vault (<id>.json, Partitions/vault-<id>), as the app's own "Remove from list"
+does. The folder itself is deleted afterwards, by whoever made it.
 
 Usage:
-  python -X utf8 tools/obsidian/register-vault.py <folder> [--open] [--config <obsidian.json>]
+  python -X utf8 tools/obsidian/register-vault.py <folder> [--open | --remove] [--config <obsidian.json>]
 
-Exit codes: 0 registered or already there, 2 no such folder, 3 Obsidian is
-running, 4 the vault could not be opened (Obsidian not installed), 5 the vault
-list is not valid JSON and was left untouched.
+Exit codes: 0 done (registered, already there, removed, or not listed), 2 no
+folder to register, 3 Obsidian is running, 4 the vault could not be opened
+(Obsidian not installed), 5 the vault list is not valid JSON and was left
+untouched.
 
 @author Angatu Sistemas
 """
@@ -27,7 +35,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import secrets
+import shutil
 import subprocess
 import sys
 import time
@@ -110,38 +120,67 @@ def open_vault(folder: Path) -> bool:
     return True
 
 
+def write_list(config: Path, settings: dict) -> None:
+    config.parent.mkdir(parents=True, exist_ok=True)
+    staged = config.with_name(config.name + ".tmp")
+    staged.write_text(json.dumps(settings, separators=(",", ":")), encoding="utf-8")
+    os.replace(staged, config)
+
+
+def forget(config: Path, key: str) -> None:
+    """What the app's own "Remove from list" deletes beside the list, for one vault id."""
+    if not re.fullmatch(r"[0-9a-f]{16}", key):
+        return  # not an id Obsidian made: never a path built from it
+    (config.parent / f"{key}.json").unlink(missing_ok=True)
+    shutil.rmtree(config.parent / "Partitions" / f"vault-{key}", ignore_errors=True)
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="register a folder as an Obsidian vault")
+    parser = argparse.ArgumentParser(description="register a folder as an Obsidian vault, or take it off")
     parser.add_argument("folder", type=Path)
-    parser.add_argument("--open", action="store_true", help="open the vault in Obsidian afterwards")
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument("--open", action="store_true", help="open the vault in Obsidian afterwards")
+    action.add_argument("--remove", action="store_true",
+                        help="take the folder off the vault list instead, before the folder is deleted")
     parser.add_argument("--config", type=Path,
                         help="obsidian.json to edit instead of the app's own, for tests")
     args = parser.parse_args()
 
     folder = args.folder.resolve()
-    if not folder.is_dir():
-        print(f"no folder at {folder}: build it first with /graphify . --obsidian", file=sys.stderr)
+    if not args.remove and not folder.is_dir():
+        print(f"no folder at {folder}: export the vault first, graphify export obsidian --dir <folder>",
+              file=sys.stderr)
         return 2
     config = args.config or default_config()
     try:
         settings = json.loads(config.read_text(encoding="utf-8-sig")) if config.is_file() else {}
     except ValueError:
-        print(f"{config} is not valid JSON: left untouched, register the vault in the app", file=sys.stderr)
+        print(f"{config} is not valid JSON: left untouched, manage the vault in the app", file=sys.stderr)
         return 5
     vaults = settings.setdefault("vaults", {})
+    listed = [key for key, entry in vaults.items()
+              if entry.get("path") and same_folder(entry["path"], folder)]
 
-    if any(entry.get("path") and same_folder(entry["path"], folder) for entry in vaults.values()):
+    if args.remove and not listed:
+        print(f"not registered: {folder}")
+        return 0
+    if listed and not args.remove:
         print(f"already registered: {folder}")
     elif args.config is None and obsidian_running():
         print("Obsidian is running and rewrites its vault list on exit: close it, then run again",
               file=sys.stderr)
         return 3
+    elif args.remove:
+        for key in listed:
+            del vaults[key]
+        write_list(config, settings)
+        for key in listed:
+            forget(config, key)
+        print(f"removed: {folder} from {config}")
+        return 0
     else:
         vaults[secrets.token_hex(8)] = {"path": str(folder), "ts": int(time.time() * 1000), "open": True}
-        config.parent.mkdir(parents=True, exist_ok=True)
-        staged = config.with_name(config.name + ".tmp")
-        staged.write_text(json.dumps(settings, separators=(",", ":")), encoding="utf-8")
-        os.replace(staged, config)
+        write_list(config, settings)
         print(f"registered: {folder} in {config}")
 
     if args.open:

@@ -80,16 +80,23 @@ missing, without asking** — the owner's decision, unlike caveman's install (2.
    | macOS | `/Applications/Obsidian.app` exists | `brew install --cask obsidian` |
    | Linux | `command -v obsidian` or `flatpak info md.obsidian.Obsidian` finds it | `flatpak install -y flathub md.obsidian.Obsidian` |
 
-2. **The project's graph vault registered and opened** — `graphify-out/obsidian/` (section 3), added to
-   Obsidian's vault list by this skill's script instead of the vault picker:
+2. **The project's graph vault exported, registered and opened** — `graphify-out/vault/<project>/`
+   (section 3), under the name of the project's folder: Obsidian names a vault after its folder, and a
+   list where every vault is called `obsidian` tells none apart. It joins Obsidian's vault list through
+   this skill's script instead of the vault picker:
 
    ```bash
    S=~/.claude/skills/AngatuLibrariesSkill          # this skill's directory, as in conventions.md
-   python -X utf8 "$S/tools/obsidian/register-vault.py" graphify-out/obsidian --open
+   V="graphify-out/vault/$(basename "$PWD")"        # from the project root: the vault takes its name
+   graphify export obsidian --dir "$V"              # the notes, current with the graph
+   python -X utf8 "$S/tools/obsidian/register-vault.py" "$V" --open
    ```
 
    Obsidian rewrites its vault list when it quits, so the script refuses (exit 3) while the app is
    running: ask the user to close it — never kill it. A vault already registered is only opened.
+   `--remove` takes a folder off the list, under the same condition, together with what Obsidian keeps
+   for it — the step before the folder is deleted. It is how a test vault leaves (R46), and how a
+   `graphify-out/obsidian/` from before the vault took the project's name is retired.
 3. **Said in one line**: what was installed, what was registered.
 
 - **No desktop** — a cloud session, a container, CI, SSH without a display — is skipped, and said once.
@@ -156,7 +163,7 @@ and images through the agent's own subagents, which do cost tokens. `/graphify .
 | `GRAPH_REPORT.md` | god nodes, surprising connections, suggested questions |
 | `graph.json` | the graph that `query`, `path` and `explain` read |
 | `cache/` | per-file hashes: a rebuild re-reads only what changed |
-| `obsidian/` | with `--obsidian`: one note per node, `graph.canvas`, colours by community — the vault of 1.3 |
+| `vault/<project>/` | from `graphify export obsidian --dir`: one note per node, `graph.canvas`, colours by community — the vault of 1.3, under the project's name |
 
 ### 3.1 On the machine, checked unasked
 
@@ -192,12 +199,14 @@ graphify install                             # the skill into ~/.claude/skills/g
   `graphify-out/` to `.gitignore` in the same commit:
 
   ```
-  /graphify . --obsidian
+  /graphify .
   ```
   ```bash
   graphify hook install    # rebuilds the code layer after commit, checkout, merge and rebase
   ```
 
+  No `--obsidian` here: it writes the vault to `graphify-out/obsidian/`, under a name every project
+  shares. The vault is exported by 1.3, under the project's name, and only where a desktop opens it.
   The hooks live in `.git/hooks`, so a fresh clone has none: `graphify hook status` at every session
   start, `graphify hook install` when they are missing. They pin the Python that has graphify, so they
   work even where the command is not on PATH.
@@ -208,7 +217,7 @@ graphify install                             # the skill into ~/.claude/skills/g
   `GRAPH_REPORT.md` is for architecture review.
 - **Kept current in the same task.** After a code change, `graphify update .` (code only, no tokens);
   after documents changed, `/graphify . --update`; before the vault is opened, `graphify export
-  obsidian`, because `update` does not rewrite the notes.
+  obsidian --dir "$V"` (1.3), because `update` does not rewrite the notes.
 - **What the graph does not read.** graphify honours `.gitignore`, so `.env`, `data/` and the database
   never enter it. What git tracks but the graph does not need goes into `.graphifyignore`, same syntax:
   the committed `tailwind.css` (R14), `vendor/` (R19), large binaries.
@@ -222,7 +231,7 @@ graphify install                             # the skill into ~/.claude/skills/g
 - **Never in the image, never published.** `.dockerignore` lists `graphify-out/` (`deploy-coolify.md`,
   `static-site.md`), and nothing of it goes under `src/main/resources/public/` or into `dist/`: the graph
   is a map of the whole codebase, routes and checks included — what a hostile client wants most (R22).
-- **The vault is regenerated, never edited.** A note written inside `graphify-out/obsidian/` is lost on
+- **The vault is regenerated, never edited.** A note written inside `graphify-out/vault/` is lost on
   the next export; project documents stay in `docs/` (1.2).
 
 ## 4. What goes into `CLAUDE.md`

@@ -1,7 +1,7 @@
-# Conventions — keeping the skill current, CLAUDE.md and commits
+# Conventions — keeping the skill current, CLAUDE.md, commits and a clean machine
 
-> Covers R1 (the skill stays current), R2 (`CLAUDE.md` current), R3 (commits) and R31
-> (no trace of AI in the repository). How code is written — architecture, performance, language and
+> Covers R1 (the skill stays current), R2 (`CLAUDE.md` current), R3 (commits), R31 (no trace of AI
+> in the repository) and R46 (what the agent makes for its own use leaves the machine). How code is written — architecture, performance, language and
 > Javadoc — is `java-standard.md` (R11, R12, R38–R40).
 
 ---
@@ -200,3 +200,51 @@ half-finished screen to production, and nobody notices until a user opens it.
 
 Before editing a large file, validate balanced `{}` / `()`, and for JavaScript run
 `node -e "new Function(fs.readFileSync(...,'utf8'))"`.
+
+## 4. What the agent leaves on the machine (R46)
+
+A task leaves behind what it delivers — the code, the commit, the file the user asked for, the tools a
+rule installs — and nothing else. What the agent makes for its own use along the way is deleted as soon
+as the task stops needing it, and at the latest before the task is reported done. The machine is the
+user's: leftovers take their disk and mix with their own files, where nobody can later tell what is safe
+to delete.
+
+**What counts** — anything the agent itself created in the task, anywhere on the machine:
+
+- scratch scripts, fixtures, sample projects, copies made to try something;
+- downloads and extracted archives: an installer, a release zip, a repository cloned to be read once;
+- test databases, logs and screenshots nobody asked to keep;
+- a test container and its image (`docker rm -f <container>`, `docker rmi <image>`); a temporary server
+  is shut down, as R29 already says;
+- what points at any of those: a test vault leaves Obsidian's list first
+  (`register-vault.py <folder> --remove`, `companion-skills.md` 1.3), and then its folder goes.
+
+Inside the project, the agent's leftovers are already R32's (`dead-code.md`: `.bak`, `-old`,
+`Teste2.java`); R46 is the rest of the machine.
+
+**Where it is made.** In the scratch directory the agent's tool provides, when there is one; otherwise in
+a folder of its own under the system's temporary directory. Never in the project tree, never among the
+user's own folders — Desktop, Documents, Downloads:
+
+```bash
+T="$(mktemp -d)"     # one folder for the task: one exact path to delete
+# ... work inside "$T" ...
+rm -rf "$T"
+```
+
+**How it goes.** A path made outside that folder is noted when it is made, and deleted by that exact
+path. Never a wildcard over a shared folder (`rm -rf /tmp/*`, `%TEMP%\*`), never a guess at what "looks
+temporary".
+
+**What never goes:**
+
+- anything that was there before the task: a path that already existed when the agent went to make it
+  is not the agent's, and deleting something old inside the project is R32's — with proof, and asking;
+- anything of the user's, however temporary it looks, and anything the user said to keep;
+- the deliverables: what was asked for, what was sent to the user, what a rule keeps (`graphify-out/`,
+  the video folder of R37), and the tools a rule installs (graphify, Obsidian, caveman, the Tailwind
+  binary);
+- the caches the tools keep for themselves: pip, npm, Maven's `~/.m2`, winget, Docker's build cache.
+
+**When something cannot go yet** — a file still open, Obsidian running with the test vault (never kill
+it) — the closing message names each path left and why, and it goes as soon as it is free.

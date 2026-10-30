@@ -126,7 +126,7 @@ has one.
 - [ ] Presentational media and text protected per element; contact data and form fields still copyable (R30)
 - [ ] `.env` + `.gitignore` (`database.db`, `.env`, `tools/tailwindcss*` when not committed)
 - [ ] `CLAUDE.md` created, with the `AngatuLibrariesSkill` block (R1)
-- [ ] graphify graph built (`/graphify . --obsidian`), git hooks installed, `graphify-out/` in
+- [ ] graphify graph built (`/graphify .`), git hooks installed, `graphify-out/` in
       `.gitignore` and `.dockerignore` (R45)
 - [ ] Angatu watermark on every page and e-mail — **the 429 and 403 block pages included** (R17),
       rendered through `JavalinAPI.setDenyPage`; the block page shows the real remaining time, is
@@ -149,6 +149,8 @@ has one.
 - [ ] No band-2 orphan left behind: the utilities, files and commented blocks this change orphaned are
       gone in the same commit, and band-1 candidates are listed rather than deleted (R32,
       `dead-code.md`)
+- [ ] Nothing the task made for its own use is left on the machine: test containers and images,
+      samples, downloads, test vaults (R46, `conventions.md` section 4)
 - [ ] Detailed commit pushed to `development` (R3)
 - [ ] History free of any AI trace — no `Co-Authored-By`, no `Generated with`, no 🤖, in commits,
       branch names and the pull request (R31). Checked with the grep in `conventions.md` **before**
