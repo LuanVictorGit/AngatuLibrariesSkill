@@ -38,8 +38,9 @@ FLATPAK_ID = "md.obsidian.Obsidian"
 
 
 def succeeds(command: list[str]) -> bool:
+    # No pipes: the app xdg-open starts can inherit them, and run() would wait for the app to quit.
     try:
-        return subprocess.run(command, capture_output=True).returncode == 0
+        return subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
     except OSError:
         return False
 
@@ -70,15 +71,43 @@ def same_folder(path: str, folder: Path) -> bool:
     return os.path.normcase(os.path.abspath(path)) == os.path.normcase(str(folder))
 
 
+def link_registered() -> bool:
+    import winreg
+    try:
+        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"obsidian\shell\open\command"):
+            return True
+    except OSError:
+        return False
+
+
+def obsidian_exe() -> Path | None:
+    """Where the Windows installer puts the app: per user, or per machine with --scope machine."""
+    local = Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
+    machine = Path(os.environ.get("ProgramFiles") or r"C:\Program Files")
+    for exe in (local / "Programs" / "Obsidian" / "Obsidian.exe", machine / "Obsidian" / "Obsidian.exe"):
+        if exe.is_file():
+            return exe
+    return None
+
+
 def open_vault(folder: Path) -> bool:
     uri = "obsidian://open?path=" + urllib.parse.quote(str(folder), safe="")
-    if sys.platform == "win32":
+    if sys.platform != "win32":
+        return succeeds(["open" if sys.platform == "darwin" else "xdg-open", uri])
+    # The installer leaves obsidian:// unregistered -- the app registers it on its first run -- so
+    # until then the app is started with the link, the way Windows starts it once it is registered.
+    if link_registered():
         try:
             os.startfile(uri)
+            return True
         except OSError:
-            return False
-        return True
-    return succeeds(["open" if sys.platform == "darwin" else "xdg-open", uri])
+            pass
+    exe = obsidian_exe()
+    if exe is None:
+        return False
+    subprocess.Popen([str(exe), uri], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                     stderr=subprocess.DEVNULL)
+    return True
 
 
 def main() -> int:
