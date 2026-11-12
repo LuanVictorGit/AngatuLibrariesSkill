@@ -123,7 +123,10 @@ rule says which one wins.
   agent — is checked unasked and installed when missing. `/graphify .` builds
   `graphify-out/` on first use; a codebase question starts with `graphify query`, `path` or `explain`,
   before any grep; `graphify update .` follows every code change. The graph maps the whole codebase, so
-  it stays local: `.gitignore`, `.dockerignore`, never under `public/`. → `references/companion-skills.md`
+  it stays local: `.gitignore`, `.dockerignore`, never under `public/`. **Its purpose is context economy,
+  and so is the R42 vault's:** the agent learns the project from the graph, then from the vault note of
+  the node, and opens only the source lines they point at — never whole files read to get a feel, never
+  the same files re-read after a compaction. → `references/companion-skills.md` (section 0)
 - **R46 — On the machine, the agent leaves only what the task delivers.** Its scratch scripts, samples,
   downloads, extracted archives, test images and containers, test vaults and their entry in Obsidian's
   list are deleted once the task no longer needs them, before it is reported done, each by the path noted
@@ -387,7 +390,9 @@ que o agente instala e configura na máquina, sem pedir, quando faltar (R42); o 
 chat — nunca para o que fica gravado (R43); e o grafo de conhecimento do **graphify**
 (<https://github.com/safishamsi/graphify>): gerado com `/graphify .` em `graphify-out/`,
 consultado com `graphify query` antes de qualquer busca no código e atualizado com `graphify update .`
-depois de cada mudança (R45).
+depois de cada mudança (R45). **O grafo e o cofre existem para economizar contexto:** o projeto se lê
+pelo grafo, depois pela nota do nó no cofre, e só então pelas linhas do código que eles apontam — nunca
+arquivo inteiro lido para "ter uma ideia", nem o mesmo arquivo relido depois de compactar o contexto.
 
 ### Resumo das regras (texto completo na skill; os IDs são estáveis)
 
@@ -429,7 +434,8 @@ fica pronto depois de cada página ser olhada como imagem · R42 obsidian-skills
 mais nova, e o Obsidian instalado e configurado na máquina pelo agente · R43 caveman em toda sessão, só no
 chat, e o `caveman-compress` nunca toca o CLAUDE.md · R44 logo depois deste bloco vem o módulo Efficient
 Command Execution, copiado sem alteração · R45 grafo do graphify em todo projeto, lido antes do código e
-atualizado a cada mudança, com `graphify-out/` fora do git e da imagem · R46 o que o agente cria na máquina
+atualizado a cada mudança, com `graphify-out/` fora do git e da imagem — grafo, nota do cofre e só então as
+linhas do código, para gastar o mínimo de contexto · R46 o que o agente cria na máquina
 para uso próprio é apagado quando a tarefa não precisa mais dele — nunca o que já existia nem o que é do usuário.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,

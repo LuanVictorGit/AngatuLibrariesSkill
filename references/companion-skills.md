@@ -7,6 +7,42 @@
 
 ---
 
+## 0. What the graph and the vault are for: reading less to know more
+
+Obsidian and the graphify graph are not documentation for people to admire. **They exist so the agent
+loads the project into its context cheaply.** A context window spent on whole files read "to get a feel"
+is gone before the real work starts, and it is the first thing a long session compacts away. The graph
+already knows where everything lives and what touches what; reading it costs a few hundred tokens where
+the files cost tens of thousands.
+
+The reading order, for every question about the project and in every session, including after a
+compaction:
+
+1. **The graph answers first.** `graphify query "<question>"`, `graphify path "<A>" "<B>"` or
+   `graphify explain "<X>"` (3.2). They return the nodes, the files and the lines that matter, and the
+   community each one sits in. `GRAPH_REPORT.md` is read once, at the start of a session that needs the
+   architecture, and never re-read to find one class.
+2. **Then the vault note of the node, not the file.** `graphify-out/vault/<project>/` has one note per
+   node, with its neighbours as wikilinks: following two or three links is how a dependency chain is read
+   without opening the files along it. In Obsidian the same notes, the graph view and `graph.canvas`
+   show the person what the agent is navigating.
+3. **Only then the source, and only the lines the graph pointed at** — `Read` with `offset`/`limit`, or a
+   targeted `grep`. A whole file is read only when the change is in it.
+4. **After a compaction, ask the graph again.** Re-reading the files that were open before is paying
+   twice for the same context; the graph rebuilds the picture in one query.
+
+Consequences that follow from the purpose:
+
+- **A stale graph is worse than none**, because it sends the agent to the wrong lines with confidence.
+  That is why `graphify update .` runs after every code change and the vault is re-exported before it is
+  opened (3.2), in the same task.
+- **Every subagent that explores code gets the same order in its prompt** — graph, note, lines. A
+  subagent told only "find X" greps the whole tree and returns file dumps the parent pays for again.
+- **The project's own notes in `docs/` are Obsidian notes too (1.2)**, linked with wikilinks to the
+  plan and to each other, so a decision is found by following a link and not by reading every document.
+- **A missing graph is built before the exploration, not after.** On a project without
+  `graphify-out/graph.json`, the first `/graphify .` (3.2) comes before the first broad search.
+
 ## 1. obsidian-skills (R42)
 
 Source: <https://github.com/kepano/obsidian-skills> — Steph Ango, MIT, published as the `obsidian`
