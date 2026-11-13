@@ -249,6 +249,35 @@ verified origin — Google sign-in, the CRM's OAuth page, `wa.me`, Maps. That is
 removed; what must never show a bar is any page of the product's own domain. When diagnosing a report of
 "the URL shows", first find out on which page.
 
+## 6b. Notices (Web Push) in the app — and the tap that opened nothing
+
+The site's own Web Push is the app's push: with `DelegationService` and the `POST_NOTIFICATIONS` permission in
+the manifest (plus `NotificationPermissionRequestActivity`), Chrome shows each notice **as the app's**
+notification and asks Android 13+ for the permission in the app's name. No Firebase SDK, no
+`google-services.json`: Chrome's push on Android already rides on FCM.
+
+**The service worker's `notificationclick` must not reuse an invisible window.** With the app closed, Chrome
+can still list the app's old page in `clients.matchAll()`; the usual pattern — find a client with the same
+path, `navigate()` and `focus()` it — brings nothing forward, so tapping the notice with the app closed did
+nothing (AutoRenascer, 13/11/2026). Reuse only a client whose `visibilityState === "visible"`; in every other
+case, and when `focus()` throws, call `clients.openWindow(url)`, which on Android opens the installed app at
+that URL, full screen.
+
+**How to test the three states on an emulator** (signed in through the app with the device's own Google
+account, never a password typed by the agent):
+
+- open: tap the app's "send a test notice" and read `adb shell dumpsys notification --noredact` for
+  `pkg=<package>`;
+- background: tap, then `adb shell input keyevent KEYCODE_HOME` at once;
+- closed: delivery takes about a second, so cut the network right after the tap
+  (`adb shell "input tap X Y; sleep 0.25; svc wifi disable; svc data disable"`), then `am force-stop <package>`
+  and `am kill com.android.chrome`, confirm `pidof <package>` is empty, and turn the network back on: the
+  notice must arrive with the app closed. Never `am force-stop` the app *after* the notice arrived — Android
+  deletes a force-stopped package's notifications, and the test reads as a failure;
+- tap: `cmd statusbar expand-notifications`, tap the notice, and the app must open on the notice's screen.
+
+Turn the device's notices off at the end of a test on production, so no test device is left registered.
+
 ## 7. Splash, colours and identity
 
 - `splash.png` is the logo on the brand's page colour, `drawable-nodpi`, the same mark as the site (R17
