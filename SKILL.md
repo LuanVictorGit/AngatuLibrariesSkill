@@ -505,8 +505,10 @@ asked for it; R18 means the source is not rewritten to achieve that.
 - `CLAUDE.md` updated (R2), commit on `development` with no mention of AI (R3).
 - R45: `graphify update .` ran after the last code change, so the graph matches what is delivered.
 - R46: nothing the agent made for its own use is left on the machine — or the reply names what is, and why.
-- An Android TWA release: the test matrix of `references/android-twa.md` section 9 passed on the
-  Play-signed build, no address bar on the first launch, every fingerprint the device reports served.
+- An Android TWA release: section 6a of `references/android-twa.md` done in order before the first
+  submission (domain resolving, `HEAD` routed, the `pm get-app-links` fingerprint served as a constant and
+  `linked: true`), and the test matrix of section 9 passed on the Play-signed build — no frame of the first
+  launch shows the address bar.
 - A video is not a frontend: its list is the final checklist of `references/video-review.md` (R37).
 - A proposal is not a frontend either: its list is section 8 of `references/proposal.md` (R41).
 
