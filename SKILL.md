@@ -54,6 +54,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md`.
 | Motion concepts translated to vanilla, without React | `references/framer-motion.md` |
 | Generative art, canvas backgrounds, textures | `references/canvas-generative.md` |
 | Touch, thumb zones, safe areas, mobile budgets | `references/mobile-principles.md` |
+| **An Android app on Google Play that opens the site (TWA)** — manifest, Digital Asset Links, every signing fingerprint, the launcher that opens verified on the first launch, updates, test matrix, publishing, diagnosing the address bar | `references/android-twa.md` |
 | Hover, pointer precision, keyboard, multi-window | `references/desktop-principles.md` |
 | Final design audit before delivery | `references/design-audit.md` |
 | Build pipeline: minify, strip comments, script-only obfuscation, keep images/assets intact for SEO, validate | `references/frontend-build.md` |
@@ -504,6 +505,8 @@ asked for it; R18 means the source is not rewritten to achieve that.
 - `CLAUDE.md` updated (R2), commit on `development` with no mention of AI (R3).
 - R45: `graphify update .` ran after the last code change, so the graph matches what is delivered.
 - R46: nothing the agent made for its own use is left on the machine — or the reply names what is, and why.
+- An Android TWA release: the test matrix of `references/android-twa.md` section 9 passed on the
+  Play-signed build, no address bar on the first launch, every fingerprint the device reports served.
 - A video is not a frontend: its list is the final checklist of `references/video-review.md` (R37).
 - A proposal is not a frontend either: its list is section 8 of `references/proposal.md` (R41).
 
