@@ -170,6 +170,14 @@ nowhere in the Console. The procedure that always gives the truth:
 4. `adb shell pm get-app-links <package>` → the `Signatures:` line is what Chrome compares. Put **that**
    fingerprint in the route, plus every other one above.
 
+**This step is not optional, and it has to run before the first release goes out.** It failed the same way
+twice, on two apps: on AutoRenascer (13/11/2026) the Console and `apksigner` both showed the Play key
+`20:42…E4:F0`, Google's `assetlinks:check` answered `linked: true` for it — and the Play-installed app still
+opened with the address bar, because Android reported `5E:D0…B0:DA`, which appears nowhere in the Console.
+`linked: true` for the Console key proves nothing about the phone; only the `Signatures:` line does.
+Read it on an emulator before submitting the first release, put it in the route as a constant, and only
+then submit.
+
 Never commit the keystore or its passwords: keep them in `~/.android-keys/<project>/keystore.properties`,
 read by Gradle, and record only the **public** fingerprints in `docs/android.md`.
 
@@ -212,6 +220,34 @@ The full, reviewed implementation is FastCurrículo's
 the package. Rules it follows: nothing can hold the app (every failure opens the site), callbacks from the
 binder thread are posted to the main thread, the activity recreated after launch does nothing, portrait is
 locked except on Android 8.0 (it throws for translucent activities).
+
+## 6a. Before the first submission — the order that avoids a rejection and a bar
+
+Each step depends on the one before. Doing them out of order cost AutoRenascer a Play rejection and an app
+that showed the address bar (13/11/2026):
+
+1. **The domain resolves and serves HTTPS** from public resolvers (`https://dns.google/resolve?name=<domain>&type=A`)
+   *before* anything points at it. A domain created minutes before the submission was refused by the Play
+   review ("privacy policy URL does not link to a valid privacy policy page"), and an app launched against a
+   domain that does not resolve caches a failed verification on the phone.
+2. **Every page answers `HEAD` like `GET`.** Javalin answers `HEAD` only on paths that declare it, and the
+   site answered every `HEAD` with an empty `200 text/plain`; automated checkers (Play's privacy policy check
+   among them) read that as an invalid page. Register a `HEAD` for each `GET` endpoint after the routes are
+   up, sharing the handler (`app.unsafe.internalRouter.allHttpHandlers()` → `addHttpEndpoint(new Endpoint(HEAD,
+   path, handler))`), and test it: `curl -sI https://<domain>/privacidade` must show `text/html`.
+3. **The privacy policy URL is on the official domain** and names the app as the listing does.
+4. **Upload the first bundle** (as a draft is enough), let Play generate the APKs, download the universal one
+   and run section 5 steps 1–4 on an emulator. Every fingerprint found goes into the route **as a constant**,
+   and the deploy goes out.
+5. Wait for Google's Digital Asset Links cache to see it: `assetlinks:check` with the `Signatures:` fingerprint
+   must answer `linked: true` (the API caches statements for up to an hour — `maxAge` in the answer).
+6. Run the clean first-launch case of section 9 with screenshots every second: no frame may show the bar.
+7. Only now send the release for review.
+
+**What the bar on an outside page is not.** A TWA shows a small bar with an X whenever the user leaves the
+verified origin — Google sign-in, the CRM's OAuth page, `wa.me`, Maps. That is Chrome's design and cannot be
+removed; what must never show a bar is any page of the product's own domain. When diagnosing a report of
+"the URL shows", first find out on which page.
 
 ## 7. Splash, colours and identity
 
@@ -283,12 +319,16 @@ only when the owner asked for that release.** The first release of a new app goe
 
 In order — stop at the first that explains it:
 
-1. `curl -sI https://<domain>/.well-known/assetlinks.json` → `200`, `application/json`, no redirect.
+1. `curl -sI https://<domain>/.well-known/assetlinks.json` → `200`, `application/json`, no redirect. A `curl -I`
+   that answers an empty `text/plain` means `HEAD` is not routed (section 6a, step 2).
 2. Google's view of it:
    `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://<domain>&relation=delegate_permission/common.handle_all_urls`
    — every fingerprint of section 5 must be there.
 3. The certificate devices report (section 5, steps 1–4). A missing one is the classic cause of "the bar
-   shows on some phones and not on others".
+   shows on some phones and not on others" — and of "the bar shows on every phone" when the Console key was
+   the only one published. After adding it, `assetlinks:check` with that fingerprint takes up to an hour
+   to say `linked: true`; phones that failed meanwhile recover on a later launch, or at once after clearing
+   the app's storage.
 4. The launch path: the bar only on the **first** launch → the launcher of section 6 is missing or skips
    verification.
 5. The browser: the default browser without TWA support → Custom Tab with the bar, by design (fallback).
