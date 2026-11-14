@@ -521,8 +521,8 @@ One line each; the detail lives in the reference named in section 0.
 **Core** — `AngatuLib` (startup), `JavalinAPI` (server, security headers, rate limiting),
 `Dependencies` (classload guard), `Console` + `AnsiColor` (logging), `Env`, `GsonAPI`, `Password`,
 `StringAPI`, `DataTime`, `Task`, `Request` / `Response` / `StatusCode`.
-**Persistence** — `Saveable` (SQLite + Gson, no RAM cache), with `mutate`, `transaction`,
-`createIndex` and `query`.
+**Persistence** — `Saveable` (SQLite + Gson, no RAM cache), with `mutate`, `transaction`, `saveAll`,
+`forEach`, `findPage`, `createIndex` and `query`.
 **Web** — `Route` + `RouteType` (auto-discovered), `HtmlRouteAPI` (one page per file name),
 `AssetsAPI`, `IP`.
 **Integrations** — `EmailAPI`, `EmailFormatter`, `WebPushAPI` + `PushBootstrap`, `Bot` (Discord),

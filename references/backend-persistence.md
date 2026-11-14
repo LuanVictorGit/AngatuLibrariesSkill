@@ -62,7 +62,7 @@ and the class is `abstract` — R10.
 // create / store (atomic; last write wins)
 User user = new User();
 user.setName("João");
-user.save(); // a null id gets a UUID
+user.save(); // a null id gets a time-ordered UUIDv7 (36-char text, as before)
 
 // read — always from the database, always a new instance
 User found   = Saveable.findById(User.class, user.getId());
@@ -72,15 +72,18 @@ long total   = Saveable.count(User.class);
 // query by field: create the index once, at startup
 Saveable.createIndex(User.class, "email");
 Saveable.createIndex(User.class, "role");   // enum: index it too, and query by its name
+Saveable.createIndex(Order.class, "storeId", "status"); // composite, in this order: idx_orders_storeid_status
 User byEmail       = Saveable.findFirstByField(User.class, "email", "joao@exemplo.com");
 List<User> byField = Saveable.findByField(User.class, "name", "João");
 List<User> result  = Saveable.query(User.class,
         "SELECT data FROM " + Saveable.tableName(User.class) + " WHERE json_extract(data,'$.name')=?", "João");
 List<User> noPhone = Saveable.findByField(User.class, "phone", null); // IS NULL in the SQL, missing key included
 
-// full-table scan — use it knowing the size
-List<User> all      = Saveable.findAll(User.class);
-List<User> filtered = Saveable.findByPredicate(User.class, x -> "João".equals(x.getName()));
+// full-table work — pick by size
+List<User> all      = Saveable.findAll(User.class);       // the whole table in RAM: small tables only
+List<User> filtered = Saveable.findByPredicate(User.class, x -> "João".equals(x.getName())); // paged: only matches stay in RAM
+Saveable.forEach(User.class, u -> report.add(u));          // any size, flat memory, 500 rows per page
+List<User> page     = Saveable.findPage(User.class, lastId, 100); // keyset page by id; null = first page, max 1000
 
 // delete
 user.delete(); Saveable.deleteById(User.class, id); Saveable.deleteAll(User.class);
@@ -93,9 +96,14 @@ Saveable.shutdown(); // in the shutdown hook
 ```java
 Saveable.findByField(User.class, "role", Role.ADMIN);        // scans the table in memory
 Saveable.findByField(User.class, "role", Role.ADMIN.name()); // uses the index
-List<User> page = Saveable.query(User.class,
-        "SELECT data FROM users ORDER BY id LIMIT 100 OFFSET ?", 0);
 ```
+
+**Paginate by key, not by `OFFSET`.** `LIMIT 100 OFFSET 900000` makes SQLite walk 900 000 rows to
+throw them away; `Saveable.findPage(User.class, lastIdOfThePreviousPage, 100)` is one index seek per
+page at any depth. The cursor is the last `getId()` the client received. `forEach` and `findPage`
+return the connection to the pool before your code sees a row, so a callback that queries the
+database is safe — and neither is a snapshot: a record written while the walk runs shows up if its
+id is still ahead of the cursor.
 
 Always use `?` placeholders in `Saveable.query`, never string concatenation.
 
@@ -110,7 +118,7 @@ Routes, scheduled tasks and workers touch the same records at the same time. Cho
 | Re-read before deciding | `obj.reload()` | Current state from the database, discarding uncommitted local changes |
 | Two writes that must hold together | `Saveable.transaction(() -> {…})` | All or nothing; `computeInTransaction(...)` returns a value |
 | A step that may fail without sinking the rest | a `transaction` nested inside another | A savepoint: if it throws and the outer one catches and continues, only the inner part is undone |
-| Batch | `Saveable.saveAll(list)` | A single transaction |
+| Batch (import, seed, sync) | `Saveable.saveAll(list)` | A single transaction, one prepared statement per table in batches of 512 — about 3× faster than a loop of `save()`. An entity that overrides `save()` still has it called, in order |
 
 ```java
 // WRONG on a contested record: between findById and save, another component writes and its change vanishes
@@ -157,7 +165,12 @@ default) gets `PersistenceException`. Call the network first, then write the res
   is a write, and outside a transaction it runs alone in autocommit — `VACUUM` and `ATTACH` work.
   Transaction control (`BEGIN`, `COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT`, `RELEASE`) is refused with
   `IllegalArgumentException`: use `Saveable.transaction`.
-- `Saveable.shutdown()` waits for the reads in flight before closing — never skip it to "shut down
+- Concurrent `save()` and `deleteById()` outside a transaction are **group-committed**: whoever gets
+  the write turn writes everything waiting (up to 256) in one transaction. Each caller still gets its
+  own result or its own failure; a write that makes SQLite undo the group fails alone and the others
+  are redone. Nothing to do in the project — just do not wrap independent saves in a `transaction`
+  to "make them faster": that is what the library already does, without coupling their failures.
+- `Saveable.shutdown()` runs `PRAGMA optimize` and waits for the reads in flight before closing — never skip it to "shut down
   faster"; a connection left open holds the file and the `-wal`.
 
 ## 4. Consequences of having no cache
@@ -168,8 +181,9 @@ Read this before porting an older project.
   the database.
 - `findById` twice returns **two different objects**. Do not compare with `==`, and do not expect a
   change in one to show up in the other.
-- `findAll` / `findByPredicate` walk and deserialise the whole table. On a hot route, switch to
-  `findByField` / `query` with an index.
+- `findAll` loads the whole table; `findByPredicate` walks it page by page (only matches stay in
+  RAM) but still deserialises every row. On a hot route, switch to `findByField` / `query` with an
+  index; for jobs over large tables, `forEach`.
 - **A contested write loses updates.** Reading, changing and writing in separate steps overwrites
   whatever another component wrote in between. With the cache this never surfaced, because both
   sides held the same object.
@@ -186,10 +200,23 @@ Read this before porting an older project.
 SQLite at its persistent volume. Without it the database dies on every deploy.
 `Saveable.databasePath()` shows the path in use.
 
-**Native memory:** SQLite's page cache lives outside the Java heap, one cache per connection. The
-defaults (`ANGATU_DB_CACHE_KIB=8192` per connection, `ANGATU_DB_POOL_SIZE=12` read connections plus
-the writer) cap it at about 104 MiB. On a small container, `ANGATU_DB_CACHE_KIB=4096` and
-`ANGATU_DB_POOL_SIZE=6` bring it to about 28 MiB with no visible effect on indexed queries.
+**Native memory — CPU before RAM:** SQLite's page cache lives outside the Java heap, one cache per
+connection. The defaults (`ANGATU_DB_CACHE_KIB=2048` per connection, `ANGATU_DB_POOL_SIZE=12` read
+connections plus the writer) cap it at about 26 MiB; large sorts and temporary indexes go to a
+temporary file (`temp_store=FILE`), not to RAM. A read-heavy service with memory to spare can raise
+`ANGATU_DB_CACHE_KIB`. `ANGATU_DB_MMAP_MIB` (default `0`, off) memory-maps the file for faster reads
+on big databases — leave it off unless the volume is a local disk: an I/O error on a mapped file can
+take the JVM down instead of failing one query.
+
+**Large tables (millions of rows)** — measured on 1 million rows, library before → after the
+rewrite: `saveAll` 42 799 → 119 674 rows/s; concurrent `save` (64 threads) 2 735 → ~11 000/s;
+`findById` 11 941 → ~17 000/s; indexed `findFirstByField` 6 485 → ~10 000/s; `findByPredicate`
+heap peak 1 210 → 160 MiB. What keeps a big table fast: an index for every field you filter on,
+`saveAll` for bulk writes, `findPage`/`forEach` instead of `findAll`, and ids the library generates
+(UUIDv7 lands new rows at the end of the primary key instead of a random page).
+
+These APIs and defaults come with the library commit that introduced `Saveable.forEach`; R4 applies —
+check the pinned `angatulibraries.version` is that commit or newer before using them.
 
 ---
 
