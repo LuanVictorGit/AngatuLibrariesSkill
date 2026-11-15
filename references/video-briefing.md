@@ -10,13 +10,14 @@
 
 1. **URL first** — research before asking (section 2).
 2. **The type question** — narration or music edit, and for an edit, which kind (section 3).
-3. **What is still open** — one numbered list, each item with a suggested default (sections 4 to 6).
-4. **The Angatu mark** — asked every time (section 7).
-5. **Assets and permissions** — the inventory (sections 8 and 9).
-6. **`docs/BRIEFING.md`** — written, summarised in chat, confirmed by the user (section 10).
+3. **Narration and script** — who makes each, asked every time, before anything is built (section 3a).
+4. **What is still open** — one numbered list, each item with a suggested default (sections 4 to 6).
+5. **The Angatu mark** — asked every time (section 7).
+6. **Assets and permissions** — the inventory (sections 8 and 9).
+7. **`docs/BRIEFING.md`** — written, summarised in chat, confirmed by the user (section 10).
 
 `paint.md` asks one question at a time because each answer reshapes the next. Here only the type question
-does that; the rest are facts the user can answer in one go. So: the type question alone, then one list.
+and the two questions of section 3a do that; the rest are facts the user can answer in one go. So: the type question alone, then one list.
 Never ask what the URL or the platform already answered.
 
 ---
@@ -72,6 +73,37 @@ If B:
 
 ---
 
+## 3a. Narration and script — asked every time
+
+Right after the type, and **before any plan or scene**, two questions, each in its own message, because
+each answer changes what is asked next:
+
+> **"Esse vídeo precisa de narração? (1) eu gero a voz do zero pelo OpenRouter, com a voz Leda ·
+> (2) você me envia a narração já gravada · (3) não precisa de narração"**
+
+- **1** → OpenRouter, model `google/gemini-3.8-flash-tts`, voice `Leda`, always (`video-voice.md`).
+  The first time, the user's OpenRouter key is asked and kept for every later video (`video-voice.md`,
+  section 2). The script must be approved before the voice, and the user hears the first take at the
+  first draft. Never offer another model, voice or a local generator.
+- **2** → "Onde está o arquivo?" — the work waits for it (R37 rule 8).
+- **3** → the music or the silence drives the time axis; a type A video without narration is confirmed,
+  not assumed.
+
+Suggest by type: A → 1; B1 and B2 → 3.
+
+> **"E o roteiro: (1) eu planejo e te mostro para aprovar · (2) você me envia o roteiro pronto"**
+
+- **1** → the agent writes `docs/ROTEIRO.md` from the brief and the URL research (`landing-copy.md`:
+  plain words, the client's own vocabulary, PT-BR reviewed — R16), shows it, and nothing else proceeds
+  until the user approves it. With a generated voice, the approved script is also what Leda reads.
+- **2** → the user's script is copied to `docs/ROTEIRO.md` as sent; spelling and order are theirs. A
+  typo or a claim the URL contradicts is pointed out, never silently fixed.
+
+For a music edit without narration the "roteiro" is the sequence of scenes and on-screen text; the same
+two options apply.
+
+---
+
 ## 4. The platform decides the format — derive it
 
 | Where | Format | Resolution | fps | Safe zone (keep text and logos inside) | Typical length |
@@ -108,7 +140,7 @@ Ask in PT-BR, as one numbered list, each with the suggested default in brackets:
 ## 6. Questions by type
 
 **A — narrado**
-- Onde está a narração gravada? (arquivo; a skill não gera voz — R26)
+- Narração e roteiro já decididos na seção 3a (gerada pelo OpenRouter, gravada, ou sem narração)
 - O roteiro aprovado, com a grafia exata (é dele que vem o texto da tela)
 - A trilha de fundo: onde está o arquivo e qual a licença
 - Imagens e vídeos disponíveis; cenas obrigatórias
@@ -217,6 +249,9 @@ Data: <aaaa-mm-dd> · Pedido original: "<frase do usuário>"
 
 ## O vídeo
 - Tipo: A | B1 (intensidade n) | B2
+- Narração: gerada (OpenRouter · gemini-3.8-flash-tts · Leda) | gravada (arquivo ...) | sem narração
+- Roteiro: planejado pelo agente (aprovado em <data>) | enviado pelo usuário
+- Remotion: <versão> (a mais nova em <data>)
 - Plataforma: ... · Formato: ... · Duração: ...
 - Marca da Angatu: sim | não
 - Objetivo · Público · Sensação · CTA

@@ -70,9 +70,11 @@ animation that breaks the rhythm loses; a perfect cut that contradicts the brief
 8. **No asset is ever invented.** A missing logo, screen, photo, number, testimonial, voice or track is
    named, and the work stops for it (`video-briefing.md`).
 9. **Nothing is downloaded unasked**, and every third-party file has its licence in `docs/LICENCAS.md`.
-10. **Voice and music are recorded files the user points to.** Generating them with AI would be an AI
-    call, and R26 sends AI through AngatuCRM, which generates text only today — so it is not done. A
-    local speech model installed on the machine is not a way around R26.
+10. **Music is a file the user points to; the voice is recorded or Leda.** Music is never generated.
+    Narration is a recorded file the user sends, or generated through OpenRouter with
+    `google/gemini-3.8-flash-tts` and the voice Leda, the key kept in `~/.angatu/` — the one exception R26
+    allows, for video narration only; never a local model (`video-voice.md`). The briefing asks every
+    time (`video-briefing.md`, 3a).
 11. **The Angatu Sistemas mark is asked in G5 for every video**, suggesting yes. R17 governs pages and
     e-mails; this question governs videos.
 12. **The API is the installed version.** Read `node_modules/**/*.d.ts` and the official Remotion skills
@@ -100,6 +102,13 @@ with the effects bus playing. Timing errors are cheap there and expensive after 
 
 **Checkpoints with the user**: the brief summary · the theses and styleframes · the plan · the first
 full draft (listening) · the final.
+
+**The studio is open from the first file to the delivery.** As soon as the project exists (section 7) the
+Remotion Studio starts in the app's browser pane (`preview_start` with the `studio` entry of
+`.claude/launch.json`, `video-review.md` section 3) and stays running: the user watches every scene appear
+and change in real time, scrubbing and listening, instead of waiting for a render. Each scene built is
+announced in the chat with the composition and the second to look at. A closed studio is reopened before
+the next edit, and a revision opens it before touching anything.
 
 ---
 
@@ -153,7 +162,8 @@ the escalation live in `video-review.md`.
   local history and is never pushed anywhere; commits made there follow R31.
 - **Retention.** After delivery only `node_modules` is deleted (about 750 MB, the headless browser
   included); `package-lock.json` stays. A revision reopens the folder, runs `npm ci` (the browser
-  downloads again on the first render) and goes through the same loop as v2. "From scratch" applies to
+  downloads again on the first render), updates Remotion (section 7a), opens the studio and goes through
+  the same loop as v2. "From scratch" applies to
   new videos, not to revisions of the same one.
 
 ---
@@ -174,6 +184,9 @@ npx remotion skills add                    # official Remotion skills (download:
 mkdir -p tools && cp ~/.claude/skills/AngatuLibrariesSkill/tools/video/* tools/
 ```
 
+Then write `.claude/launch.json` with the `studio` entry (`video-review.md`, section 3) and **open the
+studio in the browser pane now**, before the first scene — the user follows the build live (section 4).
+
 Then, before the first scene:
 
 - **Remove the Tailwind the blank template ships even with `--no-tailwind`**: `npm uninstall
@@ -190,7 +203,21 @@ Two traps: **`npx remotion add` fails on npm 12** with `EALLOWSCRIPTS` — insta
 and the same version as `remotion`; and **`create-video --yes` refuses to run inside an existing Git
 repository** — one more reason the studio lives outside every repository.
 
-**Preflight at the start of every video**: `node -v`; `ffmpeg -hide_banner -filters` lists
+### 7a. Remotion always current
+
+The newest Remotion, every time — the version numbers in these files (4.0.527) are where a module was
+tested, never a ceiling.
+
+- **New video**: `create-video@latest` already brings the newest; confirm with
+  `npm view remotion version` against `node -p "require('remotion/package.json').version"`.
+- **Revision of an old video, or a studio that sat for weeks**: `npx remotion upgrade`, then every
+  `@remotion/*` package pinned exactly to the same version as `remotion` (`npm install -E`), then
+  `npx remotion skills add` again (the official skills follow the version), then the determinism check
+  and one `still` before any edit. A rename that breaks the build is read in the new `*.d.ts` and the
+  renames table of `video-motion.md` is updated in this skill.
+- Record the version in `docs/BRIEFING.md`. A downgrade is never the fix.
+
+**Preflight at the start of every video**: `node -v`; the Remotion check of 7a; `ffmpeg -hide_banner -filters` lists
 `blackdetect`, `freezedetect`, `ebur128` and `tile` (the FFmpeg bundled in Remotion does not — the review
 needs the full build, `winget install Gyan.FFmpeg` with the user's OK); `python -c "import librosa,
 faster_whisper, PIL"`; for Instagram references, Claude in Chrome connected to the user's browser.
@@ -202,7 +229,8 @@ faster_whisper, PIL"`; for Instagram references, Claude in Chrome connected to t
 **Apply**: R1 and R2 (the folder's `CLAUDE.md`), R11 and R12 (all code in English, identifiers and
 comments alike, with `@author Angatu Sistemas` in the file header), R16 (the text on screen is PT-BR
 and reviewed), R26, R31 (the local history), R32 at delivery (no leftovers), R35 — and the spirit of R4
-and R5: the newest Remotion at creation, pinned exact, and only the packages the video uses.
+and R5: the newest Remotion at creation and at every revision (7a), pinned exact, and only the
+packages the video uses.
 
 **Replaced**: R17 by the G5 question about the Angatu mark; R21 and R29 by the review loop; R13 by the
 client's identity in `src/data/brand.ts`, taken from the URL research.

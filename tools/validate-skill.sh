@@ -510,6 +510,7 @@ VP=references/video-production.md; VB=references/video-briefing.md
 VL=references/video-plan.md;       VM=references/video-motion.md
 VA=references/video-audio.md;      VK=references/video-phonk.md
 VR=references/video-review.md
+VV=references/video-voice.md
 
 exige SKILL.md '^- \*\*R37' 'R37 definida no SKILL.md' 'R37 ausente -- o modulo de video fica sem regra'
 exige SKILL.md 'video-production\.md' 'SKILL.md roteia o pedido de video' \
@@ -589,10 +590,25 @@ exige "$VM" 'R35' 'video-motion.md aplica R35 ao video' 'video-motion.md sem R35
 
 exige "$VA" 'cannot hear' 'video-audio.md poe o ouvido do usuario no laco' \
             'video-audio.md finge que o agente ouve o video'
-exige "$VA" 'recorded file' 'video-audio.md usa narracao gravada' \
-            'video-audio.md deixa gerar a narracao'
+exige "$VA" 'recorded file' 'video-audio.md aceita a narracao gravada' \
+            'video-audio.md sem o caminho da narracao gravada'
 exige "$VA" 'R26' 'video-audio.md reconcilia voz sintetica com R26' \
             'video-audio.md deixa gerar voz por fora do AngatuCRM'
+exige "$VA" 'Leda' 'video-audio.md usa so a voz da casa' \
+            'video-audio.md sem a Leda -- cada video sai com uma voz diferente'
+exige "$VV" 'gemini-3\.8-flash-tts' 'video-voice.md fixa o modelo de voz' 'video-voice.md sem o modelo de voz'
+exige "$VV" 'openrouter\.key' 'video-voice.md guarda a chave fora do projeto' \
+            'video-voice.md sem lugar fixo para a chave -- ela vai parar no projeto'
+exige "$VV" 'R26' 'video-voice.md explica a excecao a R26' 'video-voice.md sem a excecao a R26'
+exige tools/video/tts.py 'VOICE = "Leda"' 'tts.py fixa a voz Leda' 'tts.py sem a voz fixa'
+exige "$VB" 'sem narra' 'video-briefing.md pergunta pela narracao' \
+            'video-briefing.md nao pergunta se o video tem narracao'
+exige "$VB" 'roteiro pronto' 'video-briefing.md pergunta quem faz o roteiro' \
+            'video-briefing.md nao pergunta quem faz o roteiro'
+exige "$VP" 'remotion upgrade' 'video-production.md mantem o Remotion atualizado' \
+            'video-production.md sem o upgrade -- revisao roda Remotion velho'
+exige "$VP" 'studio is open' 'video-production.md abre o estudio ao vivo' \
+            'video-production.md nao abre o estudio -- o usuario so ve o render'
 exige "$VA" 'anchor' 'video-audio.md alinha o efeito pelo impacto' \
             'video-audio.md posiciona SFX pelo inicio do arquivo -- o impacto chega atrasado'
 exige "$VA" 'ENAMETOOLONG' 'video-audio.md mixa os efeitos num barramento' \

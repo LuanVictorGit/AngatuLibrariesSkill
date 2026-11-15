@@ -55,18 +55,20 @@ Placing it: `trimBefore` (frames) starts the music at a chosen section; the vide
 
 ---
 
-## 3. The voice — recorded, never generated
+## 3. The voice — a recorded file or Leda via OpenRouter
 
-The narration is a **recorded file the user points to** (G5 asks where it is). Generating a voice would
-be an AI call, and R26 sends AI through AngatuCRM, which generates text only today — so voice is not
-generated, and a local speech model installed on the machine is not a way around that.
+G5 asks every time (`video-briefing.md`, 3a): **gerar a voz do zero**, **enviar a voz gravada** or
+**sem narração**. A recorded file the user points to is used as it comes. A generated one is always
+OpenRouter, model `google/gemini-3.8-flash-tts`, voice **Leda** (`video-voice.md`) — the one exception R26
+allows, for video narration only. Never a local model, another service or another voice. Either way the
+file lands in `public/voice/` and is measured the same way:
 
 ```bash
 python -X utf8 tools/transcribe.py public/voice/<narration>.wav --model small
 ```
 
 `faster-whisper`, local, with the model already cached (`HF_HUB_OFFLINE=1`): nothing leaves the machine
-and nothing is generated — only the timing of what was recorded is measured, so R26 does not apply. It
+and nothing is generated — only the timing of the narration is measured, so R26 does not apply. It
 writes `src/data/narration.ts`: segments, and every word with its start and end in seconds. Measured on a
 47 s narration: the first word at 0.24 s exactly as a reference transcript, 107 words matched with a mean
 difference of 11 ms, in 22 s.

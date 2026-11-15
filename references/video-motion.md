@@ -3,7 +3,8 @@
 > Covers phase 4 of `video-production.md` (R37). **Technique, not a template**: every component here is
 > written for this video, from these patterns, after the plan was approved (`video-plan.md`). The snippets
 > marked *testado* ran in the smoke test of this module on Remotion 4.0.527; the rest follow the installed
-> types — confirm them there before trusting them.
+> types — confirm them there before trusting them. The project always runs the newest Remotion
+> (`video-production.md`, 7a); 4.0.527 is where this was tested, not the version to install.
 
 ---
 

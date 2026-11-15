@@ -44,8 +44,9 @@ Every iteration is judged against this paragraph and nothing else.
 | web | `node tools/render.mjs webm` | VP9 for a page — only if at least 15 % smaller than the MP4 |
 
 `render.mjs` runs the determinism check, the plan check and the effects bus before every video render.
-For the user, the Remotion Studio (`npx remotion studio`) opens in the app's browser pane, where they can
-scrub and listen:
+For the user, the Remotion Studio (`npx remotion studio`) opens in the app's browser pane **as soon as the
+project exists and stays open through the whole build** (`video-production.md`, section 4), where they
+follow the creation live, scrub and listen:
 
 ```json
 { "version": "0.0.1", "configurations": [

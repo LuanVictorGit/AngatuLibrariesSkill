@@ -68,7 +68,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md`.
 | Previewing a frontend and actually looking at it | `references/frontend-preview.md` |
 | Blocking image/video saving and text copying | `references/content-protection.md` |
 | **Any video that is not a landing hero — start here** (Remotion, from scratch, reviewed until it matches the plan) | `references/video-production.md` |
-| Video: brief and G5, plan and timeline, motion vocabulary, music/voice/SFX sync, PHONK and the Angatu client reel, the review loop | `references/video-briefing.md`, `video-plan.md`, `video-motion.md`, `video-audio.md`, `video-phonk.md`, `video-review.md` |
+| Video: brief and G5, plan and timeline, motion vocabulary, music/voice/SFX sync, generated narration (OpenRouter, voice Leda), PHONK and the Angatu client reel, the review loop | `references/video-briefing.md`, `video-plan.md`, `video-motion.md`, `video-audio.md`, `video-voice.md`, `video-phonk.md`, `video-review.md` |
 | **A proposal or quote for a client (orçamento técnico) — start here** (PDF from the house template in `tools/proposal/`, G6, every page looked at) | `references/proposal.md` |
 
 ---
@@ -258,12 +258,12 @@ rule says which one wins.
 - **R37 — A video is directed before it is coded, and done only once it has been watched and
   heard.** Any video that is not a landing hero starts from scratch, in its own folder that is kept
   (`~/Videos/Angatu/<cliente>-<peca>/`; delivery deletes only `node_modules`). G5 comes first: the
-  client's URL is researched, only what it leaves open is asked, and whether the video carries the
-  Angatu Sistemas mark is asked every time — R17 governs pages and e-mails, not videos. Nothing is
-  built before the plan is approved, and the plan is data (scenes, beats or words, cues), never a
-  frame number typed into a scene. No asset is invented and nothing is downloaded unasked. Done
-  means the render matches the plan, measured and looked at in the review loop — "it compiled" and
-  "it rendered once" are not done. → `references/video-production.md`
+  URL is researched, only what it leaves open is asked; the Angatu mark (R17 is for pages), the
+  narration and the script are asked every time. The Remotion Studio, on the newest Remotion, stays
+  open in the browser pane while it is built. Nothing is built before the plan is approved, and the
+  plan is data, never a frame number typed into a scene. No asset is invented, nothing is downloaded
+  unasked. Done means the render matches the plan, measured and looked at in the review loop — "it
+  compiled" and "it rendered once" are not done. → `references/video-production.md`
 
 ### Proposals
 
@@ -313,9 +313,9 @@ rule says which one wins.
 ### Integrations
 
 - **R26 — Payments and AI go through the AngatuCRM API.** Never the provider directly, never a
-  provider SDK, and never this library's own `MercadoPagoAPI` or `DeepSeek`. **This rule beats the
-  integrations reference.** Truth lives at <https://crm.angatusistemas.com.br/docs-ia> and
-  <https://crm.angatusistemas.com.br/docs-pagamentos>. → `references/crm-payments-ai.md`
+  provider SDK, never this library's `MercadoPagoAPI` or `DeepSeek`. **This rule beats the integrations
+  reference.** Sole exception: video narration via OpenRouter TTS (`video-voice.md`). Truth lives at
+  <https://crm.angatusistemas.com.br/docs-ia>, <https://crm.angatusistemas.com.br/docs-pagamentos>. → `references/crm-payments-ai.md`
 - **R36 — WhatsApp goes through `AngatuWhatsappSDK`, and the link is given out loud.** Every
   WhatsApp feature — sending, receiving, a bot, a notifier, a broadcaster — uses the Java SDK at
   <https://github.com/LuanVictorGit/AngatuWhatsappSDK>. Never Baileys directly, never
@@ -354,7 +354,7 @@ code. Answering on the user's behalf is the failure this section exists to preve
 | **G2 — Images** | the project starts saving images | compression strategy (A/B/C/D), maximum upload size, accepted formats, thumbnail needed. Recorded in `CLAUDE.md`, asked once per project. → `references/images.md` |
 | **G3 — Cache** | anything would store content | cache is never introduced on the agent's initiative. If it looks necessary, ask; the default is no cache. → `references/cache.md` |
 | **G4 — Turnstile** | a new project, and any existing project that does not have it yet | *"Will this system use Cloudflare Turnstile?"* If yes → `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` from `.env`, backend verification, system-wide coverage, and Cloudflare's notice added to the privacy policy. → `references/turnstile.md` |
-| **G5 — Video** | any video that is not a landing hero — motion graphics, an explainer, an ad, a PHONK edit | Research the client's URL first (logo, palette, type, copy, services, WhatsApp, screens), then ask only what it leaves open, starting with the type — narration or music edit — and, for a music edit, *"É uma edição PHONK normal ou é um vídeo para um novo cliente da Angatu Sistemas?"*. Always *"O vídeo leva a marca da Angatu Sistemas?"*, suggesting yes. Recorded in the video's `docs/BRIEFING.md`. **Not one scene before the answers and the approved plan.** → `references/video-briefing.md` |
+| **G5 — Video** | any video that is not a landing hero — motion graphics, an explainer, an ad, a PHONK edit | Research the client's URL first (logo, palette, type, copy, services, WhatsApp, screens), then ask only what it leaves open, starting with the type — narration or music edit — and, for a music edit, *"É uma edição PHONK normal ou é um vídeo para um novo cliente da Angatu Sistemas?"*. Always the narration (generated via OpenRouter with the voice Leda, a recording the user sends, or none) and the script (the agent plans it, or the user sends it). Always *"O vídeo leva a marca da Angatu Sistemas?"*, suggesting yes. Recorded in the video's `docs/BRIEFING.md`. **Not one scene before the answers and the approved plan.** → `references/video-briefing.md` |
 | **G6 — Proposal** | an orçamento, a proposta or a quote for a client | Read the request first, then ask in one message only what it leaves open: the client's logo file, each item and its price (one-time or monthly), optional items, deadline, contract, and whether the photos are the client's or stock. Validity defaults to 15 days and the inclusions are read from angatusistemas.com.br; both are said back. **Not one page before the prices and the scope are known.** → `references/proposal.md` |
 
 ---
@@ -427,8 +427,8 @@ filtro · R36 WhatsApp sempre pelo **AngatuWhatsappSDK**
 (<https://github.com/LuanVictorGit/AngatuWhatsappSDK>), nunca Baileys direto, `whatsapp-web.js`
 nem navegador headless — e o repositório é lido antes de escrever código · R37 vídeo que não é
 hero de landing nasce do zero, em pasta própria que fica, com briefing (G5) que pesquisa a URL do
-cliente e pergunta se leva a marca da Angatu, e plano aprovado antes da primeira cena; só fica
-pronto depois de assistido e ouvido no ciclo de revisão, nunca porque compilou ou renderizou uma vez ·
+cliente e pergunta marca da Angatu, narração (gerada via OpenRouter, gravada ou nenhuma) e roteiro (agente ou usuário),
+estúdio do Remotion mais novo aberto ao vivo, plano aprovado antes da primeira cena; só fica pronto depois de assistido e ouvido no ciclo de revisão, nunca porque compilou ou renderizou uma vez ·
 R41 orçamento sai do template da skill (`tools/proposal/`), com G6 antes: preço, prazo e contrato vêm do
 dono e nunca são inventados, a capa é só texto, cada página mostra uma ideia com mockup e foto real, e só
 fica pronto depois de cada página ser olhada como imagem · R42 obsidian-skills em todo projeto, na versão
