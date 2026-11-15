@@ -54,7 +54,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md`.
 | Motion concepts translated to vanilla, without React | `references/framer-motion.md` |
 | Generative art, canvas backgrounds, textures | `references/canvas-generative.md` |
 | Touch, thumb zones, safe areas, mobile budgets | `references/mobile-principles.md` |
-| **An Android app on Google Play that opens the site (TWA)** — manifest, Digital Asset Links, every signing fingerprint, the launcher that opens verified on the first launch, updates, test matrix, publishing, diagnosing the address bar | `references/android-twa.md` |
+| **An Android app on Google Play that opens the site (TWA)** — manifest, Digital Asset Links, every signing fingerprint, the launcher that opens verified on the first launch, the browser chosen by the app and never the phone's default, updates, test matrix, publishing, diagnosing the address bar | `references/android-twa.md` |
 | Hover, pointer precision, keyboard, multi-window | `references/desktop-principles.md` |
 | Final design audit before delivery | `references/design-audit.md` |
 | Build pipeline: minify, strip comments, script-only obfuscation, keep images/assets intact for SEO, validate | `references/frontend-build.md` |

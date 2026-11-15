@@ -1,7 +1,7 @@
 # Android app on Google Play — Trusted Web Activity (TWA)
 
 > Audit: Angatu Sistemas · written from the FastCurrículo app (package
-> `fastcurriculo.angatusistemas.com.br`, versions 1.0 to 1.1.3), where every trap below was hit once in
+> `fastcurriculo.angatusistemas.com.br`, versions 1.0 to 1.1.4), where every trap below was hit once in
 > production. Read it whole before creating, changing or publishing an Android app that opens a site.
 
 A TWA is a tiny Android app whose only job is to open the site in the user's Chrome **with no browser
@@ -202,12 +202,13 @@ public class LauncherActivity extends com.google.androidbrowserhelper.trusted.La
 
     // onCreate: if (isFinishing()) return; then checkRelationship() and checkForUpdate() in parallel.
     // checkRelationship():
-    //   TwaProviderPicker.Action a = TwaProviderPicker.pickProvider(getPackageManager());
-    //   if a.launchMode != TRUSTED_WEB_ACTIVITY → done (fallback browser, nothing to verify)
-    //   CustomTabsClient.bindCustomTabsService(this, a.provider, connection)
+    //   candidates = the installed browsers of section 6c (never TwaProviderPicker: it follows the default)
+    //   no candidate → done (library fallback, nothing to verify)
+    //   CustomTabsClient.bindCustomTabsService(this, candidates[i], connection)
     //   onCustomTabsServiceConnected: client.warmup(0); session = client.newSession(callback);
     //     session.validateRelationship(CustomTabsService.RELATION_HANDLE_ALL_URLS, origin, null)
-    //   callback.onRelationshipValidationResult(..., result, ...): result false → ask once more; then done
+    //   callback.onRelationshipValidationResult(..., result, ...): result false → ask once more; then the
+    //   next candidate; true → done. createTwaLauncher() returns new TwaLauncher(this, chosen).
     //   every path that cannot ask (bind false, null session, disconnect) → done
     // A timeout (6 s) for the verification and another (2.5 s) for the update check; when both are done,
     // launchTwa(). onDestroy: remove callbacks and unbindService.
@@ -278,6 +279,43 @@ account, never a password typed by the agent):
 
 Turn the device's notices off at the end of a test on production, so no test device is left registered.
 
+## 6c. The browser — never the phone's default
+
+**The symptom:** the address bar shows on some phones, every launch, with the site side and the fingerprints
+correct (section 11 steps 1–4 all pass). Every time it was traced, the person used another browser as the
+phone's default — usually one with a built-in ad blocker (Brave, Firefox, Opera, DuckDuckGo, Kiwi, AdGuard,
+Vivaldi, Mi Browser…). FastCurrículo 1.1.3 shipped with it (15/11/2026).
+
+**Why:** the library's `TwaProviderPicker` — used by the stock launcher, by `new TwaLauncher(context)` and by
+the section 6 verification — opens the **phone's default browser** whenever its Custom Tabs service declares
+the Trusted Web Activity category. Many browsers declare it and still draw their interface over the site,
+because they never verify Digital Asset Links (or verify and show the bar anyway). Nothing on the site side
+can fix that browser.
+
+**The fix:** the app chooses the browser itself and ignores the default.
+
+1. A fixed list of browsers that verify Digital Asset Links and hide their interface, in order: Chrome
+   (`com.android.chrome`), its channels (`com.chrome.beta`, `.dev`, `.canary`), Edge (`com.microsoft.emmx`),
+   Samsung Internet (`com.sec.android.app.sbrowser`, `.beta`). Chrome first: it ships on every phone with
+   Google Play, so in practice the site always opens in Chrome — an ad-blocking default browser keeps being
+   the default for everything else.
+2. Keep only the installed and enabled ones whose service answers for TWAs:
+   `pm.queryIntentServices(new Intent(CustomTabsService.ACTION_CUSTOM_TABS_CONNECTION).setPackage(pkg),
+   GET_RESOLVED_FILTER)` with `filter.hasCategory("androidx.browser.trusted.category.TrustedWebActivities")`.
+   The manifest's `<queries>` for that action is what makes them visible on Android 11+.
+3. Run the section 6 verification against the first candidate; a browser that answers `verified=false`
+   twice, fails to bind or disconnects is skipped for the next. With none left, open in the first.
+4. Open in the chosen one: override `createTwaLauncher()` and return `new TwaLauncher(this, chosen)` (a
+   non-null package forces the TWA launch mode). A null choice — no listed browser on the phone — returns
+   `super.createTwaLauncher()`, the library's own fallback.
+5. Log the candidates and the choice (`Trusted Web Activity browsers available=[…]`, `Opening the site in …`).
+
+**What stays impossible, said plainly to the owner:** a phone with none of the listed browsers (Chrome
+disabled and nothing else) opens a Custom Tab with the bar. The only way past it is a `WebView`, which
+section 1 forbids — it loses the session and Google sign-in. A list entry is never added for a browser
+because it "is Chromium": it goes in only after the clean first launch of section 9 passes on it.
+The cookies live in the chosen browser, not in the default one — expected, since the app is its own door.
+
 ## 7. Splash, colours and identity
 
 - `splash.png` is the logo on the brand's page colour, `drawable-nodpi`, the same mark as the site (R17
@@ -320,6 +358,7 @@ with the launcher's log line showing `verified=true` before the page:
 | App data cleared | `adb shell pm clear <pkg>`; launch |
 | Reinstall | uninstall, install, launch |
 | Update in place | `adb install -r` the new build over the old; launch |
+| Another default browser | install a browser that is not on the section 6c list, make it the default (`adb shell cmd role add-role-holder android.app.role.BROWSER <pkg>`), launch: the log must say `Opening the site in com.android.chrome` and the screen has no bar |
 | **The Play-signed build** | after uploading, download the universal APK (section 5), install with `-i com.android.vending`, repeat the clean first launch — this is the build users get, with Google's certificate |
 
 Launch with `adb shell am start -n <pkg>/<LauncherActivity>`. Never `adb shell monkey` — it crashed the
@@ -360,8 +399,9 @@ In order — stop at the first that explains it:
    the app's storage.
 4. The launch path: the bar only on the **first** launch → the launcher of section 6 is missing or skips
    verification.
-5. The browser: the default browser without TWA support → Custom Tab with the bar, by design (fallback).
-   Chrome outdated or disabled → same.
+5. The browser: the log line `Opening the site in <pkg>`. Missing → the launcher still follows the phone's
+   default browser, and an ad-blocking default (Brave, Firefox, Opera…) shows the bar on every launch —
+   section 6c. A phone with no listed browser (Chrome disabled) → Custom Tab with the bar, by design.
 6. After fixing the site side, phones that already cached a **failure** recover on the next launch (Chrome
    re-verifies); nothing has to be reinstalled.
 
