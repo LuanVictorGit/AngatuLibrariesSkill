@@ -46,7 +46,7 @@ Consequences that follow from the purpose:
 ## 1. obsidian-skills (R42)
 
 Source: <https://github.com/kepano/obsidian-skills> — Steph Ango, MIT, published as the `obsidian`
-plugin. Six skills, each one mandatory as soon as the task enters its ground:
+plugin. Seven skills, each one mandatory as soon as the task enters its ground:
 
 | Skill | Loaded and followed whenever the task… |
 |---|---|
@@ -56,6 +56,7 @@ plugin. Six skills, each one mandatory as soon as the task enters its ground:
 | `obsidian-cli` | reads or changes an Obsidian vault, or develops an Obsidian plugin or theme |
 | `defuddle` | reads a web page for its content — the AngatuCRM documentation (R26, R33), a library's page, the client's site in a brief (G5): `defuddle parse <url> --md` instead of raw HTML |
 | `knap` | turns JSON or CSV into Markdown, or renders a Markdown template |
+| `obsidian-headless` | sets up or runs Obsidian Sync or Obsidian Publish without the desktop app — on a server, in CI or from a terminal (`ob`) — or changes a vault's Sync or Publish settings |
 
 Mandatory means loaded and followed when the ground appears, never that its file types get invented: a
 project with no board needs no `.canvas`.
@@ -64,12 +65,12 @@ project with no board needs no `.canvas`.
 
 The skills travel with the repository, so every machine, clone and cloud session has them. They live in
 the project's `.claude/skills/`, where Claude Code loads project skills, copied from the upstream
-`skills/` folder:
+`plugins/obsidian/skills/` folder — until November 2026 they lived in `skills/`, at the root:
 
 ```bash
 U="$(mktemp -d)"                                   # outside the project
 git clone --depth 1 https://github.com/kepano/obsidian-skills.git "$U"
-mkdir -p .claude/skills && cp -r "$U"/skills/* .claude/skills/
+mkdir -p .claude/skills && cp -r "$U"/plugins/obsidian/skills/* .claude/skills/
 git -C "$U" rev-parse --short HEAD                 # the hash recorded in CLAUDE.md
 rm -rf "$U"
 ```
@@ -79,6 +80,9 @@ rm -rf "$U"
   recorded in `CLAUDE.md`. Behind → copy again (instructions only, no runtime risk), record the new
   hash, commit `chore: atualiza obsidian-skills para <hash>` (R3), and say so in one line.
 - **Missing** — an older project, a fresh clone of one → install as above, in the same task.
+- **The upstream layout is read, not remembered.** A folder that moved again makes `cp` fail and copy
+  nothing: before removing the clone, find where the skills went (`find "$U" -name SKILL.md`), fix this
+  recipe in the same task, and never copy from a guess.
 - **`.claude/skills/**` is committed**, never listed in `.gitignore`, and stays out of the image
   (`.dockerignore` lists `.claude/`, `deploy-coolify.md`).
 - **Never dead code (R32).** Nothing in the code references these files: the agent reads them
