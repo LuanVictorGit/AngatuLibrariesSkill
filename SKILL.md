@@ -69,6 +69,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md`.
 | Blocking image/video saving and text copying | `references/content-protection.md` |
 | **Any video that is not a landing hero — start here** (Remotion, from scratch, reviewed until it matches the plan) | `references/video-production.md` |
 | Video: brief and G5, plan and timeline, motion vocabulary, music/voice/SFX sync, generated narration (OpenRouter, voice Leda), PHONK and the Angatu client reel, the review loop | `references/video-briefing.md`, `video-plan.md`, `video-motion.md`, `video-audio.md`, `video-voice.md`, `video-phonk.md`, `video-review.md` |
+| **How an Angatu edit animates** (the "+1 cliente" language: bloom and blur transitions, one eased event per beat, numbered product steps, motion share ≥ 60 %), and studying a reference reel frame by frame | `references/video-phonk-recipe.md` |
 | **A proposal or quote for a client (orçamento técnico) — start here** (PDF from the house template in `tools/proposal/`, G6, every page looked at) | `references/proposal.md` |
 
 ---

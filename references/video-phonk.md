@@ -83,6 +83,11 @@ What not to do:
 The new video is original: new text, the new client's sector as texture, the new client's screens and
 team — in the same language. Nothing is copied literally.
 
+**How it moves is in `video-phonk-recipe.md`** — the transition grammar (bloom, blur dissolve, light
+line, data stream, sector shape, logo band), one eased event on every beat, the numbered product steps
+and the motion share to measure (≥ 60 % of frames changing). The profile below says what is on screen;
+the recipe says how it animates, and an edit built from the profile alone was rejected as "parado".
+
 ### 4.1 Analyse before producing — every time
 
 The account restricts age: signed out, the reels do not open. The analysis runs in **Claude in Chrome,
@@ -166,6 +171,8 @@ and glitch stay out unless the brief asks.
 - [ ] B2: both references (and any newer post of the series) analysed with `tools/reel-analysis.js`;
       findings in `docs/REFERENCIAS.md`
 - [ ] Every scene change on a beat; the biggest change on the drop
+- [ ] The recipe followed (`video-phonk-recipe.md`): blooms and blur dissolves between blocks, one event
+      per beat, motion share ≥ 60 % measured
 - [ ] No "image + auto zoom"; no effect on every beat; two or three transition families
 - [ ] At most three flashes in any second
 - [ ] B2: the eight blocks present, in the new client's material and sector
