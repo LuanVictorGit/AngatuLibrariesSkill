@@ -228,7 +228,27 @@ public final class EmailPreviewRoute extends Route {
 }
 ```
 
-3. Open it in the browser at **600px and at 375px**, and say what you see (`frontend-preview.md`).
+3. **Test it responsive, phone and desktop — both, every time, for every e-mail the change touches.**
+   Open it at **600px (desktop)** and at **375px (phone)**, look at each as an image, and say what you
+   see (`frontend-preview.md`). Neither width stands in for the other: the desktop hides a table that
+   overflows the phone, the phone hides a header that floats loose on the desktop. At each width check:
+   - nothing scrolls sideways — `scrollWidth` of the page equals the viewport width;
+   - the logo keeps its `width`/`height`, the header text beside it wraps instead of pushing it out;
+   - the title wraps cleanly, the highlight and the button stay inside the card, the label/value rows
+     of a data table still line up;
+   - long URLs and codes break (`word-break:break-all`) instead of widening the card.
+
+   An e-mail wider than 600px on purpose (a review table read on a computer) is still opened at 375px:
+   it must scroll **inside its table**, never stretch the whole message.
+
+   **The phone check needs a viewport.** A sample file written for the preview carries
+   `<meta name="viewport" content="width=device-width,initial-scale=1">` (and `<meta charset="utf-8">`)
+   at the top; without it a phone-sized browser lays the page out at 980px and shows an overflow that a
+   real mail app — which sets its own viewport — never has. Mail apps add the viewport themselves; the
+   preview must, or the test lies in both directions.
+
+   When the owner asked for the e-mails, the screenshots at both widths are what is shown to them —
+   the HTML file alone is not proof that it was looked at.
 4. Check it with images blocked — that is the state half the recipients are in.
 5. Send one real message to a live inbox before calling it done. Gmail and Outlook are the two that
    actually matter, and neither behaves like the preview.
@@ -249,6 +269,8 @@ exempt from SEO and Open Graph (R13).
 - [ ] Every URL absolute `https://` on the production domain
 - [ ] Angatu footer present, logo from the official file (R17)
 - [ ] PT-BR reviewed, and free of machine-written phrasing (R16)
-- [ ] Rendered, opened at 600px and 375px, and checked with images off (R21)
+- [ ] Rendered and tested responsive: looked at as an image at 600px (desktop) **and** 375px (phone),
+      no sideways scroll at either, the preview file carrying a viewport meta (R21)
+- [ ] Checked with images off
 - [ ] One real message sent to a real inbox
 - [ ] `emails/**` excluded from every build transformation
