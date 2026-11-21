@@ -280,6 +280,45 @@ docker run --rm -p 8080:8080 -v myproject-data:/data myproject
 If the image builds and answers locally, Coolify will run it the same way. This is the test that catches
 uncommitted CSS, the wrong JAR and a missing health route.
 
+### 8.1 Docker Desktop on Windows dies at startup: stale socket files
+
+The gate above needs a running engine, and on some Windows machines Docker Desktop refuses to start with
+"An unexpected error occurred" and one of these messages:
+
+```text
+starting services: initializing Ingest server: listening on unix://C:/Users/<user>/AppData/Local/Docker/run/sailor-ingest.sock:
+remove ...\sailor-ingest.sock: The file cannot be accessed by the system.
+starting services: initializing Secrets Engine: listening on unix://C:/Users/<user>/AppData/Local/docker-secrets-engine/engine.sock:
+remove ...\engine.sock: The file cannot be accessed by the system.
+```
+
+**Cause.** Docker Desktop's services listen on AF_UNIX sockets under `%LOCALAPPDATA%`. When a session ends
+without closing them, Windows leaves the `.sock` files behind as reparse points that cannot be opened, so
+not even deleted; on the next start Docker tries to remove them before listening and gives up. It is the
+same Windows AF_UNIX defect that breaks Jetty's selector inside `%LOCALAPPDATA%\Temp`. "Reset to factory
+defaults" does not help and wipes images and volumes — never use it for this.
+
+**Fix, no configuration touched.** Quit Docker Desktop, rename **both** folders that hold sockets (the
+first error hides the second: fixing only `run` just moves the failure to the secrets engine), and start it
+again. Docker recreates them empty:
+
+```powershell
+Get-Process | Where-Object { $_.ProcessName -like 'Docker Desktop*' -or $_.ProcessName -like 'com.docker*' } | Stop-Process -Force
+$stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+foreach ($dir in @("$env:LOCALAPPDATA\Docker\run", "$env:LOCALAPPDATA\docker-secrets-engine")) {
+  if (Test-Path $dir) { Rename-Item -Path $dir -NewName ((Split-Path $dir -Leaf) + ".velha-$stamp") }
+}
+Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+```
+
+- **Rename, never delete**: the stale files are exactly what cannot be removed, so `Remove-Item` fails on
+  them. The renamed folders can be deleted after a reboot, when Windows lets go of the files; until then
+  they are harmless.
+- **It comes back.** The defect recurs at each session that ends with Docker running, so this is a routine
+  step before the local gate, not a one-time repair. Check with `docker version` that the server answers
+  before running `docker build`.
+- If a third socket folder ever appears in the error, apply the same rename to it and add it to the list.
+
 ## 9. Errors that only appear in production
 
 - **CSS gone:** `public/styles/tailwind.css` was generated and never committed. Coolify builds from the
