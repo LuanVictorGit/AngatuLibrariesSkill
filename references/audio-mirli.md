@@ -131,6 +131,12 @@ correlation 0.56 and 0.58 — both passed, and `compare` chose the first. The te
 `analyze-music.py`, never from the prompt. On the GTX 1660 SUPER, ACE-Step Turbo takes ~100–160 s per
 10 s take.
 
+Stable Audio 3 SFX (licence accepted by the owner on 2026-11-22): two 1.5 s whoosh takes in 17 s, exact
+length, but at **44.1 kHz** — ACE-Step writes 48 kHz, so a mixed set always goes through the conversion of
+section 5. One take passed (−16.0 LUFS, true peak −6.3 dBTP, correlation 0.45); the other **failed** at
+−0.1 dBTP and was discarded — a near-full-scale peak is common on SFX takes, so true peak is checked on every
+one.
+
 The agent reads the numbers critically: a take that misses section 5 is regenerated (new seed, a
 corrected prompt), not normalised into shape. Among the takes that pass, the A/B comparison and the
 brief decide; taste questions go to the user's ears at the checkpoints, as in `video-audio.md`.
