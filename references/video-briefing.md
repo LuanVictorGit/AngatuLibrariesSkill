@@ -132,7 +132,9 @@ Ask in PT-BR, as one numbered list, each with the suggested default in brackets:
 7. Textos obrigatórios (grafia exata)
 8. O que não pode aparecer
 9. Ordem obrigatória das informações
-10. Referências visuais (links ou arquivos)
+10. Referências visuais (links ou arquivos) e o estilo: motion gráfico, ou **animado em estilo desenho**
+    (cartoon, anime, cel shading) — este vai para o Blender com as blender-skills (R48,
+    `video-cartoon-blender.md`), cena por cena no plano
 11. Identidade, se o site não resolveu (logo em arquivo, cores, fontes)
 12. Marca d'água do cliente
 

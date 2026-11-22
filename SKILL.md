@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Angatu Sistemas engineering standard - Java 25 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and to think, not just code; once a repo's CLAUDE.md names it, it governs every session there. Overrides - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist; every project ships a Coolify Dockerfile; WebSocket routes check the session inside the route; the client is hostile; all audio made in Mirli, checked by audio-analyzer. Always ask first - backend or static landing, image compression, Turnstile, proposal prices. Always preview a running frontend and look at it. Triggers - orçamento, proposta, quote, AngatuLibraries, AngatuWhatsappSDK, WhatsApp, bot, JavalinAPI, Java, Javadoc, Coolify, Dockerfile, deploy, new project, entity, screen, landing page, Remotion, video, motion graphics, PHONK, Mirli, audio, SFX, music, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, WebSocket, session, cookie, login, OAuth, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
+description: Angatu Sistemas engineering standard - Java 25 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and to think, not just code; once a repo's CLAUDE.md names it, it governs every session there. Overrides - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist; every project ships a Coolify Dockerfile; WebSocket routes check the session inside the route; the client is hostile; all audio made in Mirli, checked by audio-analyzer. Always ask first - backend or static landing, image compression, Turnstile, proposal prices. Always preview a running frontend and look at it. Triggers - orçamento, proposta, quote, AngatuLibraries, AngatuWhatsappSDK, WhatsApp, bot, JavalinAPI, Java, Coolify, Dockerfile, deploy, new project, screen, landing page, Remotion, video, motion graphics, PHONK, cartoon, Blender, Mirli, audio, SFX, music, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, WebSocket, session, cookie, login, OAuth, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
 ---
 
 # AngatuLibraries — Angatu Sistemas engineering standard
@@ -69,6 +69,7 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md`.
 | Blocking image/video saving and text copying | `references/content-protection.md` |
 | **Any video that is not a landing hero — start here** (Remotion, from scratch, reviewed until it matches the plan) | `references/video-production.md` |
 | Video: brief and G5, plan and timeline, motion vocabulary, music/voice/SFX sync, generated narration (Mirli; OpenRouter Leda only when the owner asks), PHONK and the Angatu client reel, the review loop | `references/video-briefing.md`, `video-plan.md`, `video-motion.md`, `video-audio.md`, `video-voice.md`, `video-phonk.md`, `video-review.md` |
+| **A motion video animated in a drawing style** (cartoon, desenho, anime, cel shading) — Blender with blender-skills (R48) | `references/video-cartoon-blender.md` |
 | **How an Angatu edit animates** (the "+1 cliente" language: bloom and blur transitions, one eased event per beat, numbered product steps, motion share ≥ 60 %), and studying a reference reel frame by frame | `references/video-phonk-recipe.md` |
 | **Any audio at all — music, soundtrack, SFX, ambience, loop, UI sound, notification, voice, character sound (R47, mandatory)**: Mirli installed and its MCP connected, production in Mirli, every file verified by the audio-analyzer MCP | `references/audio-mirli.md` |
 | **A proposal or quote for a client (orçamento técnico) — start here** (PDF from the house template in `tools/proposal/`, G6, every page looked at) | `references/proposal.md` |
@@ -267,6 +268,12 @@ rule says which one wins.
   unasked. Done means the render matches the plan, measured and looked at in the review loop — "it
   compiled" and "it rendered once" are not done. Its music, effects and generated voice fall under R47.
   → `references/video-production.md`
+- **R48 — A motion video animated in a drawing style is animated in Blender with blender-skills.**
+  Cartoon, desenho, anime, cel-shaded or comic shots are built and rendered in Blender following
+  <https://github.com/EL4CTEO/blender-skills> (installed in `~/.claude/skills`, `blender-core` first,
+  `blender-stylized-npr` for the look, `blender-asset-qa` before any render counts); Remotion stays the
+  editor and R37 the process. Missing Blender or skills are installed on this machine.
+  → `references/video-cartoon-blender.md`
 
 ### Audio
 
@@ -456,7 +463,9 @@ inclusive o dos vídeos motion, é produzido no **Mirli** (<https://github.com/H
 verificado pelo MCP **audio-analyzer** antes de entrar no projeto — o agente confere, instala e conecta os
 dois MCP na máquina quando faltarem, gera de verdade, mede, refaz o que reprova e escolhe o melhor; nunca
 áudio feito em código nem serviço pago enquanto o Mirli resolve localmente; impedimento real é documentado
-e a tarefa não é dada como concluída.
+e a tarefa não é dada como concluída · R48 vídeo motion animado em estilo desenho (cartoon, anime, cel
+shading) é animado no Blender seguindo as **blender-skills** (<https://github.com/EL4CTEO/blender-skills>),
+instaladas na máquina; o Remotion continua sendo o editor e o R37 o processo.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,

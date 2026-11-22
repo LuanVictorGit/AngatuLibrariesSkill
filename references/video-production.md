@@ -82,7 +82,10 @@ animation that breaks the rhythm loses; a perfect cut that contradicts the brief
     installed in the project — never memory (`video-motion.md`).
 13. **Done means the review loop closed** (`video-review.md`): "it compiled" and "it rendered once" are
     not done.
-14. **Escalate instead of looping.** The same finding in two consecutive iterations, or a tool failing
+14. **A drawing-style animation is made in Blender (R48).** Cartoon, anime or cel-shaded shots are built
+    with the blender-skills and rendered as PNG sequences that Remotion places (`video-cartoon-blender.md`);
+    the plan names the engine of each scene.
+15. **Escalate instead of looping.** The same finding in two consecutive iterations, or a tool failing
     three times, stops the loop: show the evidence to the user and offer options.
 
 ---
