@@ -2,7 +2,7 @@
 """
 Generated narration for Angatu videos, through OpenRouter.
 
-Model google/gemini-3.8-flash-tts, always with the voice Leda -- the fixed house
+Model google/gemini-3.8-flash-lite-tts, always with the voice Leda -- the fixed house
 voice, never switched per video. See references/video-voice.md.
 
 Commands:
@@ -39,7 +39,7 @@ from pathlib import Path
 
 KEY_FILE = Path.home() / ".angatu" / "openrouter.key"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/audio/speech"
-MODEL = "google/gemini-3.8-flash-tts"
+MODEL = "google/gemini-3.8-flash-lite-tts"
 VOICE = "Leda"  # the fixed house voice; never switched per video
 GAP_SECONDS = 0.35
 

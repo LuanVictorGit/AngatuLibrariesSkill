@@ -1,5 +1,11 @@
 # Video voice — generated narration through OpenRouter
 
+> **Since R47, this is the exception, not the default.** A generated narration is produced in **Mirli**,
+> locally (`audio-mirli.md`, `video-audio.md` section 3). This file applies only when the owner asks by
+> name, in the briefing, for the OpenRouter voice Leda — and its output still passes the audio-analyzer
+> checks of `audio-mirli.md` section 5 before it is placed. Where the text below says "nothing else
+> generates a voice", read it as "nothing else generates *this* voice".
+
 > Covers the generated half of the narration in R37. The briefing asks whether a video has narration
 > and where it comes from (`video-briefing.md`, section 3a); this file is what happens when the answer is
 > **"gerar a voz do zero"**. A recorded file the user sends skips straight to `video-audio.md`, section 3.
@@ -11,9 +17,9 @@
 | | |
 |---|---|
 | Service | OpenRouter — `POST https://openrouter.ai/api/v1/audio/speech` |
-| Model | **`google/gemini-3.8-flash-tts`** (<https://openrouter.ai/google/gemini-3.8-flash-tts>) |
+| Model | **`google/gemini-3.8-flash-lite-tts`** (<https://openrouter.ai/google/gemini-3.8-flash-lite-tts>) |
 | Voice | **`Leda`** — the fixed house voice, female, for every video |
-| Price | US$ 0.50 per million input tokens and US$ 9 per million output tokens |
+| Price | read it on the model page before the first take and record it in section 4 (the lite model replaced `gemini-3.8-flash-tts`, priced at US$ 0.50 / 9 per million input / output tokens) |
 | Tool | `tools/tts.py` (copied into the video's `tools/` at creation) |
 
 **Nothing else generates a voice**: no local model, no Ollama, no other service, no other model, no other
@@ -70,7 +76,7 @@ cuts on those words.
 - **Only the request body the endpoint documents** (`model`, `input`, `voice`, `response_format`): no
   style instructions written into the text — they would be read aloud.
 - `docs/LICENCAS.md` gets: `public/voice/narracao.wav · voz · gerada via OpenRouter
-  (google/gemini-3.8-flash-tts, voz Leda) · uso comercial conforme os termos do OpenRouter e do Google`.
+  (google/gemini-3.8-flash-lite-tts, voz Leda) · uso comercial conforme os termos do OpenRouter e do Google`.
 
 ---
 

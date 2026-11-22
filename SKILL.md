@@ -1,6 +1,6 @@
 ---
 name: AngatuLibrariesSkill
-description: Angatu Sistemas engineering standard - Java 25 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and to think, not just code; once a repo's CLAUDE.md names it, it governs every session there. Overrides - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist, even unasked; every project ships a Coolify Dockerfile, not for dev; WebSocket routes check the session inside the route; the client is hostile. Always ask first - backend or static landing, image compression, Turnstile, proposal prices. Always preview a frontend on a running server and look at it. Triggers - orçamento, proposta, quote, AngatuLibraries, AngatuWhatsappSDK, WhatsApp, bot, Baileys, Saveable, Route, JavalinAPI, Java, Javadoc, Coolify, Dockerfile, deploy, new project, entity, screen, landing page, Remotion, video, motion graphics, PHONK, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, obfuscate, WebSocket, session, cookie, login, OAuth, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
+description: Angatu Sistemas engineering standard - Java 25 + Javalin backends (AngatuLib, Saveable, Route) and vanilla frontends under a mandatory design system. ALWAYS load this skill for any Angatu project, and to think, not just code; once a repo's CLAUDE.md names it, it governs every session there. Overrides - payments and AI through the AngatuCRM API, never a provider SDK; WhatsApp always through AngatuWhatsappSDK, never Baileys; newest lib version, checked unasked; Tailwind local, never CDN; no cache unless asked; Saveable holds nothing in RAM, so contested writes use mutate; source stays readable, only the build obfuscates into dist; every project ships a Coolify Dockerfile; WebSocket routes check the session inside the route; the client is hostile; all audio made in Mirli, checked by audio-analyzer. Always ask first - backend or static landing, image compression, Turnstile, proposal prices. Always preview a running frontend and look at it. Triggers - orçamento, proposta, quote, AngatuLibraries, AngatuWhatsappSDK, WhatsApp, bot, JavalinAPI, Java, Javadoc, Coolify, Dockerfile, deploy, new project, entity, screen, landing page, Remotion, video, motion graphics, PHONK, Mirli, audio, SFX, music, SEO, Open Graph, email template, frontend, design system, Tailwind, responsive, build, dist, WebSocket, session, cookie, login, OAuth, security, rate limit, Turnstile, captcha, cache, image, compression, copy protection, watermark, gallery, payment, PIX, checkout, webhook, AI, LLM, ai:chat.
 ---
 
 # AngatuLibraries — Angatu Sistemas engineering standard
@@ -68,8 +68,9 @@ user-visible text (R16), commit messages (R3) and the project's own `CLAUDE.md`.
 | Previewing a frontend and actually looking at it | `references/frontend-preview.md` |
 | Blocking image/video saving and text copying | `references/content-protection.md` |
 | **Any video that is not a landing hero — start here** (Remotion, from scratch, reviewed until it matches the plan) | `references/video-production.md` |
-| Video: brief and G5, plan and timeline, motion vocabulary, music/voice/SFX sync, generated narration (OpenRouter, voice Leda), PHONK and the Angatu client reel, the review loop | `references/video-briefing.md`, `video-plan.md`, `video-motion.md`, `video-audio.md`, `video-voice.md`, `video-phonk.md`, `video-review.md` |
+| Video: brief and G5, plan and timeline, motion vocabulary, music/voice/SFX sync, generated narration (Mirli; OpenRouter Leda only when the owner asks), PHONK and the Angatu client reel, the review loop | `references/video-briefing.md`, `video-plan.md`, `video-motion.md`, `video-audio.md`, `video-voice.md`, `video-phonk.md`, `video-review.md` |
 | **How an Angatu edit animates** (the "+1 cliente" language: bloom and blur transitions, one eased event per beat, numbered product steps, motion share ≥ 60 %), and studying a reference reel frame by frame | `references/video-phonk-recipe.md` |
+| **Any audio at all — music, soundtrack, SFX, ambience, loop, UI sound, notification, voice, character sound (R47, mandatory)**: Mirli installed and its MCP connected, production in Mirli, every file verified by the audio-analyzer MCP | `references/audio-mirli.md` |
 | **A proposal or quote for a client (orçamento técnico) — start here** (PDF from the house template in `tools/proposal/`, G6, every page looked at) | `references/proposal.md` |
 
 ---
@@ -264,7 +265,18 @@ rule says which one wins.
   open in the browser pane while it is built. Nothing is built before the plan is approved, and the
   plan is data, never a frame number typed into a scene. No asset is invented, nothing is downloaded
   unasked. Done means the render matches the plan, measured and looked at in the review loop — "it
-  compiled" and "it rendered once" are not done. → `references/video-production.md`
+  compiled" and "it rendered once" are not done. Its music, effects and generated voice fall under R47.
+  → `references/video-production.md`
+
+### Audio
+
+- **R47 — All audio is produced in Mirli and verified by the audio-analyzer MCP; never done without
+  both.** Music, SFX, ambience, loops, UI sounds, notifications, voices — every project, every R37 video.
+  Missing Mirli (<https://github.com/HamSanders/soundbox>) or either MCP is installed and connected **on
+  this machine**, not documented for later. Real takes, measured, regenerated until they pass; never
+  audio written in code or a paid service while Mirli can do it; a user's file is measured too; one
+  format and rate per project; a `conditional` licence is the owner's call. A real block is documented
+  and the task is **not** done. → `references/audio-mirli.md`
 
 ### Proposals
 
@@ -438,7 +450,13 @@ chat, e o `caveman-compress` nunca toca o CLAUDE.md · R44 logo depois deste blo
 Command Execution, copiado sem alteração · R45 grafo do graphify em todo projeto, lido antes do código e
 atualizado a cada mudança, com `graphify-out/` fora do git e da imagem — grafo, nota do cofre e só então as
 linhas do código, para gastar o mínimo de contexto · R46 o que o agente cria na máquina
-para uso próprio é apagado quando a tarefa não precisa mais dele — nunca o que já existia nem o que é do usuário.
+para uso próprio é apagado quando a tarefa não precisa mais dele — nunca o que já existia nem o que é do usuário ·
+R47 todo áudio (música, trilha, efeito, ambiente, loop, som de interface, notificação, voz, som de personagem),
+inclusive o dos vídeos motion, é produzido no **Mirli** (<https://github.com/HamSanders/soundbox>) e
+verificado pelo MCP **audio-analyzer** antes de entrar no projeto — o agente confere, instala e conecta os
+dois MCP na máquina quando faltarem, gera de verdade, mede, refaz o que reprova e escolhe o melhor; nunca
+áudio feito em código nem serviço pago enquanto o Mirli resolve localmente; impedimento real é documentado
+e a tarefa não é dada como concluída.
 
 **R31 — nenhum vestígio de IA no repositório, sem exceção.** Proibido em mensagem, corpo, trailer,
 nome de branch, tag, título e descrição de PR: `Co-Authored-By: Claude` ou qualquer IA como coautor,
@@ -511,6 +529,7 @@ asked for it; R18 means the source is not rewritten to achieve that.
   `linked: true`), and the test matrix of section 9 passed on the Play-signed build — no frame of the first
   launch shows the address bar.
 - A video is not a frontend: its list is the final checklist of `references/video-review.md` (R37).
+- Any audio (R47): from Mirli or the user, passed section 5 of `references/audio-mirli.md`, recorded.
 - A proposal is not a frontend either: its list is section 8 of `references/proposal.md` (R41).
 
 ---

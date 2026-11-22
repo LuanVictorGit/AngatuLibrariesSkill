@@ -69,12 +69,13 @@ animation that breaks the rhythm loses; a perfect cut that contradicts the brief
    the plan; "it looked empty" is not a reason.
 8. **No asset is ever invented.** A missing logo, screen, photo, number, testimonial, voice or track is
    named, and the work stops for it (`video-briefing.md`).
-9. **Nothing is downloaded unasked**, and every third-party file has its licence in `docs/LICENCAS.md`.
-10. **Music is a file the user points to; the voice is recorded or Leda.** Music is never generated.
-    Narration is a recorded file the user sends, or generated through OpenRouter with
-    `google/gemini-3.8-flash-tts` and the voice Leda, the key kept in `~/.angatu/` — the one exception R26
-    allows, for video narration only; never a local model (`video-voice.md`). The briefing asks every
-    time (`video-briefing.md`, 3a).
+9. **Nothing is downloaded unasked**, and every file has its origin and licence in `docs/LICENCAS.md`.
+10. **All sound is produced in Mirli and verified by the audio-analyzer MCP (R47).** Music, effects,
+    ambience and a generated voice come out of Mirli (`audio-mirli.md`), never from code, a library
+    pulled in place of a take or a paid service; a track or a narration the user sends is used as it
+    comes. Every file, either way, is measured by the audio-analyzer before it is placed and the master
+    is measured again. OpenRouter with the voice Leda (`video-voice.md`) only when the owner names it in
+    the briefing. The briefing asks every time (`video-briefing.md`, 3a).
 11. **The Angatu Sistemas mark is asked in G5 for every video**, suggesting yes. R17 governs pages and
     e-mails; this question governs videos.
 12. **The API is the installed version.** Read `node_modules/**/*.d.ts` and the official Remotion skills

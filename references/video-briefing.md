@@ -78,13 +78,14 @@ If B:
 Right after the type, and **before any plan or scene**, two questions, each in its own message, because
 each answer changes what is asked next:
 
-> **"Esse vídeo precisa de narração? (1) eu gero a voz do zero pelo OpenRouter, com a voz Leda ·
+> **"Esse vídeo precisa de narração? (1) eu gero a voz do zero no Mirli, aqui no computador ·
 > (2) você me envia a narração já gravada · (3) não precisa de narração"**
 
-- **1** → OpenRouter, model `google/gemini-3.8-flash-tts`, voice `Leda`, always (`video-voice.md`).
-  The first time, the user's OpenRouter key is asked and kept for every later video (`video-voice.md`,
-  section 2). The script must be approved before the voice, and the user hears the first take at the
-  first draft. Never offer another model, voice or a local generator.
+- **1** → produced in **Mirli** (R47, `audio-mirli.md`, `video-audio.md` section 3): the house voice
+  saved in Mirli's Voice Lab, or, the first time, two or three Portuguese voices from its catalogue for
+  the owner to choose by ear. The script must be approved before the voice, the take passes the
+  audio-analyzer, and the user hears it at the first draft. OpenRouter with the voice Leda
+  (`video-voice.md`) only if the owner asks for it by name — it is paid, and R47 prefers the local one.
 - **2** → "Onde está o arquivo?" — the work waits for it (R37 rule 8).
 - **3** → the music or the silence drives the time axis; a type A video without narration is confirmed,
   not assumed.
@@ -142,12 +143,12 @@ Ask in PT-BR, as one numbered list, each with the suggested default in brackets:
 **A — narrado**
 - Narração e roteiro já decididos na seção 3a (gerada pelo OpenRouter, gravada, ou sem narração)
 - O roteiro aprovado, com a grafia exata (é dele que vem o texto da tela)
-- A trilha de fundo: onde está o arquivo e qual a licença
+- A trilha de fundo: um arquivo seu (onde está e qual a licença) ou produzida no Mirli (R47) — gênero, instrumentos, andamento
 - Imagens e vídeos disponíveis; cenas obrigatórias
 - Legenda embutida [sim — rede social toca sem som]
 
 **B1 — PHONK normal**
-- Onde está a música (arquivo) e qual trecho usar
+- A música: um arquivo seu (onde está e qual trecho) ou produzida no Mirli (R47) — gênero, andamento, energia
 - Imagens e vídeos disponíveis; tema; personagem ou produto
 - Estilo visual; intensidade [1 limpa · 2 média · 3 agressiva]
 - Duração; formato; referências; texto, se houver
@@ -157,7 +158,7 @@ Ask in PT-BR, as one numbered list, each with the suggested default in brackets:
 - Como era antes (o processo antigo do cliente: à mão, planilha, papel — é o bloco "problema")
 - Telas reais (capturas da URL ou do sistema, com dado fictício)
 - Equipe a creditar: nome, função e foto com permissão (`_marca/` na raiz do estúdio)
-- Onde está a música (arquivo) e a licença
+- A música: um arquivo seu (e a licença) ou produzida no Mirli (R47)
 - O WhatsApp do CTA — confirmar
 - Duração [~19 s, como as referências]
 
@@ -209,13 +210,12 @@ with permission recorded there.
 **Nothing is downloaded unasked.** One batch list per request — file, URL, licence, size — and a clear
 yes before anything is fetched.
 
-Sources for sound effects, in order:
-
-1. the studio's local library, each file verified by its Openverse id — `GET
-   https://api.openverse.org/v1/audio/<id>/` returns licence, creator and source page, no key needed;
-2. `@remotion/sfx` — 32 hosted sounds usable without attribution (licence per sound on its page);
-3. Openverse search filtered to CC0 — `https://api.openverse.org/v1/audio/?q=whoosh&license=cc0`;
-4. Freesound or Pixabay by hand (Pixabay's own licence is not CC0 — read it).
+**Sound effects, music and generated voices are produced in Mirli (R47)**, not downloaded: the only
+downloads audio needs are Mirli's model weights, each one announced with its size and licence, and a
+licence marked `conditional` or `no` is accepted by the owner, never by the agent (`audio-mirli.md`,
+section 2). A third-party sound file enters a video only when the user sends it; it is still verified by
+the audio-analyzer, and when it came from Openverse its licence is confirmed by id — `GET
+https://api.openverse.org/v1/audio/<id>/` returns licence, creator and source page, no key needed.
 
 Forbidden: ripping music or video from a platform; non-commercial (NC) licences in commercial work; music
 without a licence for the platform where the video will run — in that case, deliver an extra version
@@ -249,7 +249,8 @@ Data: <aaaa-mm-dd> · Pedido original: "<frase do usuário>"
 
 ## O vídeo
 - Tipo: A | B1 (intensidade n) | B2
-- Narração: gerada (OpenRouter · gemini-3.8-flash-tts · Leda) | gravada (arquivo ...) | sem narração
+- Narração: gerada no Mirli (modelo ..., voz ...) | gerada no OpenRouter (Leda, pedida pelo dono) | gravada (arquivo ...) | sem narração
+- Trilha e efeitos: produzidos no Mirli (R47), verificados pelo audio-analyzer | trilha enviada pelo usuário (arquivo ...)
 - Roteiro: planejado pelo agente (aprovado em <data>) | enviado pelo usuário
 - Remotion: <versão> (a mais nova em <data>)
 - Plataforma: ... · Formato: ... · Duração: ...

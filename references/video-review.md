@@ -177,6 +177,10 @@ Never loop in silence, and never lower a target to make an item pass.
 - [ ] A voz está sincronizada (cada elemento entra na palavra)?
 - [ ] Os efeitos sonoros estão sincronizados (carimbo do barramento = eventos atuais)?
 
+**Áudio (R47)**
+- [ ] Toda música, efeito e voz gerada saiu do Mirli (ou é arquivo enviado pelo usuário), com modelo, seed e licença em `docs/LICENCAS.md`?
+- [ ] Cada arquivo passou pelo audio-analyzer (duração, sem clipe, compatível em mono, família consistente) e o master final foi medido de novo (−14 LUFS, pico real ≤ −1 dBTP)?
+
 **Imagem**
 - [ ] As transições estão corretas? As animações estão suaves?
 - [ ] Existem quadros problemáticos, elementos cortados, textos ilegíveis?

@@ -596,7 +596,7 @@ exige "$VA" 'R26' 'video-audio.md reconcilia voz sintetica com R26' \
             'video-audio.md deixa gerar voz por fora do AngatuCRM'
 exige "$VA" 'Leda' 'video-audio.md usa so a voz da casa' \
             'video-audio.md sem a Leda -- cada video sai com uma voz diferente'
-exige "$VV" 'gemini-3\.8-flash-tts' 'video-voice.md fixa o modelo de voz' 'video-voice.md sem o modelo de voz'
+exige "$VV" 'gemini-3\.8-flash-lite-tts' 'video-voice.md fixa o modelo de voz' 'video-voice.md sem o modelo de voz'
 exige "$VV" 'openrouter\.key' 'video-voice.md guarda a chave fora do projeto' \
             'video-voice.md sem lugar fixo para a chave -- ela vai parar no projeto'
 exige "$VV" 'R26' 'video-voice.md explica a excecao a R26' 'video-voice.md sem a excecao a R26'

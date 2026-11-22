@@ -4,6 +4,12 @@
 > by a tool in `tools/video/` or put in front of the user's ears at a checkpoint — never "it sounds good"
 > said by the agent. The plan that places the sound is `video-plan.md`; the loop that checks it is
 > `video-review.md`.
+>
+> **R47 governs every sound in this file.** Music, effects, ambience and a generated voice are produced in
+> **Mirli** and every file, generated or sent by the user, is verified by the **audio-analyzer MCP**
+> before it is placed (`audio-mirli.md`). The tools below measure *timing* for the plan; the analyzer
+> measures *quality* (duration, LUFS, true peak, mono safety, consistency between takes). A video whose
+> audio skipped either is not done.
 
 ---
 
@@ -25,7 +31,15 @@ never silent (one of the reference reels ends in 3.7 s of silence; do not copy t
 
 ---
 
-## 2. The music — `tools/analyze-music.py`
+## 2. The music — produced in Mirli, then `tools/analyze-music.py`
+
+Where it comes from: a track the user sends (used as it comes), or **produced in Mirli** (R47) —
+`soundbox.generate` with `audiocpp-ace-step` (MIT) by default, the brief's genre, instruments and BPM in
+the prompt, `lyrics: "[instrumental]"` for a bed without voice, 2–4 takes. A Stable Audio or MiniMax
+model is used only after the owner accepted its licence. Every take is checked with the audio-analyzer
+(`audio_info` for the length — Mirli trims trailing silence, so a model that ends early yields a short
+file; `compare` between takes; `rhythm_analysis` for the tempo) and the chosen one is copied to
+`public/music/` as WAV 48 kHz stereo. Then:
 
 ```bash
 python -X utf8 tools/analyze-music.py public/music/<track>.mp3 --fps 30
@@ -55,13 +69,17 @@ Placing it: `trimBefore` (frames) starts the music at a chosen section; the vide
 
 ---
 
-## 3. The voice — a recorded file or Leda via OpenRouter
+## 3. The voice — a recorded file, or generated in Mirli
 
 G5 asks every time (`video-briefing.md`, 3a): **gerar a voz do zero**, **enviar a voz gravada** or
-**sem narração**. A recorded file the user points to is used as it comes. A generated one is always
-OpenRouter, model `google/gemini-3.8-flash-tts`, voice **Leda** (`video-voice.md`) — the one exception R26
-allows, for video narration only. Never a local model, another service or another voice. Either way the
-file lands in `public/voice/` and is measured the same way:
+**sem narração**. A recorded file the user points to is used as it comes. A generated one is **produced
+in Mirli** (R47): `soundbox.speak` or the story tools, with a Portuguese-capable TTS model from Mirli's
+catalogue, or a clone of a reference clip the owner provides — the `soundbox-voice-story` skill carries
+the craft. The house voice is kept: once the owner approves a Mirli voice, it is saved in Mirli's Voice
+Lab and reused for every video, never switched per video. OpenRouter with the voice Leda
+(`video-voice.md`, the R26 exception) is used **only when the owner names it in the briefing**, since it is
+a paid service and R47 prefers the local one. Either way the file lands in `public/voice/`, passes the
+audio-analyzer, and is timed the same way:
 
 ```bash
 python -X utf8 tools/transcribe.py public/voice/<narration>.wav --model small
@@ -80,7 +98,13 @@ difference of 11 ms, in 22 s.
 
 ---
 
-## 4. Effects — tied to events, placed by their anchor
+## 4. Effects — produced in Mirli, tied to events, placed by their anchor
+
+Every effect is **produced in Mirli** (R47), never pulled from a library in place of a take: the cue
+sheet of the plan is the inventory (`soundbox-sound-pass`), one prompt per family in one material
+vocabulary (`soundbox-sfx`: material, action, space), 2–4 variations per family, the chosen takes
+measured with the audio-analyzer (`compare` inside a family, so the variants sit within ±2 LU), then
+copied to `public/sfx/` with the family prefix and converted to WAV 48 kHz stereo.
 
 The brief's map, as the default:
 
@@ -192,6 +216,10 @@ If the limiter has to take more than 6 dB, the script says so: the mix is crushe
 
 ---
 
+Before the master, every file in `public/music/`, `public/voice/` and `public/sfx/` has passed the
+audio-analyzer checks of `audio-mirli.md` section 5, and `out/final-master.mp4` is measured again with
+`full_analysis` — the number in the review log comes from that measurement, not from the script's echo.
+
 ## 8. Deliverables
 
 - `final-master.mp4` per format.
@@ -203,7 +231,8 @@ If the limiter has to take more than 6 dB, the script says so: the mix is crushe
 
 | Arquivo | Tipo | Fonte (URL) | Licença | Autor | Data | Onde é usado |
 |---|---|---|---|---|---|---|
-| public/sfx/whoosh-01.mp3 | efeito | https://freesound.org/... | CC0 1.0 | ... | 2026-09-22 | cortes 4, 8, 12 |
+| public/sfx/whoosh-01.wav | efeito | Mirli · audiocpp-stable-audio-3-sfx · seed 1234 · "fast airy whoosh, close, dry" | Stability AI Community (aceita pelo dono em ...) | Angatu Sistemas | 2026-09-22 | cortes 4, 8, 12 |
+| public/music/trilha.wav | música | Mirli · audiocpp-ace-step · seed 837711155 · "upbeat corporate..." | MIT | Angatu Sistemas | 2026-09-22 | trilha inteira |
 
 ---
 *Original source: the Remotion Motion Graphics brief of Angatu Sistemas, and the audio practice of Angatu's own studios · written and audited by Angatu Sistemas*
